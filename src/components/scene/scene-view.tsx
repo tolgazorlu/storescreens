@@ -8,7 +8,7 @@ import { backgroundCss } from "@/lib/scene";
  * no CSS classes, no external stylesheets.
  */
 
-export const FONT_FAMILY = "Inter";
+export const FONT_FAMILY = "Inter, Noto Sans Arabic";
 
 export function SceneView({
   scene,
@@ -97,7 +97,15 @@ export function LayerView({
   }
 }
 
+const RTL_RE = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+
 function TextView({ layer }: { layer: TextLayer }) {
+  // Arabic/Hebrew text needs an explicit direction or satori shapes it
+  // left-to-right and the line order comes out mirrored.
+  const dir = RTL_RE.test(layer.text) ? "rtl" : "ltr";
+  // satori reorders words around ordinary spaces in RTL runs; non-breaking
+  // spaces keep each line as one run. Explicit newlines still break lines.
+  const text = dir === "rtl" ? layer.text.replace(/ /g, "\u00a0") : layer.text;
   const justify =
     layer.align === "center"
       ? "center"
@@ -115,13 +123,14 @@ function TextView({ layer }: { layer: TextLayer }) {
           lineHeight: layer.lineHeight,
           letterSpacing: layer.letterSpacing,
           textAlign: layer.align,
+          direction: dir,
           whiteSpace: "pre-wrap",
           width: "100%",
           justifyContent: justify,
           wordBreak: "break-word",
         }}
       >
-        {layer.text}
+        {text}
       </div>
     </div>
   );

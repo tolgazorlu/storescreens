@@ -19,16 +19,21 @@ let fontsPromise: Promise<Font[]> | null = null;
 
 function loadFonts(): Promise<Font[]> {
   if (!fontsPromise) {
-    fontsPromise = Promise.all(
+    // Inter has no Arabic glyphs; satori falls back to the next font that
+    // covers the glyph, so Noto Sans Arabic is listed second at every weight.
+    const load = (family: string, prefix: string) =>
       Object.entries(WEIGHTS).map(async ([weight, file]) => ({
-        name: "Inter",
+        name: family,
         weight: Number(weight) as Font["weight"],
         style: "normal" as const,
         data: await readFile(
-          path.join(process.cwd(), "public", "fonts", `Inter-${file}.ttf`),
+          path.join(process.cwd(), "public", "fonts", `${prefix}-${file}.ttf`),
         ),
-      })),
-    );
+      }));
+    fontsPromise = Promise.all([
+      ...load("Inter", "Inter"),
+      ...load("Noto Sans Arabic", "NotoSansArabic"),
+    ]);
   }
   return fontsPromise;
 }
