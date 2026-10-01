@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  Palette,
   ChevronLeft,
   Download,
   Plus,
@@ -44,6 +45,8 @@ import { GridView } from "./grid-view";
 import { Inspector } from "./inspector";
 import { AssetsPanel } from "./assets-panel";
 import { GeneratePanel } from "./generate-panel";
+import { BrandPanel } from "./brand-panel";
+import type { Brand } from "@/lib/brand";
 import { ScreenStrip } from "./screen-strip";
 import { useHistory } from "./use-history";
 import { useFittedSizes } from "./use-fit";
@@ -55,11 +58,15 @@ export function Editor({
   project,
   initialAssets,
   initialScreens,
+  initialBrand,
 }: {
   project: ProjectDto;
   initialAssets: AssetDto[];
   initialScreens: ScreenDto[];
+  initialBrand: Brand;
 }) {
+  const [brand, setBrand] = useState<Brand>(initialBrand);
+  const [brandOpen, setBrandOpen] = useState(false);
   const [assets, setAssets] = useState(initialAssets);
   const [screens, setScreens] = useState(initialScreens);
   const locales = useMemo(
@@ -493,9 +500,22 @@ export function Editor({
 
         <div className="ml-auto flex items-center gap-1">
           <Button
+            variant={brandOpen ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => {
+              setBrandOpen((o) => !o);
+              setGenOpen(false);
+            }}
+          >
+            <Palette className="size-4" /> Brand
+          </Button>
+          <Button
             variant={genOpen ? "secondary" : "outline"}
             size="sm"
-            onClick={() => setGenOpen((o) => !o)}
+            onClick={() => {
+              setGenOpen((o) => !o);
+              setBrandOpen(false);
+            }}
           >
             <Sparkles className="size-4" /> Generate
           </Button>
@@ -626,9 +646,17 @@ export function Editor({
           )}
         </main>
 
-        {genOpen ? (
+        {brandOpen ? (
+          <BrandPanel
+            project={project}
+            brand={brand}
+            onChange={setBrand}
+            onClose={() => setBrandOpen(false)}
+          />
+        ) : genOpen ? (
           <GeneratePanel
             project={project}
+            brand={brand}
             assets={assets}
             locale={locale}
             device={device}

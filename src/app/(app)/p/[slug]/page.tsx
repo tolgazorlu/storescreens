@@ -1,5 +1,11 @@
 import { notFound } from "next/navigation";
-import { getProject, listAssets, listScreens, NotFound } from "@/lib/service";
+import {
+  getProject,
+  listAssets,
+  listScreens,
+  NotFound,
+  projectBrand,
+} from "@/lib/service";
 import { Editor } from "@/components/editor/editor";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +30,7 @@ export default async function ProjectPage({
   return (
     <Editor
       project={{ id: project.id, name: project.name, slug: project.slug }}
+      initialBrand={projectBrand(project)}
       initialAssets={assetRows.map((a) => ({
         id: a.id,
         kind: a.kind,

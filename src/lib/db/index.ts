@@ -27,8 +27,11 @@ const BOOTSTRAP = [
     locale TEXT NOT NULL, device TEXT NOT NULL, position INTEGER NOT NULL DEFAULT 0,
     scene TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
 ];
+/** Additive migrations; each is safe to re-run (errors for existing columns are swallowed). */
+const MIGRATIONS = ["ALTER TABLE projects ADD COLUMN brand TEXT"];
 const ready = (async () => {
   for (const sql of BOOTSTRAP) await client.execute(sql);
+  for (const sql of MIGRATIONS) await client.execute(sql).catch(() => {});
 })();
 
 export const db = drizzle(client, { schema });

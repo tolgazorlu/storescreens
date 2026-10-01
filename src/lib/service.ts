@@ -17,6 +17,7 @@ import {
   type TemplateParams,
 } from "@/lib/templates";
 import { parseScene, type Scene } from "@/lib/scene";
+import { brandSchema, DEFAULT_BRAND, type Brand } from "@/lib/brand";
 import { renderSceneToPng } from "@/lib/render";
 import { storeFile, deleteFile } from "@/lib/storage";
 import { imageSize } from "@/lib/image-size";
@@ -186,12 +187,18 @@ export type ScreenSpec = {
   subtitle?: string;
   /** Asset id, asset name or absolute URL of the in-app screenshot. */
   screenshot?: string | null;
+  screenshot2?: string | null;
+  bullets?: { icon?: string; text: string }[];
+  titleScale?: number;
+  phoneScale?: number;
+  phoneOffsetY?: number;
 };
 
 export type GenerateInput = {
   locale: string;
   device: DeviceId;
   logo?: string | null;
+  brand?: Partial<Brand>;
   background?: Scene["background"];
   textColor?: string;
   fontFamily?: string;
@@ -199,6 +206,21 @@ export type GenerateInput = {
   replace?: boolean;
   screens: ScreenSpec[];
 };
+
+export function projectBrand(p: Project): Brand {
+  return brandSchema.parse({ ...DEFAULT_BRAND, ...(p.brand ?? {}) });
+}
+
+export async function updateBrand(id: string, patch: Partial<Brand>) {
+  const p = await getProject(id);
+  const brand = brandSchema.parse({ ...projectBrand(p), ...patch });
+  const [row] = await db
+    .update(projects)
+    .set({ brand, updatedAt: new Date() })
+    .where(eq(projects.id, p.id))
+    .returning();
+  return row;
+}
 
 async function resolveAssetRef(
   projectId: string,
@@ -256,17 +278,25 @@ export async function generateScreens(
     );
   let position = existing.reduce((m, r) => Math.max(m, r.position + 1), 0);
 
+  const brand: Partial<Brand> = { ...projectBrand(p), ...(input.brand ?? {}) };
   const rows = [];
   for (const spec of input.screens) {
     const screenshot = await resolveAssetRef(p.id, spec.screenshot);
+    const screenshot2 = await resolveAssetRef(p.id, spec.screenshot2);
     const params: TemplateParams = {
       title: spec.title,
       subtitle: spec.subtitle,
       screenshot,
+      screenshot2,
       logo,
+      bullets: spec.bullets,
+      brand,
       background: input.background,
       textColor: input.textColor,
       fontFamily: input.fontFamily,
+      titleScale: spec.titleScale,
+      phoneScale: spec.phoneScale,
+      phoneOffsetY: spec.phoneOffsetY,
     };
     rows.push({
       projectId: p.id,

@@ -6,7 +6,10 @@ import {
   deleteProject,
   listAssets,
   listScreens,
+  updateBrand,
+  projectBrand,
 } from "@/lib/service";
+import { brandSchema } from "@/lib/brand";
 
 type P = { project: string };
 
@@ -16,15 +19,25 @@ export const GET = route<P>(async (_req, { params }) => {
     listAssets(project.id),
     listScreens(project.id),
   ]);
-  return json({ ...project, assets: assetRows, screens: screenRows });
+  return json({
+    ...project,
+    brand: projectBrand(project),
+    assets: assetRows,
+    screens: screenRows,
+  });
 });
 
 export const PATCH = route<P>(async (req, { params }) => {
   const body = z
-    .object({ name: z.string().min(1).max(80) })
+    .object({
+      name: z.string().min(1).max(80).optional(),
+      brand: brandSchema.partial().optional(),
+    })
     .parse(await req.json());
-  const project = await getProject(params.project);
-  return json(await renameProject(project.id, body.name));
+  let project = await getProject(params.project);
+  if (body.name) project = await renameProject(project.id, body.name);
+  if (body.brand) project = await updateBrand(project.id, body.brand);
+  return json({ ...project, brand: projectBrand(project) });
 });
 
 export const DELETE = route<P>(async (_req, { params }) => {

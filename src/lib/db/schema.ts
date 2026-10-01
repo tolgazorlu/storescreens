@@ -1,6 +1,7 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { randomUUID } from "node:crypto";
 import type { Scene } from "@/lib/scene";
+import type { Brand } from "@/lib/brand";
 
 const id = () =>
   text("id")
@@ -15,6 +16,7 @@ export const projects = sqliteTable("projects", {
   id: id(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
+  brand: text("brand", { mode: "json" }).$type<Brand>(),
   createdAt: now("created_at"),
   updatedAt: now("updated_at"),
 });

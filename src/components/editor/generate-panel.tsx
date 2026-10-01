@@ -22,16 +22,20 @@ import {
 } from "@/lib/templates";
 import { SceneView } from "@/components/scene/scene-view";
 import type { AssetDto, ProjectDto, ScreenDto } from "./types";
+import type { Brand } from "@/lib/brand";
 
 type Row = {
   template: TemplateId;
   title: string;
   subtitle: string;
   screenshot: string | null;
+  screenshot2: string | null;
+  bullets: string;
 };
 
 type Props = {
   project: ProjectDto;
+  brand: Brand;
   assets: AssetDto[];
   locale: string;
   device: DeviceId;
@@ -59,6 +63,7 @@ const ROTATION: TemplateId[] = [
  */
 export function GeneratePanel({
   project,
+  brand,
   assets,
   locale: initialLocale,
   device: initialDevice,
@@ -70,8 +75,6 @@ export function GeneratePanel({
   const [locale, setLocale] = useState(initialLocale);
   const [device, setDevice] = useState<DeviceId>(initialDevice);
   const [logo, setLogo] = useState<string>(() => logos[0]?.id ?? "__none");
-  const [bg, setBg] = useState("#2E3DF2");
-  const [textColor, setTextColor] = useState("#ffffff");
   const [replace, setReplace] = useState(true);
   const [busy, setBusy] = useState(false);
   const [rows, setRows] = useState<Row[]>(() =>
@@ -80,8 +83,16 @@ export function GeneratePanel({
       title: "",
       subtitle: "",
       screenshot: a?.id ?? null,
+      screenshot2: null,
+      bullets: "",
     })),
   );
+  const parseBullets = (b: string) =>
+    b
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => ({ text: l }));
 
   const assetUrl = (id: string | null) =>
     id ? (assets.find((a) => a.id === id)?.url ?? null) : null;
@@ -93,13 +104,14 @@ export function GeneratePanel({
           title: r.title || "Headline",
           subtitle: r.subtitle || undefined,
           screenshot: assetUrl(r.screenshot),
+          screenshot2: assetUrl(r.screenshot2),
+          bullets: parseBullets(r.bullets),
           logo: logo === "__none" ? null : assetUrl(logo),
-          background: { type: "solid", color: bg },
-          textColor,
+          brand,
         }),
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rows, dev, logo, bg, textColor, assets],
+    [rows, dev, logo, brand, assets],
   );
 
   const set = (i: number, patch: Partial<Row>) =>
@@ -124,11 +136,15 @@ export function GeneratePanel({
             locale,
             device,
             logo: logo === "__none" ? null : logo,
-            background: { type: "solid", color: bg },
-            textColor,
             replace,
             screens: rows.map((r) => ({
-              ...r,
+              template: r.template,
+              screenshot: r.screenshot,
+              screenshot2: r.screenshot2,
+              bullets:
+                r.template === "feature-list"
+                  ? parseBullets(r.bullets)
+                  : undefined,
               title: r.title || "Headline",
               subtitle: r.subtitle || undefined,
             })),
@@ -200,10 +216,24 @@ export function GeneratePanel({
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Background / text">
-          <div className="flex h-8 gap-1">
-            <ColorInput value={bg} onChange={setBg} />
-            <ColorInput value={textColor} onChange={setTextColor} />
+        <Field label="Brand">
+          <div className="flex h-8 items-center gap-1.5 rounded-md border border-input px-2 text-xs text-muted-foreground">
+            <span
+              className="size-3 rounded-sm"
+              style={{
+                background:
+                  brand.background.type === "solid"
+                    ? brand.background.color
+                    : brand.background.from,
+              }}
+            />
+            <span
+              className="size-3 rounded-sm"
+              style={{ background: brand.textColor }}
+            />
+            <span className="truncate">
+              {brand.fontFamily}, {brand.titleWeight}
+            </span>
           </div>
         </Field>
       </div>
@@ -290,6 +320,15 @@ export function GeneratePanel({
                   className="h-7 text-xs"
                   onChange={(e) => set(i, { subtitle: e.target.value })}
                 />
+                {r.template === "feature-list" && (
+                  <textarea
+                    placeholder={"One bullet per line (max 4)"}
+                    value={r.bullets}
+                    rows={3}
+                    className="rounded-md border border-input bg-transparent px-2 py-1 text-xs outline-none"
+                    onChange={(e) => set(i, { bullets: e.target.value })}
+                  />
+                )}
                 {r.template !== "text-only" && (
                   <div className="flex gap-1 overflow-x-auto pb-0.5">
                     <ShotPick
@@ -302,6 +341,27 @@ export function GeneratePanel({
                         key={a.id}
                         active={r.screenshot === a.id}
                         onClick={() => set(i, { screenshot: a.id })}
+                        url={a.url}
+                        label={a.name}
+                      />
+                    ))}
+                  </div>
+                )}
+                {r.template === "two-phones" && (
+                  <div className="flex gap-1 overflow-x-auto pb-0.5">
+                    <span className="w-5 self-center text-[10px] text-muted-foreground">
+                      2nd
+                    </span>
+                    <ShotPick
+                      active={r.screenshot2 === null}
+                      onClick={() => set(i, { screenshot2: null })}
+                      label="same"
+                    />
+                    {shots.map((a) => (
+                      <ShotPick
+                        key={a.id}
+                        active={r.screenshot2 === a.id}
+                        onClick={() => set(i, { screenshot2: a.id })}
                         url={a.url}
                         label={a.name}
                       />
@@ -325,6 +385,8 @@ export function GeneratePanel({
                 title: "",
                 subtitle: "",
                 screenshot: null,
+                screenshot2: null,
+                bullets: "",
               },
             ])
           }
@@ -374,26 +436,6 @@ function ShotPick({
         <span className="text-[9px] text-muted-foreground">–</span>
       )}
     </button>
-  );
-}
-
-function ColorInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <label className="flex flex-1 cursor-pointer items-center gap-1.5 rounded-md border border-input px-1.5">
-      <input
-        type="color"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="size-4 cursor-pointer rounded-sm border-0 bg-transparent p-0"
-      />
-      <span className="font-mono text-[11px]">{value}</span>
-    </label>
   );
 }
 
