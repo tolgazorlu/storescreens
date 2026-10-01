@@ -13,6 +13,7 @@ export type ScreenDto = {
   locale: string;
   device: string;
   position: number;
+  groupId?: string | null;
   scene: Scene;
 };
 export type ProjectDto = { id: string; name: string; slug: string };

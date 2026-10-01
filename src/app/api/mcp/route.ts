@@ -23,6 +23,9 @@ import {
   updateScreen,
   updateBrand,
   projectBrand,
+  propagateLayout,
+  exportCopyCsv,
+  importCopyCsv,
   exportFileName,
 } from "@/lib/service";
 import { storeFile } from "@/lib/storage";
@@ -175,7 +178,7 @@ const handler = createMcpHandler(
         title: "Generate screens",
         description:
           "Create store screenshots for one locale + device from templates. Each entry gives a template, title, subtitle and a screenshot asset id (or name). " +
-          "Call once per locale and per device. Use replace=true to regenerate. Keep titles short (2-6 words) and in the target language. " +
+          "Pass locales=[...] with {locale: value} maps for title/subtitle/screenshot to generate every language in one call, or locale for one. Call once per device. Use replace=true to regenerate. Keep titles short (2-6 words) and in the target language. " +
           "Per screen: titleScale / phoneScale / phoneOffsetY tune the layout; feature-list takes bullets [{icon?, text}]; two-phones takes screenshot2. Project brand supplies colors unless brand is passed.",
         inputSchema: generateSchema.extend({ project: z.string() }),
       },
@@ -229,6 +232,50 @@ const handler = createMcpHandler(
         await updateScreen(s.id, { scene });
         return text({ ok: true });
       },
+    );
+
+    server.registerTool(
+      "propagate_layout",
+      {
+        title: "Propagate layout to other locales",
+        description:
+          "Copy positions, sizes and styles from one screen to the same screen in other locales (text and screenshots stay).",
+        inputSchema: z.object({
+          screen: z.string(),
+          locales: z.array(z.string()).optional(),
+        }),
+      },
+      async ({ screen, locales }) =>
+        text({
+          updated: (await propagateLayout(screen, locales)).map((r) => ({
+            id: r.id,
+            locale: r.locale,
+          })),
+        }),
+    );
+
+    server.registerTool(
+      "export_copy_csv",
+      {
+        title: "Export copy as CSV",
+        description:
+          "All titles/subtitles/bullets as CSV (group, screen, field, one column per locale) for translators.",
+        inputSchema: z.object({ project: z.string() }),
+      },
+      async ({ project }) =>
+        text(await exportCopyCsv((await getProject(project)).id)),
+    );
+
+    server.registerTool(
+      "import_copy_csv",
+      {
+        title: "Import copy CSV",
+        description:
+          "Import a CSV in the export_copy_csv format; updates the text on every matching screen. Add new locale columns to translate.",
+        inputSchema: z.object({ project: z.string(), csv: z.string() }),
+      },
+      async ({ project, csv }) =>
+        text(await importCopyCsv((await getProject(project)).id, csv)),
     );
 
     server.registerTool(

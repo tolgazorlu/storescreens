@@ -28,7 +28,14 @@ const BOOTSTRAP = [
     scene TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
 ];
 /** Additive migrations; each is safe to re-run (errors for existing columns are swallowed). */
-const MIGRATIONS = ["ALTER TABLE projects ADD COLUMN brand TEXT"];
+const MIGRATIONS = [
+  "ALTER TABLE projects ADD COLUMN brand TEXT",
+  "ALTER TABLE screens ADD COLUMN group_id TEXT",
+  `CREATE TABLE IF NOT EXISTS copy (
+    id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    group_id TEXT NOT NULL, locale TEXT NOT NULL, field TEXT NOT NULL, value TEXT NOT NULL,
+    updated_at INTEGER NOT NULL, UNIQUE(project_id, group_id, locale, field))`,
+];
 const ready = (async () => {
   for (const sql of BOOTSTRAP) await client.execute(sql);
   for (const sql of MIGRATIONS) await client.execute(sql).catch(() => {});

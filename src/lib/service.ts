@@ -6,10 +6,12 @@ import {
   projects,
   assets,
   screens,
+  copy,
   type Project,
   type Screen,
   type Asset,
 } from "@/lib/db";
+import { randomUUID } from "node:crypto";
 import { DEVICES, getDevice, type DeviceId } from "@/lib/devices";
 import {
   buildScene,
@@ -181,21 +183,26 @@ export async function getScreen(screenId: string): Promise<Screen> {
   return row;
 }
 
+/** A string, or a map of locale -> string. */
+export type Localized = string | Record<string, string>;
+
 export type ScreenSpec = {
   template: TemplateId;
-  title?: string;
-  subtitle?: string;
-  /** Asset id, asset name or absolute URL of the in-app screenshot. */
-  screenshot?: string | null;
-  screenshot2?: string | null;
-  bullets?: { icon?: string; text: string }[];
+  title?: Localized;
+  subtitle?: Localized;
+  /** Asset id, asset name or absolute URL of the in-app screenshot; or a per-locale map. */
+  screenshot?: Localized | null;
+  screenshot2?: Localized | null;
+  bullets?: { icon?: string; text: Localized }[];
   titleScale?: number;
   phoneScale?: number;
   phoneOffsetY?: number;
 };
 
 export type GenerateInput = {
-  locale: string;
+  /** One locale, or several at once (each gets its own screens, linked by groupId). */
+  locale?: string;
+  locales?: string[];
   device: DeviceId;
   logo?: string | null;
   brand?: Partial<Brand>;
@@ -220,6 +227,15 @@ export async function updateBrand(id: string, patch: Partial<Brand>) {
     .where(eq(projects.id, p.id))
     .returning();
   return row;
+}
+
+function pick(
+  v: Localized | null | undefined,
+  locale: string,
+): string | undefined {
+  if (v == null) return undefined;
+  if (typeof v === "string") return v;
+  return v[locale] ?? v[locale.split("-")[0]] ?? v.en ?? Object.values(v)[0];
 }
 
 async function resolveAssetRef(
@@ -255,62 +271,308 @@ export async function generateScreens(
   const p = await getProject(projectId);
   const device = getDevice(input.device);
   const logo = await resolveAssetRef(p.id, input.logo);
-  if (input.replace) {
-    await db
-      .delete(screens)
+  const locales = input.locales?.length
+    ? input.locales
+    : [input.locale ?? "en"];
+  const brand: Partial<Brand> = { ...projectBrand(p), ...(input.brand ?? {}) };
+  const groupIds = input.screens.map(() => randomUUID());
+  const inserted: Screen[] = [];
+
+  for (const locale of locales) {
+    if (input.replace) {
+      await db
+        .delete(screens)
+        .where(
+          and(
+            eq(screens.projectId, p.id),
+            eq(screens.locale, locale),
+            eq(screens.device, input.device),
+          ),
+        );
+    }
+    const existing = await db
+      .select({ position: screens.position })
+      .from(screens)
       .where(
         and(
           eq(screens.projectId, p.id),
-          eq(screens.locale, input.locale),
+          eq(screens.locale, locale),
           eq(screens.device, input.device),
         ),
       );
-  }
-  const existing = await db
-    .select({ position: screens.position })
-    .from(screens)
-    .where(
-      and(
-        eq(screens.projectId, p.id),
-        eq(screens.locale, input.locale),
-        eq(screens.device, input.device),
-      ),
-    );
-  let position = existing.reduce((m, r) => Math.max(m, r.position + 1), 0);
+    let position = existing.reduce((m, r) => Math.max(m, r.position + 1), 0);
 
-  const brand: Partial<Brand> = { ...projectBrand(p), ...(input.brand ?? {}) };
-  const rows = [];
-  for (const spec of input.screens) {
-    const screenshot = await resolveAssetRef(p.id, spec.screenshot);
-    const screenshot2 = await resolveAssetRef(p.id, spec.screenshot2);
-    const params: TemplateParams = {
-      title: spec.title,
-      subtitle: spec.subtitle,
-      screenshot,
-      screenshot2,
-      logo,
-      bullets: spec.bullets,
-      brand,
-      background: input.background,
-      textColor: input.textColor,
-      fontFamily: input.fontFamily,
-      titleScale: spec.titleScale,
-      phoneScale: spec.phoneScale,
-      phoneOffsetY: spec.phoneOffsetY,
-    };
-    rows.push({
-      projectId: p.id,
-      locale: input.locale,
-      device: input.device,
-      position: position++,
-      scene: buildScene(device, spec.template, params),
-    });
+    const rows = [];
+    const copyRows: { groupId: string; field: string; value: string }[] = [];
+    for (const [i, spec] of input.screens.entries()) {
+      const title = pick(spec.title, locale);
+      const subtitle = pick(spec.subtitle, locale);
+      const bullets = spec.bullets?.map((b) => ({
+        icon: b.icon,
+        text: pick(b.text, locale) ?? "",
+      }));
+      const params: TemplateParams = {
+        title,
+        subtitle,
+        screenshot: await resolveAssetRef(p.id, pick(spec.screenshot, locale)),
+        screenshot2: await resolveAssetRef(
+          p.id,
+          pick(spec.screenshot2, locale),
+        ),
+        logo,
+        bullets,
+        brand,
+        background: input.background,
+        textColor: input.textColor,
+        fontFamily: input.fontFamily,
+        titleScale: spec.titleScale,
+        phoneScale: spec.phoneScale,
+        phoneOffsetY: spec.phoneOffsetY,
+      };
+      rows.push({
+        projectId: p.id,
+        locale,
+        device: input.device,
+        position: position++,
+        groupId: groupIds[i],
+        scene: buildScene(device, spec.template, params),
+      });
+      if (title)
+        copyRows.push({ groupId: groupIds[i], field: "title", value: title });
+      if (subtitle)
+        copyRows.push({
+          groupId: groupIds[i],
+          field: "subtitle",
+          value: subtitle,
+        });
+      bullets?.forEach((b, bi) =>
+        copyRows.push({
+          groupId: groupIds[i],
+          field: `bullet${bi + 1}`,
+          value: b.text,
+        }),
+      );
+    }
+    if (rows.length)
+      inserted.push(...(await db.insert(screens).values(rows).returning()));
+    for (const c of copyRows)
+      await upsertCopy(p.id, c.groupId, locale, c.field, c.value);
   }
-  const inserted = rows.length
-    ? await db.insert(screens).values(rows).returning()
-    : [];
   await touch(p.id);
   return inserted;
+}
+
+async function upsertCopy(
+  projectId: string,
+  groupId: string,
+  locale: string,
+  field: string,
+  value: string,
+) {
+  await db
+    .insert(copy)
+    .values({ projectId, groupId, locale, field, value })
+    .onConflictDoUpdate({
+      target: [copy.projectId, copy.groupId, copy.locale, copy.field],
+      set: { value, updatedAt: new Date() },
+    });
+}
+
+// ---- localization ----
+
+/** Copy positions/sizes/styles from one screen to the same group's screens in other locales. Text and screenshots stay. */
+export async function propagateLayout(screenId: string, toLocales?: string[]) {
+  const src = await getScreen(screenId);
+  if (!src.groupId)
+    throw new BadRequest(
+      "Screen has no group (generated before localization support)",
+    );
+  const conds = [
+    eq(screens.projectId, src.projectId),
+    eq(screens.groupId, src.groupId),
+    eq(screens.device, src.device),
+  ];
+  const targets = (
+    await db
+      .select()
+      .from(screens)
+      .where(and(...conds))
+  ).filter(
+    (t) => t.id !== src.id && (!toLocales || toLocales.includes(t.locale)),
+  );
+  const updated: Screen[] = [];
+  for (const t of targets) {
+    const byIndex = new Map(src.scene.layers.map((l, i) => [i, l]));
+    const layers = t.scene.layers.map((l, i) => {
+      const s = byIndex.get(i);
+      if (!s || s.type !== l.type) return l;
+      if (l.type === "text" && s.type === "text") {
+        return { ...s, id: l.id, text: l.text, dir: l.dir };
+      }
+      if (l.type === "mockup" && s.type === "mockup")
+        return { ...s, id: l.id, src: l.src };
+      if (l.type === "image" && s.type === "image")
+        return { ...s, id: l.id, src: l.src };
+      return { ...s, id: l.id };
+    });
+    const [row] = await db
+      .update(screens)
+      .set({
+        scene: { ...t.scene, background: src.scene.background, layers },
+        updatedAt: new Date(),
+      })
+      .where(eq(screens.id, t.id))
+      .returning();
+    updated.push(row);
+  }
+  await touch(src.projectId);
+  return updated;
+}
+
+/** locale x group x field as CSV rows. Column order: group, position, field, then one column per locale. */
+export async function exportCopyCsv(projectId: string): Promise<string> {
+  const p = await getProject(projectId);
+  const rows = await db.select().from(copy).where(eq(copy.projectId, p.id));
+  const screenRows = await db
+    .select({ groupId: screens.groupId, position: screens.position })
+    .from(screens)
+    .where(eq(screens.projectId, p.id));
+  const pos = new Map(
+    screenRows
+      .filter((s) => s.groupId)
+      .map((s) => [s.groupId as string, s.position]),
+  );
+  const locales = [...new Set(rows.map((r) => r.locale))].sort();
+  const keys = [
+    ...new Set(rows.map((r) => `${r.groupId}\u0000${r.field}`)),
+  ].sort((a, b) => {
+    const [ga, fa] = a.split("\u0000");
+    const [gb, fb] = b.split("\u0000");
+    return (pos.get(ga) ?? 0) - (pos.get(gb) ?? 0) || fa.localeCompare(fb);
+  });
+  const byKey = new Map<string, Record<string, string>>();
+  for (const r of rows) {
+    const k = `${r.groupId}\u0000${r.field}`;
+    byKey.set(k, { ...(byKey.get(k) ?? {}), [r.locale]: r.value });
+  }
+  const q = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const lines = [["group", "screen", "field", ...locales].map(q).join(",")];
+  for (const k of keys) {
+    const [g, f] = k.split("\u0000");
+    const vals = byKey.get(k) ?? {};
+    lines.push(
+      [
+        g,
+        String((pos.get(g) ?? 0) + 1),
+        f,
+        ...locales.map((l) => vals[l] ?? ""),
+      ]
+        .map(q)
+        .join(","),
+    );
+  }
+  return lines.join("\n") + "\n";
+}
+
+/** Import the CSV produced by exportCopyCsv: updates copy rows and re-applies text to every matching screen. */
+export async function importCopyCsv(
+  projectId: string,
+  csv: string,
+): Promise<{ updated: number }> {
+  const p = await getProject(projectId);
+  const table = parseCsv(csv);
+  if (!table.length) throw new BadRequest("Empty CSV");
+  const [header, ...body] = table;
+  const locales = header.slice(3);
+  let updated = 0;
+  for (const row of body) {
+    const [groupId, , field] = row;
+    if (!groupId || !field) continue;
+    for (const [li, locale] of locales.entries()) {
+      const value = row[3 + li];
+      if (value === undefined || value === "") continue;
+      await upsertCopy(p.id, groupId, locale, field, value);
+      const targets = await db
+        .select()
+        .from(screens)
+        .where(
+          and(
+            eq(screens.projectId, p.id),
+            eq(screens.groupId, groupId),
+            eq(screens.locale, locale),
+          ),
+        );
+      for (const t of targets) {
+        const scene = applyCopy(t.scene, field, value);
+        if (scene !== t.scene) {
+          await db
+            .update(screens)
+            .set({ scene, updatedAt: new Date() })
+            .where(eq(screens.id, t.id));
+          updated++;
+        }
+      }
+    }
+  }
+  await touch(p.id);
+  return { updated };
+}
+
+/** Field -> text layer mapping: title = first text layer, subtitle = second, bulletN = Nth after those. */
+function applyCopy(scene: Scene, field: string, value: string): Scene {
+  const texts = scene.layers.filter((l) => l.type === "text");
+  const idx =
+    field === "title"
+      ? 0
+      : field === "subtitle"
+        ? 1
+        : field.startsWith("bullet")
+          ? 1 + Number(field.slice(6))
+          : -1;
+  // feature-list has no subtitle: bullets start at index 1.
+  const hasSubtitle =
+    texts.length > 1 && !scene.layers.some((l) => l.type === "icon");
+  const target =
+    texts[field.startsWith("bullet") ? (hasSubtitle ? idx : idx - 1) : idx];
+  if (!target || target.type !== "text" || target.text === value) return scene;
+  return {
+    ...scene,
+    layers: scene.layers.map((l) =>
+      l.id === target.id ? { ...l, text: value } : l,
+    ),
+  };
+}
+
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cur = "";
+  let inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"' && text[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else if (c === '"') inQ = false;
+      else cur += c;
+    } else if (c === '"') inQ = true;
+    else if (c === ",") {
+      row.push(cur);
+      cur = "";
+    } else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(cur);
+      rows.push(row);
+      row = [];
+      cur = "";
+    } else cur += c;
+  }
+  if (cur.length || row.length) {
+    row.push(cur);
+    rows.push(row);
+  }
+  return rows.filter((r) => r.some((v) => v !== ""));
 }
 
 export async function updateScreen(

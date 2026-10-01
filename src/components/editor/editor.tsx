@@ -2,6 +2,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  Languages,
+  FileDown,
+  FileUp,
   Palette,
   ChevronLeft,
   Download,
@@ -260,6 +263,44 @@ export function Editor({
     }
   }
 
+  async function propagate() {
+    if (!active) return;
+    try {
+      const r = await api<{ updated: { locale: string }[] }>(
+        `/api/screens/${active.id}/propagate`,
+        { method: "POST", json: {} },
+      );
+      const fresh = await api<ScreenDto[]>(
+        `/api/projects/${project.id}/screens`,
+      );
+      setScreens(fresh);
+      toast.success(
+        r.updated.length
+          ? `Layout copied to ${r.updated.map((u) => u.locale).join(", ")}`
+          : "No sibling screens in other locales",
+      );
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+  async function importCsv(file: File) {
+    const fd = new FormData();
+    fd.set("file", file);
+    try {
+      const r = await api<{ updated: number }>(
+        `/api/projects/${project.id}/copy`,
+        { method: "POST", body: fd },
+      );
+      const fresh = await api<ScreenDto[]>(
+        `/api/projects/${project.id}/screens`,
+      );
+      setScreens(fresh);
+      toast.success(`${r.updated} screens updated from CSV`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
   // ---- keyboard ----
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -499,6 +540,35 @@ export function Editor({
         </Seg>
 
         <div className="ml-auto flex items-center gap-1">
+          <Seg>
+            <SegBtn
+              label="Propagate layout to other locales"
+              onClick={propagate}
+              disabled={!active?.groupId}
+            >
+              <Languages className="size-4" />
+            </SegBtn>
+            <SegBtn
+              label="Download copy CSV"
+              onClick={() =>
+                window.open(`/api/projects/${project.id}/copy`, "_blank")
+              }
+            >
+              <FileDown className="size-4" />
+            </SegBtn>
+            <SegBtn
+              label="Import copy CSV"
+              onClick={() => {
+                const i = document.createElement("input");
+                i.type = "file";
+                i.accept = ".csv,text/csv";
+                i.onchange = () => i.files?.[0] && importCsv(i.files[0]);
+                i.click();
+              }}
+            >
+              <FileUp className="size-4" />
+            </SegBtn>
+          </Seg>
           <Button
             variant={brandOpen ? "secondary" : "outline"}
             size="sm"

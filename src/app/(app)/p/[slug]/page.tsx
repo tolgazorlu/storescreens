@@ -44,6 +44,7 @@ export default async function ProjectPage({
         locale: s.locale,
         device: s.device,
         position: s.position,
+        groupId: s.groupId,
         scene: s.scene,
       }))}
     />
