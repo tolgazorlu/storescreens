@@ -1,16 +1,16 @@
-import { withUser, json } from "@/lib/api";
+import { route, json } from "@/lib/api";
 import { addAsset, getProject, listAssets, BadRequest } from "@/lib/service";
 
 type P = { project: string };
 
-export const GET = withUser<P>(async (_req, { user, params }) => {
-  const project = await getProject(user.id, params.project);
-  return json(await listAssets(user.id, project.id));
+export const GET = route<P>(async (_req, { params }) => {
+  const project = await getProject(params.project);
+  return json(await listAssets(project.id));
 });
 
 /** multipart/form-data: files[] + kind (screenshot|logo|image). Also accepts JSON {name, kind, base64}. */
-export const POST = withUser<P>(async (req, { user, params }) => {
-  const project = await getProject(user.id, params.project);
+export const POST = route<P>(async (req, { params }) => {
+  const project = await getProject(params.project);
   const ct = req.headers.get("content-type") ?? "";
   const out = [];
   if (ct.includes("multipart/form-data")) {
@@ -22,7 +22,7 @@ export const POST = withUser<P>(async (req, { user, params }) => {
     if (!files.length) throw new BadRequest("No files");
     for (const f of files) {
       out.push(
-        await addAsset(user.id, project.id, {
+        await addAsset(project.id, {
           name: f.name,
           data: Buffer.from(await f.arrayBuffer()),
           contentType: f.type || "image/png",
@@ -39,7 +39,7 @@ export const POST = withUser<P>(async (req, { user, params }) => {
     };
     if (!body?.base64) throw new BadRequest("base64 required");
     out.push(
-      await addAsset(user.id, project.id, {
+      await addAsset(project.id, {
         name: body.name ?? "image.png",
         data: Buffer.from(body.base64.replace(/^data:[^,]+,/, ""), "base64"),
         contentType: body.contentType ?? "image/png",

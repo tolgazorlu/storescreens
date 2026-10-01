@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { withUser, json } from "@/lib/api";
+import { route, json } from "@/lib/api";
 import {
   getProject,
   renameProject,
@@ -10,25 +10,25 @@ import {
 
 type P = { project: string };
 
-export const GET = withUser<P>(async (_req, { user, params }) => {
-  const project = await getProject(user.id, params.project);
+export const GET = route<P>(async (_req, { params }) => {
+  const project = await getProject(params.project);
   const [assetRows, screenRows] = await Promise.all([
-    listAssets(user.id, project.id),
-    listScreens(user.id, project.id),
+    listAssets(project.id),
+    listScreens(project.id),
   ]);
   return json({ ...project, assets: assetRows, screens: screenRows });
 });
 
-export const PATCH = withUser<P>(async (req, { user, params }) => {
+export const PATCH = route<P>(async (req, { params }) => {
   const body = z
     .object({ name: z.string().min(1).max(80) })
     .parse(await req.json());
-  const project = await getProject(user.id, params.project);
-  return json(await renameProject(user.id, project.id, body.name));
+  const project = await getProject(params.project);
+  return json(await renameProject(project.id, body.name));
 });
 
-export const DELETE = withUser<P>(async (_req, { user, params }) => {
-  const project = await getProject(user.id, params.project);
-  await deleteProject(user.id, project.id);
+export const DELETE = route<P>(async (_req, { params }) => {
+  const project = await getProject(params.project);
+  await deleteProject(project.id);
   return json({ ok: true });
 });

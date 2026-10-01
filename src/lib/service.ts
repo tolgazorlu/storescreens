@@ -2,6 +2,7 @@ import "server-only";
 import { and, asc, eq, inArray, desc } from "drizzle-orm";
 import {
   db,
+  dbReady,
   projects,
   assets,
   screens,
@@ -18,6 +19,7 @@ import {
 import { parseScene, type Scene } from "@/lib/scene";
 import { renderSceneToPng } from "@/lib/render";
 import { storeFile, deleteFile } from "@/lib/storage";
+import { imageSize } from "@/lib/image-size";
 import { zipSync } from "fflate";
 
 export class NotFound extends Error {
@@ -41,51 +43,39 @@ export function slugify(s: string) {
 
 // ---- projects ----
 
-export async function listProjects(userId: string) {
-  return db
-    .select()
-    .from(projects)
-    .where(eq(projects.userId, userId))
-    .orderBy(desc(projects.updatedAt));
+export async function listProjects() {
+  await dbReady;
+  return db.select().from(projects).orderBy(desc(projects.updatedAt));
 }
 
-export async function getProject(
-  userId: string,
-  idOrSlug: string,
-): Promise<Project> {
+export async function getProject(idOrSlug: string): Promise<Project> {
+  await dbReady;
   const isUuid = /^[0-9a-f-]{36}$/i.test(idOrSlug);
   const [row] = await db
     .select()
     .from(projects)
-    .where(
-      and(
-        eq(projects.userId, userId),
-        isUuid ? eq(projects.id, idOrSlug) : eq(projects.slug, idOrSlug),
-      ),
-    )
+    .where(isUuid ? eq(projects.id, idOrSlug) : eq(projects.slug, idOrSlug))
     .limit(1);
   if (!row) throw new NotFound(`Project not found: ${idOrSlug}`);
   return row;
 }
 
-export async function createProject(userId: string, name: string) {
+export async function createProject(name: string) {
+  await dbReady;
   let slug = slugify(name);
-  const existing = await db
-    .select({ slug: projects.slug })
-    .from(projects)
-    .where(eq(projects.userId, userId));
-  const taken = new Set(existing.map((e) => e.slug));
+  const taken = new Set(
+    (await db.select({ slug: projects.slug }).from(projects)).map(
+      (e) => e.slug,
+    ),
+  );
   let i = 2;
   while (taken.has(slug)) slug = `${slugify(name)}-${i++}`;
-  const [row] = await db
-    .insert(projects)
-    .values({ userId, name, slug })
-    .returning();
+  const [row] = await db.insert(projects).values({ name, slug }).returning();
   return row;
 }
 
-export async function renameProject(userId: string, id: string, name: string) {
-  await getProject(userId, id);
+export async function renameProject(id: string, name: string) {
+  await getProject(id);
   const [row] = await db
     .update(projects)
     .set({ name, updatedAt: new Date() })
@@ -94,8 +84,8 @@ export async function renameProject(userId: string, id: string, name: string) {
   return row;
 }
 
-export async function deleteProject(userId: string, id: string) {
-  const p = await getProject(userId, id);
+export async function deleteProject(id: string) {
+  const p = await getProject(id);
   const rows = await db.select().from(assets).where(eq(assets.projectId, p.id));
   await Promise.all(rows.map((a) => deleteFile(a.url)));
   await db.delete(projects).where(eq(projects.id, p.id));
@@ -110,8 +100,8 @@ async function touch(projectId: string) {
 
 // ---- assets ----
 
-export async function listAssets(userId: string, projectId: string) {
-  const p = await getProject(userId, projectId);
+export async function listAssets(projectId: string) {
+  const p = await getProject(projectId);
   return db
     .select()
     .from(assets)
@@ -120,7 +110,6 @@ export async function listAssets(userId: string, projectId: string) {
 }
 
 export async function addAsset(
-  userId: string,
   projectId: string,
   file: {
     name: string;
@@ -129,8 +118,8 @@ export async function addAsset(
     kind: "screenshot" | "logo" | "image";
   },
 ): Promise<Asset> {
-  const p = await getProject(userId, projectId);
-  const { width, height } = await imageSize(file.data);
+  const p = await getProject(projectId);
+  const { width, height } = imageSize(file.data);
   const url = await storeFile({
     dir: `p/${p.id}`,
     name: file.name,
@@ -152,12 +141,8 @@ export async function addAsset(
   return row;
 }
 
-export async function deleteAsset(
-  userId: string,
-  projectId: string,
-  assetId: string,
-) {
-  const p = await getProject(userId, projectId);
+export async function deleteAsset(projectId: string, assetId: string) {
+  const p = await getProject(projectId);
   const [a] = await db
     .select()
     .from(assets)
@@ -167,67 +152,13 @@ export async function deleteAsset(
   await db.delete(assets).where(eq(assets.id, a.id));
 }
 
-async function imageSize(
-  buf: Buffer,
-): Promise<{ width: number; height: number }> {
-  // PNG
-  if (buf[0] === 0x89 && buf.subarray(1, 4).toString() === "PNG") {
-    return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
-  }
-  // JPEG: walk SOF markers
-  if (buf[0] === 0xff && buf[1] === 0xd8) {
-    let off = 2;
-    while (off < buf.length) {
-      if (buf[off] !== 0xff) break;
-      const marker = buf[off + 1];
-      const len = buf.readUInt16BE(off + 2);
-      if (
-        marker >= 0xc0 &&
-        marker <= 0xcf &&
-        marker !== 0xc4 &&
-        marker !== 0xc8 &&
-        marker !== 0xcc
-      ) {
-        return {
-          height: buf.readUInt16BE(off + 5),
-          width: buf.readUInt16BE(off + 7),
-        };
-      }
-      off += 2 + len;
-    }
-  }
-  // WebP VP8X / VP8 / VP8L: keep it simple
-  if (
-    buf.subarray(0, 4).toString() === "RIFF" &&
-    buf.subarray(8, 12).toString() === "WEBP"
-  ) {
-    const chunk = buf.subarray(12, 16).toString();
-    if (chunk === "VP8X")
-      return {
-        width: 1 + buf.readUIntLE(24, 3),
-        height: 1 + buf.readUIntLE(27, 3),
-      };
-    if (chunk === "VP8 ")
-      return {
-        width: buf.readUInt16LE(26) & 0x3fff,
-        height: buf.readUInt16LE(28) & 0x3fff,
-      };
-    if (chunk === "VP8L") {
-      const b = buf.readUInt32LE(21);
-      return { width: (b & 0x3fff) + 1, height: ((b >> 14) & 0x3fff) + 1 };
-    }
-  }
-  return { width: 0, height: 0 };
-}
-
 // ---- screens ----
 
 export async function listScreens(
-  userId: string,
   projectId: string,
   filter?: { locale?: string; device?: string },
 ) {
-  const p = await getProject(userId, projectId);
+  const p = await getProject(projectId);
   const conds = [eq(screens.projectId, p.id)];
   if (filter?.locale) conds.push(eq(screens.locale, filter.locale));
   if (filter?.device) conds.push(eq(screens.device, filter.device));
@@ -238,32 +169,28 @@ export async function listScreens(
     .orderBy(asc(screens.locale), asc(screens.device), asc(screens.position));
 }
 
-export async function getScreen(
-  userId: string,
-  screenId: string,
-): Promise<Screen> {
+export async function getScreen(screenId: string): Promise<Screen> {
+  await dbReady;
   const [row] = await db
-    .select({ s: screens })
+    .select()
     .from(screens)
-    .innerJoin(projects, eq(projects.id, screens.projectId))
-    .where(and(eq(screens.id, screenId), eq(projects.userId, userId)))
+    .where(eq(screens.id, screenId))
     .limit(1);
   if (!row) throw new NotFound("Screen not found");
-  return row.s;
+  return row;
 }
 
 export type ScreenSpec = {
   template: TemplateId;
   title?: string;
   subtitle?: string;
-  /** Asset id or absolute URL of the in-app screenshot. */
+  /** Asset id, asset name or absolute URL of the in-app screenshot. */
   screenshot?: string | null;
 };
 
 export type GenerateInput = {
   locale: string;
   device: DeviceId;
-  /** Asset id or URL for the logo on every screen. */
   logo?: string | null;
   background?: Scene["background"];
   textColor?: string;
@@ -277,7 +204,12 @@ async function resolveAssetRef(
   ref: string | null | undefined,
 ): Promise<string | null> {
   if (!ref) return null;
-  if (/^https?:\/\//.test(ref) || ref.startsWith("data:")) return ref;
+  if (
+    /^https?:\/\//.test(ref) ||
+    ref.startsWith("data:") ||
+    ref.startsWith("/files/")
+  )
+    return ref;
   const [a] = await db
     .select()
     .from(assets)
@@ -294,11 +226,10 @@ async function resolveAssetRef(
 }
 
 export async function generateScreens(
-  userId: string,
   projectId: string,
   input: GenerateInput,
 ): Promise<Screen[]> {
-  const p = await getProject(userId, projectId);
+  const p = await getProject(projectId);
   const device = getDevice(input.device);
   const logo = await resolveAssetRef(p.id, input.logo);
   if (input.replace) {
@@ -350,28 +281,11 @@ export async function generateScreens(
   return inserted;
 }
 
-export async function createBlankScreen(
-  userId: string,
-  projectId: string,
-  locale: string,
-  deviceId: DeviceId,
-  template: TemplateId = "hero",
-) {
-  return (
-    await generateScreens(userId, projectId, {
-      locale,
-      device: deviceId,
-      screens: [{ template, title: "Headline", subtitle: "" }],
-    })
-  )[0];
-}
-
 export async function updateScreen(
-  userId: string,
   screenId: string,
   patch: { scene?: unknown; position?: number; locale?: string },
 ) {
-  const s = await getScreen(userId, screenId);
+  const s = await getScreen(screenId);
   const values: Partial<Screen> = { updatedAt: new Date() };
   if (patch.scene !== undefined) values.scene = parseScene(patch.scene);
   if (patch.position !== undefined) values.position = patch.position;
@@ -385,18 +299,17 @@ export async function updateScreen(
   return row;
 }
 
-export async function deleteScreen(userId: string, screenId: string) {
-  const s = await getScreen(userId, screenId);
+export async function deleteScreen(screenId: string) {
+  const s = await getScreen(screenId);
   await db.delete(screens).where(eq(screens.id, s.id));
   await touch(s.projectId);
 }
 
 export async function duplicateScreen(
-  userId: string,
   screenId: string,
   into?: { locale?: string; device?: DeviceId },
 ) {
-  const s = await getScreen(userId, screenId);
+  const s = await getScreen(screenId);
   const locale = into?.locale ?? s.locale;
   const deviceId = into?.device ?? (s.device as DeviceId);
   let scene = s.scene;
@@ -444,12 +357,8 @@ export function rescaleScene(
   };
 }
 
-export async function reorderScreens(
-  userId: string,
-  projectId: string,
-  orderedIds: string[],
-) {
-  await getProject(userId, projectId);
+export async function reorderScreens(projectId: string, orderedIds: string[]) {
+  await getProject(projectId);
   await Promise.all(
     orderedIds.map((id, i) =>
       db.update(screens).set({ position: i }).where(eq(screens.id, id)),
@@ -459,11 +368,8 @@ export async function reorderScreens(
 
 // ---- export ----
 
-export async function renderScreen(
-  userId: string,
-  screenId: string,
-): Promise<Buffer> {
-  const s = await getScreen(userId, screenId);
+export async function renderScreen(screenId: string): Promise<Buffer> {
+  const s = await getScreen(screenId);
   return renderSceneToPng(s.scene);
 }
 
@@ -473,30 +379,22 @@ export function exportFileName(s: Screen) {
 }
 
 export async function exportZip(
-  userId: string,
   projectId: string,
   filter?: { locale?: string; device?: string; ids?: string[] },
 ): Promise<Buffer> {
-  let rows = await listScreens(userId, projectId, filter);
+  let rows = await listScreens(projectId, filter);
   if (filter?.ids?.length) {
     const set = new Set(filter.ids);
     rows = rows.filter((r) => set.has(r.id));
   }
   if (!rows.length) throw new BadRequest("No screens to export");
   const files: Record<string, Uint8Array> = {};
-  // Render sequentially: satori + resvg at 1320x2868 is CPU heavy; parallel runs OOM on small lambdas.
-  for (const s of rows) {
+  for (const s of rows)
     files[exportFileName(s)] = new Uint8Array(await renderSceneToPng(s.scene));
-  }
   return Buffer.from(zipSync(files, { level: 0 }));
 }
 
-export async function screensByIds(userId: string, ids: string[]) {
+export async function screensByIds(ids: string[]) {
   if (!ids.length) return [];
-  const rows = await db
-    .select({ s: screens })
-    .from(screens)
-    .innerJoin(projects, eq(projects.id, screens.projectId))
-    .where(and(inArray(screens.id, ids), eq(projects.userId, userId)));
-  return rows.map((r) => r.s);
+  return db.select().from(screens).where(inArray(screens.id, ids));
 }

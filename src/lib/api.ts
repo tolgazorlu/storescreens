@@ -1,21 +1,13 @@
 import "server-only";
 import { NextResponse } from "next/server";
-import { getRequestUser } from "@/lib/auth";
-import type { User } from "@/lib/db";
 
-type Handler<P> = (
-  req: Request,
-  ctx: { user: User; params: P },
-) => Promise<Response>;
+type Handler<P> = (req: Request, ctx: { params: P }) => Promise<Response>;
 
-/** Wrap a route handler with auth (API key or session) and error mapping. */
-export function withUser<P = Record<string, string>>(handler: Handler<P>) {
+/** Wrap a route handler with error mapping. No auth: Screeny is a local, single-user tool. */
+export function route<P = Record<string, string>>(handler: Handler<P>) {
   return async (req: Request, ctx: { params: Promise<P> }) => {
-    const user = await getRequestUser(req);
-    if (!user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     try {
-      return await handler(req, { user, params: await ctx.params });
+      return await handler(req, { params: await ctx.params });
     } catch (e) {
       return errorResponse(e);
     }

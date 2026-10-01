@@ -1,6 +1,6 @@
-import { createMcpHandler, withMcpAuth } from "mcp-handler";
+import { createMcpHandler } from "mcp-handler";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { z } from "zod";
-import { getUserByApiKey } from "@/lib/auth";
 import { DEVICES } from "@/lib/devices";
 import type { DeviceId } from "@/lib/devices";
 import {
@@ -16,6 +16,7 @@ import {
   exportZip,
   generateScreens,
   getProject,
+  getScreen,
   listAssets,
   listProjects,
   listScreens,
@@ -23,6 +24,12 @@ import {
   exportFileName,
 } from "@/lib/service";
 import { storeFile } from "@/lib/storage";
+
+// Local single-user tool: no auth. The server only listens on localhost.
+
+/** Request origin, so tool results can return absolute URLs the agent can fetch. */
+const originStore = new AsyncLocalStorage<string>();
+const origin = () => originStore.getStore() ?? "http://localhost:3000";
 
 export const maxDuration = 300;
 
@@ -62,7 +69,7 @@ const handler = createMcpHandler(
         description: "List the user's Screeny projects (apps).",
         inputSchema: z.object({}),
       },
-      async (_a, ctx) => text(await listProjects(uid(ctx))),
+      async () => text(await listProjects()),
     );
 
     server.registerTool(
@@ -72,7 +79,7 @@ const handler = createMcpHandler(
         description: "Create a project for an app.",
         inputSchema: z.object({ name: z.string() }),
       },
-      async ({ name }, ctx) => text(await createProject(uid(ctx), name)),
+      async ({ name }) => text(await createProject(name)),
     );
 
     server.registerTool(
@@ -85,12 +92,11 @@ const handler = createMcpHandler(
           project: z.string().describe("Project id or slug"),
         }),
       },
-      async ({ project }, ctx) => {
-        const u = uid(ctx);
-        const p = await getProject(u, project);
+      async ({ project }) => {
+        const p = await getProject(project);
         const [assetRows, screenRows] = await Promise.all([
-          listAssets(u, p.id),
-          listScreens(u, p.id),
+          listAssets(p.id),
+          listScreens(p.id),
         ]);
         return text({
           ...p,
@@ -120,10 +126,9 @@ const handler = createMcpHandler(
           contentType: z.string().default("image/png"),
         }),
       },
-      async ({ project, name, kind, base64, contentType }, ctx) => {
-        const u = uid(ctx);
-        const p = await getProject(u, project);
-        const a = await addAsset(u, p.id, {
+      async ({ project, name, kind, base64, contentType }) => {
+        const p = await getProject(project);
+        const a = await addAsset(p.id, {
           name,
           kind,
           contentType,
@@ -142,10 +147,9 @@ const handler = createMcpHandler(
           "Call once per locale and per device. Use replace=true to regenerate. Keep titles short (2-6 words) and in the target language.",
         inputSchema: generateSchema.extend({ project: z.string() }),
       },
-      async ({ project, ...input }, ctx) => {
-        const u = uid(ctx);
-        const p = await getProject(u, project);
-        const rows = await generateScreens(u, p.id, {
+      async ({ project, ...input }) => {
+        const p = await getProject(project);
+        const rows = await generateScreens(p.id, {
           ...input,
           device: input.device as DeviceId,
           screens: input.screens.map((s) => ({
@@ -153,7 +157,7 @@ const handler = createMcpHandler(
             template: s.template as TemplateId,
           })),
         });
-        const base = process.env.APP_URL ?? "";
+        const base = origin();
         return text({
           created: rows.map((s) => ({
             id: s.id,
@@ -179,10 +183,8 @@ const handler = createMcpHandler(
           text: z.string(),
         }),
       },
-      async ({ screen, index, text: value }, ctx) => {
-        const u = uid(ctx);
-        const { getScreen } = await import("@/lib/service");
-        const s = await getScreen(u, screen);
+      async ({ screen, index, text: value }) => {
+        const s = await getScreen(screen);
         const texts = s.scene.layers.filter((l) => l.type === "text");
         const target = texts[index];
         if (!target) throw new Error(`No text layer at index ${index}`);
@@ -192,7 +194,7 @@ const handler = createMcpHandler(
             l.id === target.id && l.type === "text" ? { ...l, text: value } : l,
           ),
         };
-        await updateScreen(u, s.id, { scene });
+        await updateScreen(s.id, { scene });
         return text({ ok: true });
       },
     );
@@ -204,8 +206,8 @@ const handler = createMcpHandler(
         description: "Delete a screen by id.",
         inputSchema: z.object({ screen: z.string() }),
       },
-      async ({ screen }, ctx) => {
-        await deleteScreen(uid(ctx), screen);
+      async ({ screen }) => {
+        await deleteScreen(screen);
         return text({ ok: true });
       },
     );
@@ -222,49 +224,23 @@ const handler = createMcpHandler(
           device: z.string().optional(),
         }),
       },
-      async ({ project, locale, device }, ctx) => {
-        const u = uid(ctx);
-        const p = await getProject(u, project);
-        const zip = await exportZip(u, p.id, { locale, device });
+      async ({ project, locale, device }) => {
+        const p = await getProject(project);
+        const zip = await exportZip(p.id, { locale, device });
         const url = await storeFile({
           dir: `exports/${p.id}`,
           name: `${p.slug}-${locale ?? "all"}-${device ?? "all"}.zip`,
           data: zip,
           contentType: "application/zip",
         });
-        const base = process.env.APP_URL ?? "";
-        return text({
-          url: url.startsWith("/") ? base + url : url,
-          bytes: zip.length,
-        });
+        return text({ url: origin() + url, bytes: zip.length });
       },
     );
   },
   { serverInfo: { name: "screeny", version: "0.1.0" } },
 );
 
-function uid(ctx: {
-  http?: { authInfo?: { clientId?: string; extra?: Record<string, unknown> } };
-}) {
-  const id = ctx.http?.authInfo?.extra?.userId as string | undefined;
-  if (!id) throw new Error("Unauthorized");
-  return id;
-}
+const withOrigin = (req: Request) =>
+  originStore.run(new URL(req.url).origin, () => handler(req));
 
-const authed = withMcpAuth(
-  handler,
-  async (_req, token) => {
-    if (!token) return undefined;
-    const user = await getUserByApiKey(token);
-    if (!user) return undefined;
-    return {
-      token,
-      clientId: user.email,
-      scopes: ["all"],
-      extra: { userId: user.id },
-    };
-  },
-  { required: true },
-);
-
-export { authed as GET, authed as POST, authed as DELETE };
+export { withOrigin as GET, withOrigin as POST, withOrigin as DELETE };
