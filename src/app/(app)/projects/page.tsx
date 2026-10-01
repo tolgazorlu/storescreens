@@ -1,12 +1,10 @@
-import { getSessionUser } from "@/lib/auth";
 import { listProjects } from "@/lib/service";
 import { ProjectsView } from "@/components/projects-view";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
-  const user = (await getSessionUser())!;
-  const rows = await listProjects(user.id);
+  const rows = await listProjects();
   return (
     <ProjectsView
       projects={rows.map((p) => ({

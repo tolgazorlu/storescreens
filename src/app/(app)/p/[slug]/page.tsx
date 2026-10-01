@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { getSessionUser } from "@/lib/auth";
 import { getProject, listAssets, listScreens, NotFound } from "@/lib/service";
 import { Editor } from "@/components/editor/editor";
 
@@ -11,17 +10,16 @@ export default async function ProjectPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const user = (await getSessionUser())!;
   let project;
   try {
-    project = await getProject(user.id, slug);
+    project = await getProject(slug);
   } catch (e) {
     if (e instanceof NotFound) notFound();
     throw e;
   }
   const [assetRows, screenRows] = await Promise.all([
-    listAssets(user.id, project.id),
-    listScreens(user.id, project.id),
+    listAssets(project.id),
+    listScreens(project.id),
   ]);
   return (
     <Editor
