@@ -3,6 +3,7 @@ import type { Scene, Layer, MockupLayer, TextLayer } from "@/lib/scene";
 import { backgroundCss } from "@/lib/scene";
 import { layoutParagraph, detectDir, hasRtl, type Word } from "@/lib/bidi";
 import { fontStack } from "@/lib/fonts";
+import { iconDataUri } from "@/lib/icons";
 
 /**
  * Pure renderer shared by the editor (DOM) and the exporter (satori).
@@ -107,6 +108,19 @@ export function LayerView({
       );
     case "mockup":
       return <MockupView layer={layer} resolveSrc={resolveSrc} />;
+    case "icon":
+      return (
+        <div style={layerBox(layer)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={iconDataUri(layer.icon, layer.color, layer.strokeWidth)}
+            alt=""
+            width={layer.w}
+            height={layer.h}
+            style={{ width: layer.w, height: layer.h }}
+          />
+        </div>
+      );
   }
 }
 
@@ -151,8 +165,12 @@ export function TextContent({
       : layer.align === "right"
         ? "flex-end"
         : "flex-start";
-  const base = layer.dir === "auto" ? detectDir(layer.text) : layer.dir;
-  const simple = base === "ltr" && !hasRtl(layer.text);
+  const text =
+    layer.textTransform === "uppercase"
+      ? layer.text.toLocaleUpperCase()
+      : layer.text;
+  const base = layer.dir === "auto" ? detectDir(text) : layer.dir;
+  const simple = base === "ltr" && !hasRtl(text);
   const k = fontSize / layer.fontSize;
   const font: CSSProperties = {
     fontFamily: fontStack(layer.fontFamily),
@@ -175,13 +193,13 @@ export function TextContent({
           wordBreak: "normal",
         }}
       >
-        {layer.text}
+        {text}
       </div>
     );
   }
   return (
     <BidiText
-      text={layer.text}
+      text={text}
       base={base}
       justify={justify}
       font={font}

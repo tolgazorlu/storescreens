@@ -1,5 +1,6 @@
 "use client";
 import {
+  Sparkles,
   Lock,
   Unlock,
   Type,
@@ -25,6 +26,7 @@ import type { Scene, Layer } from "@/lib/scene";
 import { uid } from "@/lib/scene";
 import type { AssetDto } from "./types";
 import { FONTS, DEFAULT_FONT } from "@/lib/fonts";
+import { ICON_IDS } from "@/lib/icons";
 
 type Props = {
   scene: Scene | null;
@@ -40,6 +42,7 @@ const ICON = {
   mockup: Smartphone,
   image: ImageIcon,
   rect: Square,
+  icon: Sparkles,
 } as const;
 
 export function Inspector({
@@ -79,6 +82,7 @@ export function Inspector({
         fontFamily: DEFAULT_FONT,
         fit: "shrink",
         minFontSize: 16,
+        textTransform: "none",
         w: Math.round(W * 0.8),
         h: Math.round(W * 0.2),
       };
@@ -137,7 +141,7 @@ export function Inspector({
             Layers
           </span>
           <div className="flex gap-0.5">
-            {(["text", "mockup", "image", "rect"] as const).map((k) => {
+            {(["text", "mockup", "image", "icon", "rect"] as const).map((k) => {
               const I = ICON[k];
               return (
                 <Button
@@ -417,6 +421,22 @@ export function Inspector({
                     </SelectContent>
                   </Select>
                 </Field>
+                <Field label="Case">
+                  <Select
+                    value={layer.textTransform}
+                    onValueChange={(v) =>
+                      onLayer(layer.id, { textTransform: v as "none" })
+                    }
+                  >
+                    <SelectTrigger className="h-7 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">As typed</SelectItem>
+                      <SelectItem value="uppercase">UPPERCASE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
                 <Field label="Fit">
                   <Select
                     value={layer.fit}
@@ -582,6 +602,39 @@ export function Inspector({
             </div>
           )}
 
+          {layer.type === "icon" && (
+            <div className="grid grid-cols-2 gap-1.5">
+              <Field label="Icon">
+                <Select
+                  value={layer.icon}
+                  onValueChange={(icon) => onLayer(layer.id, { icon })}
+                >
+                  <SelectTrigger className="h-7 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ICON_IDS.map((i) => (
+                      <SelectItem key={i} value={i}>
+                        {i}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Color">
+                <Color
+                  value={layer.color}
+                  onChange={(color) => onLayer(layer.id, { color })}
+                />
+              </Field>
+              <Num
+                label="Stroke"
+                value={layer.strokeWidth}
+                step={0.25}
+                onChange={(strokeWidth) => onLayer(layer.id, { strokeWidth })}
+              />
+            </div>
+          )}
           {layer.type === "rect" && (
             <div className="grid grid-cols-2 gap-1.5">
               <Field label="Color">

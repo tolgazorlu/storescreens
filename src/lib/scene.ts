@@ -39,6 +39,7 @@ export const textLayerSchema = base.extend({
   /** none: draw at fontSize. shrink: reduce fontSize until the text fits the box. wrap: shrink only if a single word is wider than the box. */
   fit: z.enum(["none", "shrink", "wrap"]).default("shrink"),
   minFontSize: z.number().default(16),
+  textTransform: z.enum(["none", "uppercase"]).default("none"),
 });
 
 export const imageLayerSchema = base.extend({
@@ -56,6 +57,13 @@ export const mockupLayerSchema = base.extend({
   shadow: z.boolean().default(true),
 });
 
+export const iconLayerSchema = base.extend({
+  type: z.literal("icon"),
+  icon: z.string().default("check"),
+  color: z.string().default("#ffffff"),
+  strokeWidth: z.number().default(2),
+});
+
 export const rectLayerSchema = base.extend({
   type: z.literal("rect"),
   color: z.string(),
@@ -67,6 +75,7 @@ export const layerSchema = z.discriminatedUnion("type", [
   imageLayerSchema,
   mockupLayerSchema,
   rectLayerSchema,
+  iconLayerSchema,
 ]);
 
 export const backgroundSchema = z.union([
@@ -90,6 +99,7 @@ export type TextLayer = z.infer<typeof textLayerSchema>;
 export type ImageLayer = z.infer<typeof imageLayerSchema>;
 export type MockupLayer = z.infer<typeof mockupLayerSchema>;
 export type RectLayer = z.infer<typeof rectLayerSchema>;
+export type IconLayer = z.infer<typeof iconLayerSchema>;
 export type Layer = z.infer<typeof layerSchema>;
 export type Background = z.infer<typeof backgroundSchema>;
 export type Scene = z.infer<typeof sceneSchema>;

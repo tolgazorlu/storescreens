@@ -21,9 +21,13 @@ import {
   listProjects,
   listScreens,
   updateScreen,
+  updateBrand,
+  projectBrand,
   exportFileName,
 } from "@/lib/service";
 import { storeFile } from "@/lib/storage";
+import { brandSchema, BRAND_PRESETS, applyPreset } from "@/lib/brand";
+import { ICON_IDS } from "@/lib/icons";
 
 // Local single-user tool: no auth. The server only listens on localhost.
 
@@ -54,6 +58,11 @@ const handler = createMcpHandler(
       },
       async () =>
         text({
+          brandPresets: Object.entries(BRAND_PRESETS).map(([id, p]) => ({
+            id,
+            label: p.label,
+          })),
+          icons: ICON_IDS,
           devices: Object.values(DEVICES),
           templates: TEMPLATE_IDS.map((id) => ({
             id,
@@ -100,6 +109,7 @@ const handler = createMcpHandler(
         ]);
         return text({
           ...p,
+          brand: projectBrand(p),
           assets: assetRows,
           screens: screenRows.map((s) => ({
             id: s.id,
@@ -139,12 +149,34 @@ const handler = createMcpHandler(
     );
 
     server.registerTool(
+      "set_brand",
+      {
+        title: "Set project brand",
+        description:
+          "Store colors, font, title style and template defaults on the project. generate_screens uses them unless overridden. " +
+          `Pass preset to start from one of: ${Object.keys(BRAND_PRESETS).join(", ")}; then any brand fields override it.`,
+        inputSchema: z.object({
+          project: z.string(),
+          preset: z.string().optional(),
+          brand: brandSchema.partial().optional(),
+        }),
+      },
+      async ({ project, preset, brand }) => {
+        const p = await getProject(project);
+        const base = preset ? applyPreset(preset) : projectBrand(p);
+        const row = await updateBrand(p.id, { ...base, ...(brand ?? {}) });
+        return text(projectBrand(row));
+      },
+    );
+
+    server.registerTool(
       "generate_screens",
       {
         title: "Generate screens",
         description:
           "Create store screenshots for one locale + device from templates. Each entry gives a template, title, subtitle and a screenshot asset id (or name). " +
-          "Call once per locale and per device. Use replace=true to regenerate. Keep titles short (2-6 words) and in the target language.",
+          "Call once per locale and per device. Use replace=true to regenerate. Keep titles short (2-6 words) and in the target language. " +
+          "Per screen: titleScale / phoneScale / phoneOffsetY tune the layout; feature-list takes bullets [{icon?, text}]; two-phones takes screenshot2. Project brand supplies colors unless brand is passed.",
         inputSchema: generateSchema.extend({ project: z.string() }),
       },
       async ({ project, ...input }) => {

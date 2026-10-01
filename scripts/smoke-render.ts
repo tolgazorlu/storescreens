@@ -3,6 +3,7 @@ import path from "node:path";
 import { DEVICES } from "@/lib/devices";
 import { buildScene, TEMPLATE_IDS } from "@/lib/templates";
 import { renderSceneToPng } from "@/lib/render";
+import { applyPreset } from "@/lib/brand";
 
 const OUT = process.env.OUT ?? "/tmp";
 const REF = path.join(process.cwd(), "scripts", "reference");
@@ -61,6 +62,28 @@ async function main() {
   await writeFile(path.join(OUT, "screeny-fit.png"), dePng);
   if (process.env.UPDATE_REF) await writeFile(path.join(REF, "fit.png"), dePng);
   console.log("fit", dePng.length, "bytes", Date.now() - t0, "ms");
+
+  // Brand preset across the layout templates (reference: scripts/reference/wise-*.png).
+  const wise = applyPreset("wise-bright");
+  for (const id of ["hero-bleed", "feature-list", "two-phones"] as const) {
+    const scene = buildScene(DEVICES["iphone-6.9"], id, {
+      title: "Scan, sell, done",
+      subtitle: "Close the register in seconds.",
+      brand: wise,
+      bullets: [
+        { icon: "zap", text: "Barcode scanning in one tap" },
+        { icon: "chart", text: "Daily report, sent automatically" },
+        { icon: "cloud", text: "Synced across every device" },
+      ],
+      screenshot:
+        "https://raw.githubusercontent.com/github/explore/main/topics/react/react.png",
+    });
+    const png = await renderSceneToPng(scene);
+    await writeFile(path.join(OUT, `screeny-wise-${id}.png`), png);
+    if (process.env.UPDATE_REF)
+      await writeFile(path.join(REF, `wise-${id}.png`), png);
+    console.log(`wise-${id}`, png.length, "bytes", Date.now() - t0, "ms");
+  }
 }
 main().catch((e) => {
   console.error(e);
