@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Scene, Layer, MockupLayer, TextLayer } from "@/lib/scene";
 import { backgroundCss } from "@/lib/scene";
+import { layoutParagraph, detectDir, hasRtl, type Word } from "@/lib/bidi";
 
 /**
  * Pure renderer shared by the editor (DOM) and the exporter (satori).
@@ -97,41 +98,146 @@ export function LayerView({
   }
 }
 
-const RTL_RE = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
-
 function TextView({ layer }: { layer: TextLayer }) {
-  // Arabic/Hebrew text needs an explicit direction or satori shapes it
-  // left-to-right and the line order comes out mirrored.
-  const dir = RTL_RE.test(layer.text) ? "rtl" : "ltr";
-  // satori reorders words around ordinary spaces in RTL runs; non-breaking
-  // spaces keep each line as one run. Explicit newlines still break lines.
-  const text = dir === "rtl" ? layer.text.replace(/ /g, "\u00a0") : layer.text;
   const justify =
     layer.align === "center"
       ? "center"
       : layer.align === "right"
         ? "flex-end"
         : "flex-start";
+  const base = layer.dir === "auto" ? detectDir(layer.text) : layer.dir;
+  const simple = base === "ltr" && !hasRtl(layer.text);
+  const font: CSSProperties = {
+    fontSize: layer.fontSize,
+    fontWeight: layer.fontWeight,
+    color: layer.color,
+    lineHeight: layer.lineHeight,
+    letterSpacing: layer.letterSpacing,
+  };
   return (
     <div style={{ ...layerBox(layer), justifyContent: justify }}>
-      <div
+      {simple ? (
+        <div
+          style={{
+            ...font,
+            display: "flex",
+            textAlign: layer.align,
+            whiteSpace: "pre-wrap",
+            width: "100%",
+            justifyContent: justify,
+            wordBreak: "break-word",
+          }}
+        >
+          {layer.text}
+        </div>
+      ) : (
+        <BidiText text={layer.text} base={base} justify={justify} font={font} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Bidirectional text. Paragraph = wrapping flex row (`row-reverse` for an
+ * RTL base). Each run of the opposite direction is one nested no-wrap row in
+ * its own order. See `layoutParagraph` for why ordering is done with flex.
+ */
+function BidiText({
+  text,
+  base,
+  justify,
+  font,
+}: {
+  text: string;
+  base: "ltr" | "rtl";
+  justify: string;
+  font: CSSProperties;
+}) {
+  const rowDir = (d: "ltr" | "rtl") => (d === "rtl" ? "row-reverse" : "row");
+  // justifyContent is relative to flex-start, which row-reverse flips.
+  const j =
+    base === "rtl"
+      ? justify === "flex-start"
+        ? "flex-end"
+        : justify === "flex-end"
+          ? "flex-start"
+          : justify
+      : justify;
+  const span = (key: string, t: string) => (
+    <span key={key} style={{ ...font, whiteSpace: "pre" }}>
+      {t}
+    </span>
+  );
+  const word = (key: string, w: Word, dir: "ltr" | "rtl") =>
+    "space" in w ? (
+      span(key, w.space)
+    ) : w.tokens.length === 1 ? (
+      span(key, w.tokens[0])
+    ) : (
+      <span
+        key={key}
         style={{
+          ...font,
           display: "flex",
-          fontSize: layer.fontSize,
-          fontWeight: layer.fontWeight,
-          color: layer.color,
-          lineHeight: layer.lineHeight,
-          letterSpacing: layer.letterSpacing,
-          textAlign: layer.align,
-          direction: dir,
-          whiteSpace: "pre-wrap",
-          width: "100%",
-          justifyContent: justify,
-          wordBreak: "break-word",
+          flexDirection: rowDir(dir),
+          whiteSpace: "pre",
         }}
       >
-        {text}
-      </div>
+        {w.tokens.map((t, i) => span(String(i), t))}
+      </span>
+    );
+  return (
+    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+      {text.split("\n").map((para, pi) => {
+        const laid = layoutParagraph(para, base);
+        return (
+          <div
+            key={pi}
+            style={{
+              display: "flex",
+              flexDirection: rowDir(base),
+              flexWrap: "wrap",
+              justifyContent: j,
+              width: "100%",
+            }}
+          >
+            {laid.runs.flatMap((run, ri) => {
+              if (run.dir === base)
+                return run.words.map((w, wi) =>
+                  word(`${ri}-${wi}`, w, run.dir),
+                );
+              // Opposite-direction run: its own row, but leading/trailing
+              // spaces belong to the outer flow so wrapping can happen there.
+              const ws = [...run.words];
+              const lead =
+                ws[0] && "space" in ws[0]
+                  ? (ws.shift() as { space: string })
+                  : null;
+              const trail =
+                ws.length && "space" in ws[ws.length - 1]
+                  ? (ws.pop() as { space: string })
+                  : null;
+              const nodes = [];
+              if (lead) nodes.push(span(`${ri}-lead`, lead.space));
+              nodes.push(
+                <span
+                  key={ri}
+                  style={{
+                    ...font,
+                    display: "flex",
+                    flexDirection: rowDir(run.dir),
+                    whiteSpace: "pre",
+                  }}
+                >
+                  {ws.map((w, wi) => word(String(wi), w, run.dir))}
+                </span>,
+              );
+              if (trail) nodes.push(span(`${ri}-trail`, trail.space));
+              return nodes;
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }

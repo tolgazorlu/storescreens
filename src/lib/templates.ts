@@ -71,6 +71,7 @@ export function buildScene(
     align: "left",
     lineHeight: 1.1,
     letterSpacing: Math.round(-opts.fontSize * 0.02),
+    dir: "auto",
     rotation: 0,
     opacity: 1,
     locked: false,

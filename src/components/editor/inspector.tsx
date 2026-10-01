@@ -74,6 +74,7 @@ export function Inspector({
         align: "left",
         lineHeight: 1.1,
         letterSpacing: 0,
+        dir: "auto",
         w: Math.round(W * 0.8),
         h: Math.round(W * 0.2),
       };
@@ -394,6 +395,23 @@ export function Inspector({
                     value={layer.color}
                     onChange={(color) => onLayer(layer.id, { color })}
                   />
+                </Field>
+                <Field label="Dir">
+                  <Select
+                    value={layer.dir}
+                    onValueChange={(v) =>
+                      onLayer(layer.id, { dir: v as "auto" })
+                    }
+                  >
+                    <SelectTrigger className="h-7 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Auto</SelectItem>
+                      <SelectItem value="ltr">LTR</SelectItem>
+                      <SelectItem value="rtl">RTL</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Num
                   label="Line"

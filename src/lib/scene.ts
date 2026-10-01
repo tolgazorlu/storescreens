@@ -34,6 +34,7 @@ export const textLayerSchema = base.extend({
   align: z.enum(["left", "center", "right"]).default("left"),
   lineHeight: z.number().default(1.1),
   letterSpacing: z.number().default(0),
+  dir: z.enum(["auto", "ltr", "rtl"]).default("auto"),
 });
 
 export const imageLayerSchema = base.extend({
