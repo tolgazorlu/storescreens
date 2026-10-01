@@ -1,10 +1,8 @@
 
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
-import { readFileSync } from "node:fs";
-// Usage: B=http://localhost:3000 KEY=sk_... node scripts/mcp-smoke.mjs
-const key = process.env.KEY ?? JSON.parse(readFileSync("/tmp/key.json","utf8")).key;
+// Usage: B=http://localhost:3000 node scripts/mcp-smoke.mjs (needs a project with 2 screenshots + logo)
 const B = process.env.B ?? "http://localhost:3000";
-const transport = new StreamableHTTPClientTransport(new URL(B + "/api/mcp"), { requestInit: { headers: { Authorization: `Bearer ${key}` } } });
+const transport = new StreamableHTTPClientTransport(new URL(B + "/api/mcp"));
 const client = new Client({ name: "test", version: "0" });
 await client.connect(transport);
 const tools = await client.listTools();
