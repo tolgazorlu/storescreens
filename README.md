@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Screeny
 
-## Getting Started
+Store screenshot generator for App Store and Google Play. Upload in-app
+screenshots and a logo, generate screens from templates per locale and
+device, drag text and mockups around in the editor, export store-ready
+PNGs as a ZIP. Agents (Claude Code, Hermes) drive the whole flow over MCP
+or REST with an API key.
 
-First, run the development server:
+## Stack
+
+Next.js 16, shadcn (radix-vega, neutral), Postgres via drizzle, Vercel
+Blob (local `public/uploads` fallback), satori + resvg for server-side
+PNG rendering, `mcp-handler` for the MCP endpoint.
+
+## Run locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+cp .env.example .env     # set DATABASE_URL, SESSION_SECRET
+pnpm install
+pnpm db:push             # creates tables
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+First sign-in creates the account. Further signups are disabled unless
+`ALLOW_SIGNUP=true`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy (Vercel)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Add a Postgres (Neon) store and a Blob store to the project.
+2. Env: `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, `SESSION_SECRET`,
+   `APP_URL=https://<your-domain>`.
+3. `pnpm db:push` once against the production database.
+4. `vercel deploy --prod`.
 
-## Learn More
+## Connect an agent
 
-To learn more about Next.js, take a look at the following resources:
+Create a key under Settings, then:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+claude mcp add --transport http screeny https://<host>/api/mcp \
+  --header "Authorization: Bearer sk_..."
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+MCP tools: `list_meta`, `list_projects`, `create_project`, `get_project`,
+`upload_asset`, `generate_screens`, `update_screen_text`, `delete_screen`,
+`export_zip`. REST mirrors them under `/api/*` with the same Bearer key.
 
-## Deploy on Vercel
+Devices: `iphone-6.9` 1320x2868, `iphone-6.5` 1242x2688, `ipad-13`
+2064x2752, `android-phone` 1080x1920. Templates: `hero`, `title-top`,
+`caption-bottom`, `split`, `plain`, `text-only`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scene model
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+One screen = one JSON scene (`src/lib/scene.ts`): background + layers
+(text, image, mockup, rect) in output pixels. The same React renderer
+(`components/scene/scene-view.tsx`) draws the editor canvas and feeds
+satori, so what you see is what exports. Satori constraints apply: flex or
+absolute layout only, inline styles, no `undefined` style values.
+
+## Scripts
+
+- `pnpm smoke` renders every template to `/tmp/screeny-*.png`.
+- `B=http://localhost:3000 KEY=sk_... node scripts/mcp-smoke.mjs` exercises
+  the MCP server end to end.

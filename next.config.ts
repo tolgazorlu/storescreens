@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ["@resvg/resvg-js", "satori", "harfbuzzjs", "pg"],
+  images: { unoptimized: true },
+  outputFileTracingIncludes: { "/api/**": ["./public/fonts/**"] },
 };
 
 export default nextConfig;
