@@ -27,6 +27,7 @@ type Props = {
   onZoom: (z: number | "fit") => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  fitted?: Record<string, number>;
 };
 
 type Drag = {
@@ -57,6 +58,7 @@ export function Canvas({
   onZoom,
   onDragStart,
   onDragEnd,
+  fitted,
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const [fitScale, setFitScale] = useState(0.2);
@@ -228,6 +230,7 @@ export function Canvas({
                 begin={begin}
                 move={move}
                 end={end}
+                fontSize={fitted?.[layer.id]}
               />
             ))}
 
@@ -359,11 +362,13 @@ function LayerBox({
   begin,
   move,
   end,
+  fontSize,
 }: {
   layer: Layer;
   selected: boolean;
   outline: boolean;
   scale: number;
+  fontSize?: number;
   begin: (e: RPE, layer: Layer, mode: Drag["mode"], corner?: string) => void;
   move: (e: RPE) => void;
   end: () => void;
@@ -396,8 +401,33 @@ function LayerBox({
         <LayerView
           layer={{ ...layer, x: 0, y: 0, rotation: 0 }}
           resolveSrc={(s) => s}
+          fontSize={fontSize}
         />
       </div>
+      {layer.type === "text" &&
+        fontSize !== undefined &&
+        fontSize < layer.fontSize * 0.85 && (
+          <div
+            title={`Shrunk to ${fontSize}px. Shorten the copy.`}
+            style={{
+              position: "absolute",
+              right: 0,
+              top: -28 * px,
+              display: "flex",
+              padding: `${2 * px}px ${6 * px}px`,
+              fontSize: 11 * px,
+              lineHeight: 1.2,
+              fontFamily: "Inter",
+              color: "#000",
+              background: "#ffd166",
+              borderRadius: 4 * px,
+              pointerEvents: "none",
+              whiteSpace: "nowrap",
+            }}
+          >
+            shrunk to {Math.round((fontSize / layer.fontSize) * 100)}%
+          </div>
+        )}
       {selected &&
         !layer.locked &&
         HANDLES.map((c) => (

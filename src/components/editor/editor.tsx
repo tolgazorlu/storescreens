@@ -46,6 +46,7 @@ import { AssetsPanel } from "./assets-panel";
 import { GeneratePanel } from "./generate-panel";
 import { ScreenStrip } from "./screen-strip";
 import { useHistory } from "./use-history";
+import { useFittedSizes } from "./use-fit";
 import type { AssetDto, ProjectDto, ScreenDto } from "./types";
 
 type View = "single" | "grid";
@@ -318,6 +319,7 @@ export function Editor({
     return () => window.removeEventListener("keydown", onKey);
   }, [active, selectedLayer, updateLayer, updateScene, history]);
 
+  const fitted = useFittedSizes(active?.scene ?? null);
   const hasSel = Boolean(active && selectedLayer);
 
   return (
@@ -579,6 +581,7 @@ export function Editor({
                   onDragStart={onDragStart}
                   onDragEnd={onDragEnd}
                   onZoom={setZoom}
+                  fitted={fitted}
                 />
               </div>
               <ScreenStrip

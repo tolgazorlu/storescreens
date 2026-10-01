@@ -45,6 +45,22 @@ async function main() {
   if (process.env.UPDATE_REF)
     await writeFile(path.join(REF, "hebrew.png"), hePng);
   console.log("hebrew", hePng.length, "bytes", Date.now() - t0, "ms");
+
+  // Auto-fit: a 170px title that cannot fit its box shrinks until it does.
+  const deBase = buildScene(DEVICES["iphone-6.9"], "title-top", {
+    title: "TAGESABSCHLUSS FERTIG",
+    subtitle: "Kasse in Sekunden abschließen.",
+  });
+  const de = {
+    ...deBase,
+    layers: deBase.layers.map((l) =>
+      l.type === "text" && l.fontSize > 60 ? { ...l, fontSize: 170 } : l,
+    ),
+  };
+  const dePng = await renderSceneToPng(de);
+  await writeFile(path.join(OUT, "screeny-fit.png"), dePng);
+  if (process.env.UPDATE_REF) await writeFile(path.join(REF, "fit.png"), dePng);
+  console.log("fit", dePng.length, "bytes", Date.now() - t0, "ms");
 }
 main().catch((e) => {
   console.error(e);

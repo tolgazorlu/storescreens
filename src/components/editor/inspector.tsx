@@ -77,6 +77,8 @@ export function Inspector({
         letterSpacing: 0,
         dir: "auto",
         fontFamily: DEFAULT_FONT,
+        fit: "shrink",
+        minFontSize: 16,
         w: Math.round(W * 0.8),
         h: Math.round(W * 0.2),
       };
@@ -415,6 +417,30 @@ export function Inspector({
                     </SelectContent>
                   </Select>
                 </Field>
+                <Field label="Fit">
+                  <Select
+                    value={layer.fit}
+                    onValueChange={(v) =>
+                      onLayer(layer.id, { fit: v as "shrink" })
+                    }
+                  >
+                    <SelectTrigger className="h-7 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="shrink">Shrink to fit</SelectItem>
+                      <SelectItem value="wrap">
+                        Wrap, shrink long words
+                      </SelectItem>
+                      <SelectItem value="none">None</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Num
+                  label="Min size"
+                  value={layer.minFontSize}
+                  onChange={(minFontSize) => onLayer(layer.id, { minFontSize })}
+                />
                 <Field label="Dir">
                   <Select
                     value={layer.dir}

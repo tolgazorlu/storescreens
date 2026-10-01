@@ -75,6 +75,8 @@ export function buildScene(
     letterSpacing: Math.round(-opts.fontSize * 0.02),
     dir: "auto",
     fontFamily: p.fontFamily ?? DEFAULT_FONT,
+    fit: "shrink",
+    minFontSize: Math.round(W * 0.03),
     rotation: 0,
     opacity: 1,
     locked: false,

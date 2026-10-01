@@ -10,14 +10,18 @@ import { fontStack } from "@/lib/fonts";
  * no CSS classes, no external stylesheets.
  */
 
-export const FONT_FAMILY = "Inter, Noto Sans Arabic";
+export const FONT_FAMILY = "Inter";
+/** Layer id -> fitted font size (see lib/fit.ts). */
+export type Fitted = Record<string, number>;
 
 export function SceneView({
   scene,
   resolveSrc = (s) => s,
+  fitted,
 }: {
   scene: Scene;
   resolveSrc?: (src: string) => string;
+  fitted?: Fitted;
 }) {
   return (
     <div
@@ -32,7 +36,12 @@ export function SceneView({
       }}
     >
       {scene.layers.map((layer) => (
-        <LayerView key={layer.id} layer={layer} resolveSrc={resolveSrc} />
+        <LayerView
+          key={layer.id}
+          layer={layer}
+          resolveSrc={resolveSrc}
+          fontSize={fitted?.[layer.id]}
+        />
       ))}
     </div>
   );
@@ -58,13 +67,15 @@ function layerBox(layer: Layer): CSSProperties {
 export function LayerView({
   layer,
   resolveSrc,
+  fontSize,
 }: {
   layer: Layer;
   resolveSrc: (s: string) => string;
+  fontSize?: number;
 }) {
   switch (layer.type) {
     case "text":
-      return <TextView layer={layer} />;
+      return <TextView layer={layer} fontSize={fontSize} />;
     case "rect":
       return (
         <div
@@ -99,7 +110,41 @@ export function LayerView({
   }
 }
 
-function TextView({ layer }: { layer: TextLayer }) {
+function TextView({
+  layer,
+  fontSize,
+}: {
+  layer: TextLayer;
+  fontSize?: number;
+}) {
+  const justify =
+    layer.align === "center"
+      ? "center"
+      : layer.align === "right"
+        ? "flex-end"
+        : "flex-start";
+  return (
+    <div style={{ ...layerBox(layer), justifyContent: justify }}>
+      <TextContent layer={layer} fontSize={fontSize ?? layer.fontSize} />
+    </div>
+  );
+}
+
+/**
+ * The text block itself, without the absolute box, so it can be measured:
+ * render it into a probe of the layer's width and read the height. Both the
+ * server (satori probe) and the editor (DOM probe) use this same component.
+ */
+export function TextContent({
+  layer,
+  fontSize = layer.fontSize,
+  block = true,
+}: {
+  layer: TextLayer;
+  fontSize?: number;
+  /** false: shrink-to-content, no wrapping (used to measure the widest word). */
+  block?: boolean;
+}) {
   const justify =
     layer.align === "center"
       ? "center"
@@ -108,34 +153,40 @@ function TextView({ layer }: { layer: TextLayer }) {
         : "flex-start";
   const base = layer.dir === "auto" ? detectDir(layer.text) : layer.dir;
   const simple = base === "ltr" && !hasRtl(layer.text);
+  const k = fontSize / layer.fontSize;
   const font: CSSProperties = {
     fontFamily: fontStack(layer.fontFamily),
-    fontSize: layer.fontSize,
+    fontSize,
     fontWeight: layer.fontWeight,
     color: layer.color,
     lineHeight: layer.lineHeight,
-    letterSpacing: layer.letterSpacing,
+    letterSpacing: Math.round(layer.letterSpacing * k),
   };
+  if (simple) {
+    return (
+      <div
+        style={{
+          ...font,
+          display: "flex",
+          textAlign: layer.align,
+          whiteSpace: block ? "pre-wrap" : "pre",
+          width: block ? "100%" : "auto",
+          justifyContent: justify,
+          wordBreak: "normal",
+        }}
+      >
+        {layer.text}
+      </div>
+    );
+  }
   return (
-    <div style={{ ...layerBox(layer), justifyContent: justify }}>
-      {simple ? (
-        <div
-          style={{
-            ...font,
-            display: "flex",
-            textAlign: layer.align,
-            whiteSpace: "pre-wrap",
-            width: "100%",
-            justifyContent: justify,
-            wordBreak: "break-word",
-          }}
-        >
-          {layer.text}
-        </div>
-      ) : (
-        <BidiText text={layer.text} base={base} justify={justify} font={font} />
-      )}
-    </div>
+    <BidiText
+      text={layer.text}
+      base={base}
+      justify={justify}
+      font={font}
+      block={block}
+    />
   );
 }
 
@@ -149,11 +200,13 @@ function BidiText({
   base,
   justify,
   font,
+  block = true,
 }: {
   text: string;
   base: "ltr" | "rtl";
   justify: string;
   font: CSSProperties;
+  block?: boolean;
 }) {
   const rowDir = (d: "ltr" | "rtl") => (d === "rtl" ? "row-reverse" : "row");
   // justifyContent is relative to flex-start, which row-reverse flips.
@@ -189,7 +242,13 @@ function BidiText({
       </span>
     );
   return (
-    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: block ? "100%" : "auto",
+      }}
+    >
       {text.split("\n").map((para, pi) => {
         const laid = layoutParagraph(para, base);
         return (
@@ -198,7 +257,7 @@ function BidiText({
             style={{
               display: "flex",
               flexDirection: rowDir(base),
-              flexWrap: "wrap",
+              flexWrap: block ? "wrap" : "nowrap",
               justifyContent: j,
               width: "100%",
             }}

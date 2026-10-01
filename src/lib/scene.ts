@@ -36,6 +36,9 @@ export const textLayerSchema = base.extend({
   letterSpacing: z.number().default(0),
   dir: z.enum(["auto", "ltr", "rtl"]).default("auto"),
   fontFamily: z.string().default("Inter"),
+  /** none: draw at fontSize. shrink: reduce fontSize until the text fits the box. wrap: shrink only if a single word is wider than the box. */
+  fit: z.enum(["none", "shrink", "wrap"]).default("shrink"),
+  minFontSize: z.number().default(16),
 });
 
 export const imageLayerSchema = base.extend({

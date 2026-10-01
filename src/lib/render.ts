@@ -3,9 +3,10 @@ import satori, { type Font } from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { createElement } from "react";
-import type { Scene } from "@/lib/scene";
-import { SceneView } from "@/components/scene/scene-view";
+import { createElement, type ReactNode } from "react";
+import type { Scene, TextLayer } from "@/lib/scene";
+import { fitScene } from "@/lib/fit";
+import { SceneView, TextContent } from "@/components/scene/scene-view";
 import { readFileBytes } from "@/lib/storage";
 import { FONTS, FONT_WEIGHTS, fontFile } from "@/lib/fonts";
 
@@ -67,8 +68,84 @@ async function inlineImages(scene: Scene): Promise<Map<string, string>> {
   return map;
 }
 
-export async function renderSceneToSvg(scene: Scene): Promise<string> {
-  const [fonts, images] = await Promise.all([loadFonts(), inlineImages(scene)]);
+/**
+ * Measure a text layer at a font size: render TextContent alone into a box
+ * of the layer's width with unbounded height, then read the content's
+ * bounding box out of the SVG satori produced.
+ */
+async function measureWithSatori(layer: TextLayer, fontSize: number) {
+  const fonts = await loadFonts();
+  const probeH = Math.max(layer.h * 4, fontSize * 40);
+  const probe = (child: ReactNode, width: number, inner: number | "auto") =>
+    satori(
+      createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            width,
+            height: probeH,
+            alignItems: "flex-start",
+          },
+        },
+        createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              width: inner,
+              backgroundColor: "#010203",
+            },
+          },
+          child,
+        ),
+      ),
+      { width, height: probeH, fonts },
+    );
+  // Height: the real block at the layer's width. satori emits the probe's
+  // background as a <rect>; its height is the laid-out height.
+  const svg = await probe(
+    createElement(TextContent, { layer, fontSize }),
+    layer.w,
+    layer.w,
+  );
+  const rect =
+    /<rect[^>]*width="([\d.]+)"[^>]*height="([\d.]+)"[^>]*fill="#010203"/.exec(
+      svg,
+    );
+  const height = rect ? Number(rect[2]) : probeH;
+  // Width: the longest unbreakable word, measured alone on a very wide probe,
+  // so mid-word breaks (which the block allows as a last resort) count as overflow.
+  const longest = layer.text
+    .split(/\s+/)
+    .reduce((a, b) => (b.length > a.length ? b : a), "");
+  const wsvg = await probe(
+    createElement(TextContent, {
+      layer: { ...layer, text: longest, align: "left" },
+      fontSize,
+      block: false,
+    }),
+    20000,
+    "auto",
+  );
+  const wrect =
+    /<rect[^>]*width="([\d.]+)"[^>]*height="([\d.]+)"[^>]*fill="#010203"/.exec(
+      wsvg,
+    );
+  const width = wrect ? Number(wrect[1]) : 0;
+  return { width, height };
+}
+
+export async function fitSceneText(scene: Scene) {
+  return fitScene(scene, measureWithSatori);
+}
+
+export async function renderSceneToSvg(input: Scene): Promise<string> {
+  const [fonts, images, { scene }] = await Promise.all([
+    loadFonts(),
+    inlineImages(input),
+    fitSceneText(input),
+  ]);
   const resolveSrc = (s: string) => images.get(s) ?? s;
   return satori(createElement(SceneView, { scene, resolveSrc }), {
     width: scene.width,
