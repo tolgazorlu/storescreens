@@ -1,6 +1,7 @@
 import type { Device } from "./devices";
 import type { Scene, Layer, Background } from "./scene";
 import { uid } from "./scene";
+import { DEFAULT_FONT } from "./fonts";
 
 export type TemplateId =
   "hero" | "title-top" | "caption-bottom" | "split" | "plain" | "text-only";
@@ -30,6 +31,7 @@ export type TemplateParams = {
   logo?: string | null;
   background?: Background;
   textColor?: string;
+  fontFamily?: string;
 };
 
 const DEFAULT_BG: Background = { type: "solid", color: "#2E3DF2" };
@@ -72,6 +74,7 @@ export function buildScene(
     lineHeight: 1.1,
     letterSpacing: Math.round(-opts.fontSize * 0.02),
     dir: "auto",
+    fontFamily: p.fontFamily ?? DEFAULT_FONT,
     rotation: 0,
     opacity: 1,
     locked: false,

@@ -7,33 +7,30 @@ import { createElement } from "react";
 import type { Scene } from "@/lib/scene";
 import { SceneView } from "@/components/scene/scene-view";
 import { readFileBytes } from "@/lib/storage";
+import { FONTS, FONT_WEIGHTS, fontFile } from "@/lib/fonts";
 
-const WEIGHTS: Record<number, string> = {
-  400: "Regular",
-  500: "Medium",
-  600: "SemiBold",
-  700: "Bold",
-  800: "ExtraBold",
-};
 let fontsPromise: Promise<Font[]> | null = null;
 
+/** Every registry family at every weight. satori picks by name, then by glyph coverage in list order. */
 function loadFonts(): Promise<Font[]> {
   if (!fontsPromise) {
-    // Inter has no Arabic glyphs; satori falls back to the next font that
-    // covers the glyph, so Noto Sans Arabic is listed second at every weight.
-    const load = (family: string, prefix: string) =>
-      Object.entries(WEIGHTS).map(async ([weight, file]) => ({
-        name: family,
-        weight: Number(weight) as Font["weight"],
-        style: "normal" as const,
-        data: await readFile(
-          path.join(process.cwd(), "public", "fonts", `${prefix}-${file}.ttf`),
-        ),
-      }));
-    fontsPromise = Promise.all([
-      ...load("Inter", "Inter"),
-      ...load("Noto Sans Arabic", "NotoSansArabic"),
-    ]);
+    fontsPromise = Promise.all(
+      FONTS.flatMap((family) =>
+        FONT_WEIGHTS.map(async (weight) => ({
+          name: family.name,
+          weight: weight as Font["weight"],
+          style: "normal" as const,
+          data: await readFile(
+            path.join(
+              process.cwd(),
+              "public",
+              "fonts",
+              fontFile(family, weight),
+            ),
+          ),
+        })),
+      ),
+    );
   }
   return fontsPromise;
 }

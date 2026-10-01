@@ -24,6 +24,7 @@ import {
 import type { Scene, Layer } from "@/lib/scene";
 import { uid } from "@/lib/scene";
 import type { AssetDto } from "./types";
+import { FONTS, DEFAULT_FONT } from "@/lib/fonts";
 
 type Props = {
   scene: Scene | null;
@@ -75,6 +76,7 @@ export function Inspector({
         lineHeight: 1.1,
         letterSpacing: 0,
         dir: "auto",
+        fontFamily: DEFAULT_FONT,
         w: Math.round(W * 0.8),
         h: Math.round(W * 0.2),
       };
@@ -395,6 +397,23 @@ export function Inspector({
                     value={layer.color}
                     onChange={(color) => onLayer(layer.id, { color })}
                   />
+                </Field>
+                <Field label="Font">
+                  <Select
+                    value={layer.fontFamily}
+                    onValueChange={(v) => onLayer(layer.id, { fontFamily: v })}
+                  >
+                    <SelectTrigger className="h-7 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FONTS.map((f) => (
+                        <SelectItem key={f.id} value={f.name}>
+                          {f.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field label="Dir">
                   <Select

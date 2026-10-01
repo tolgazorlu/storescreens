@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { Scene, Layer, MockupLayer, TextLayer } from "@/lib/scene";
 import { backgroundCss } from "@/lib/scene";
 import { layoutParagraph, detectDir, hasRtl, type Word } from "@/lib/bidi";
+import { fontStack } from "@/lib/fonts";
 
 /**
  * Pure renderer shared by the editor (DOM) and the exporter (satori).
@@ -108,6 +109,7 @@ function TextView({ layer }: { layer: TextLayer }) {
   const base = layer.dir === "auto" ? detectDir(layer.text) : layer.dir;
   const simple = base === "ltr" && !hasRtl(layer.text);
   const font: CSSProperties = {
+    fontFamily: fontStack(layer.fontFamily),
     fontSize: layer.fontSize,
     fontWeight: layer.fontWeight,
     color: layer.color,

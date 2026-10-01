@@ -34,6 +34,17 @@ async function main() {
     await writeFile(path.join(REF, "arabic.png"), png);
   }
   console.log("arabic", png.length, "bytes", Date.now() - t0, "ms");
+
+  const he = buildScene(DEVICES["iphone-6.9"], "title-top", {
+    title: "ייבוא מ-Excel עד 2,000 מוצרים.",
+    subtitle: "ייצוא ל-PDF תוך שניות.",
+    fontFamily: "Noto Sans Hebrew",
+  });
+  const hePng = await renderSceneToPng(he);
+  await writeFile(path.join(OUT, "screeny-hebrew.png"), hePng);
+  if (process.env.UPDATE_REF)
+    await writeFile(path.join(REF, "hebrew.png"), hePng);
+  console.log("hebrew", hePng.length, "bytes", Date.now() - t0, "ms");
 }
 main().catch((e) => {
   console.error(e);

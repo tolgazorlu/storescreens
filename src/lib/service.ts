@@ -194,6 +194,7 @@ export type GenerateInput = {
   logo?: string | null;
   background?: Scene["background"];
   textColor?: string;
+  fontFamily?: string;
   /** Replace existing screens for this locale+device. */
   replace?: boolean;
   screens: ScreenSpec[];
@@ -265,6 +266,7 @@ export async function generateScreens(
       logo,
       background: input.background,
       textColor: input.textColor,
+      fontFamily: input.fontFamily,
     };
     rows.push({
       projectId: p.id,

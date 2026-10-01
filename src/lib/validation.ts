@@ -16,6 +16,7 @@ export const generateSchema = z.object({
   logo: z.string().nullable().optional(),
   background: backgroundSchema.optional(),
   textColor: z.string().optional(),
+  fontFamily: z.string().optional(),
   replace: z.boolean().optional(),
   screens: z.array(screenSpecSchema).min(1).max(10),
 });
