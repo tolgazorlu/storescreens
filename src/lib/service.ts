@@ -12,7 +12,7 @@ import {
   type Asset,
 } from "@/lib/db";
 import { randomUUID } from "node:crypto";
-import { DEVICES, getDevice, type DeviceId } from "@/lib/devices";
+import { getDevice, type DeviceId } from "@/lib/devices";
 import {
   buildScene,
   type TemplateId,
@@ -667,25 +667,97 @@ export async function renderScreen(screenId: string): Promise<Buffer> {
   return renderSceneToPng(s.scene);
 }
 
-export function exportFileName(s: Screen) {
-  const d = DEVICES[s.device as DeviceId];
-  return `${s.locale}/${d?.store ?? "store"}-${s.device}-${String(s.position + 1).padStart(2, "0")}.png`;
+export type ExportFile = {
+  path: string;
+  locale: string;
+  device: DeviceId;
+  position: number;
+  scene: Scene;
+};
+
+const slugTitle = (scene: Scene) => {
+  const t = scene.layers.find((l) => l.type === "text");
+  return t && t.type === "text" ? slugify(t.text).slice(0, 40) : "screen";
+};
+
+/**
+ * Plan what an export produces. Derived devices (6.5", 6.1") are rendered by
+ * scaling the 6.9" scene, so asking for them never requires their own scenes.
+ * Layout: <locale>/<device>/<nn>-<slug>.png; with asc=true the App Store
+ * Connect layout: <locale>/<ASC display size>/<nn>-<slug>.png.
+ */
+export async function planExport(
+  projectId: string,
+  opts: {
+    locales?: string[];
+    devices?: DeviceId[];
+    ids?: string[];
+    asc?: boolean;
+  },
+): Promise<ExportFile[]> {
+  let rows = await listScreens(projectId);
+  if (opts.ids?.length) rows = rows.filter((r) => opts.ids!.includes(r.id));
+  if (opts.locales?.length)
+    rows = rows.filter((r) => opts.locales!.includes(r.locale));
+  const wanted = opts.devices?.length
+    ? opts.devices
+    : [...new Set(rows.map((r) => r.device as DeviceId))];
+  const files: ExportFile[] = [];
+  for (const deviceId of wanted) {
+    const device = getDevice(deviceId);
+    const sourceId = device.derivedFrom ?? deviceId;
+    const source = rows.filter((r) => r.device === sourceId);
+    for (const r of source) {
+      const scene =
+        sourceId === deviceId ? r.scene : rescaleScene(r.scene, device);
+      const folder = opts.asc ? device.ascFolder : deviceId;
+      files.push({
+        path: `${r.locale}/${folder}/${String(r.position + 1).padStart(2, "0")}-${slugTitle(r.scene)}.png`,
+        locale: r.locale,
+        device: deviceId,
+        position: r.position,
+        scene,
+      });
+    }
+  }
+  if (!files.length) throw new BadRequest("No screens to export");
+  return files;
 }
 
 export async function exportZip(
   projectId: string,
-  filter?: { locale?: string; device?: string; ids?: string[] },
+  opts: Parameters<typeof planExport>[1],
 ): Promise<Buffer> {
-  let rows = await listScreens(projectId, filter);
-  if (filter?.ids?.length) {
-    const set = new Set(filter.ids);
-    rows = rows.filter((r) => set.has(r.id));
+  const files = await planExport(projectId, opts);
+  const out: Record<string, Uint8Array> = {};
+  // Sequential: satori + resvg at full size is CPU heavy.
+  for (const f of files)
+    out[f.path] = new Uint8Array(await renderSceneToPng(f.scene));
+  return Buffer.from(zipSync(out, { level: 0 }));
+}
+
+/** Write PNGs straight into a directory on this machine (local tool). Returns written paths. */
+export async function exportToDir(
+  projectId: string,
+  dir: string,
+  opts: Parameters<typeof planExport>[1],
+): Promise<string[]> {
+  const { mkdir, writeFile } = await import("node:fs/promises");
+  const path = await import("node:path");
+  const files = await planExport(projectId, opts);
+  const written: string[] = [];
+  for (const f of files) {
+    const abs = path.join(dir, f.path);
+    await mkdir(path.dirname(abs), { recursive: true });
+    await writeFile(abs, await renderSceneToPng(f.scene));
+    written.push(abs);
   }
-  if (!rows.length) throw new BadRequest("No screens to export");
-  const files: Record<string, Uint8Array> = {};
-  for (const s of rows)
-    files[exportFileName(s)] = new Uint8Array(await renderSceneToPng(s.scene));
-  return Buffer.from(zipSync(files, { level: 0 }));
+  return written;
+}
+
+/** Kept for callers that only know a screen: <locale>/<device>/<nn>-<slug>.png */
+export function exportFileName(s: Screen) {
+  return `${s.locale}/${s.device}/${String(s.position + 1).padStart(2, "0")}-${slugTitle(s.scene)}.png`;
 }
 
 export async function screensByIds(ids: string[]) {

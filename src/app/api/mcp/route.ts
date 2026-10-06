@@ -14,6 +14,7 @@ import {
   createProject,
   deleteScreen,
   exportZip,
+  exportToDir,
   generateScreens,
   getProject,
   getScreen,
@@ -294,21 +295,35 @@ const handler = createMcpHandler(
     server.registerTool(
       "export_zip",
       {
-        title: "Export ZIP",
+        title: "Export",
         description:
-          "Render all screens (optionally filtered by locale/device) to store-ready PNGs and return a download URL for the ZIP. Files are named <locale>/<store>-<device>-<nn>.png.",
+          'Render screens to store-ready PNGs. Filter by locales and devices; 6.5" and 6.1" are derived from the 6.9" scenes automatically. ' +
+          "Files are <locale>/<device>/<nn>-<slug>.png, or with asc=true the App Store Connect folder names. " +
+          "Default returns a ZIP URL; pass dir to write PNGs straight into that directory instead.",
         inputSchema: z.object({
           project: z.string(),
-          locale: z.string().optional(),
-          device: z.string().optional(),
+          locales: z.array(z.string()).optional(),
+          devices: z.array(z.string()).optional(),
+          asc: z.boolean().optional(),
+          dir: z
+            .string()
+            .optional()
+            .describe("Absolute directory to write into (no ZIP)"),
         }),
       },
-      async ({ project, locale, device }) => {
+      async ({ project, locales, devices, asc, dir }) => {
         const p = await getProject(project);
-        const zip = await exportZip(p.id, { locale, device });
+        const opts = {
+          locales,
+          devices: devices as DeviceId[] | undefined,
+          asc,
+        };
+        if (dir)
+          return text({ dir, files: await exportToDir(p.id, dir, opts) });
+        const zip = await exportZip(p.id, opts);
         const url = await storeFile({
           dir: `exports/${p.id}`,
-          name: `${p.slug}-${locale ?? "all"}-${device ?? "all"}.zip`,
+          name: `${p.slug}-${locales?.join("+") ?? "all"}.zip`,
           data: zip,
           contentType: "application/zip",
         });
