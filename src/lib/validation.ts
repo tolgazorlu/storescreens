@@ -44,3 +44,11 @@ export const generateSchema = z
   });
 
 export type GenerateBody = z.infer<typeof generateSchema>;
+
+export const deriveSchema = z.object({
+  from: z.object({ device: z.enum(DEVICE_IDS as [string, ...string[]]) }),
+  to: z.enum(["duo-outer", "duo-inner", "ipad"]),
+  locales: z.array(z.string()).optional(),
+});
+
+export type DeriveBody = z.infer<typeof deriveSchema>;

@@ -18,12 +18,18 @@ import {
   type TemplateId,
   type TemplateParams,
 } from "@/lib/templates";
-import { parseScene, type Scene } from "@/lib/scene";
+import {
+  parseScene,
+  type Scene,
+  type TextLayer,
+  type MockupLayer,
+} from "@/lib/scene";
 import { brandSchema, DEFAULT_BRAND, type Brand } from "@/lib/brand";
 import { renderSceneToPng } from "@/lib/render";
 import { storeFile, deleteFile } from "@/lib/storage";
 import { imageSize } from "@/lib/image-size";
 import { zipSync } from "fflate";
+import sharp from "sharp";
 
 export class NotFound extends Error {
   status = 404;
@@ -691,4 +697,257 @@ export async function exportZip(
 export async function screensByIds(ids: string[]) {
   if (!ids.length) return [];
   return db.select().from(screens).where(inArray(screens.id, ids));
+}
+
+// ---- derive (iPad / duo from an existing iPhone set) ----
+
+export type DeriveTarget = "duo-outer" | "duo-inner" | "ipad";
+export type DeriveInput = {
+  from: { device: DeviceId };
+  to: DeriveTarget;
+  /** Defaults to every locale the source device has. */
+  locales?: string[];
+};
+
+/** Pull title/subtitle/screenshot/colors back out of a rendered scene, so a
+ * derived screen can be rebuilt (not stretched) on another device while
+ * matching the source look exactly, even though the scene has no stored
+ * template id. */
+function extractScreenStyle(scene: Scene) {
+  const texts = scene.layers.filter(
+    (l): l is TextLayer => l.type === "text",
+  );
+  const mockups = scene.layers.filter(
+    (l): l is MockupLayer => l.type === "mockup",
+  );
+  const title = texts[0];
+  const subtitle = texts[1];
+  const mock = mockups[0];
+  const brand: Partial<Brand> = {
+    background: scene.background,
+    textColor: title?.color ?? DEFAULT_BRAND.textColor,
+    accent: subtitle?.color ?? title?.color ?? DEFAULT_BRAND.accent,
+    frameColor: mock?.frameColor ?? DEFAULT_BRAND.frameColor,
+    titleWeight: title?.fontWeight ?? DEFAULT_BRAND.titleWeight,
+    titleCase: title?.textTransform ?? DEFAULT_BRAND.titleCase,
+    fontFamily: title?.fontFamily ?? DEFAULT_BRAND.fontFamily,
+  };
+  return {
+    title: title?.text ?? "",
+    subtitle: subtitle?.text,
+    screenshot: mock?.src ?? null,
+    brand,
+    subFont: subtitle?.fontFamily,
+    subColor: subtitle?.color,
+    subWeight: subtitle?.fontWeight,
+  };
+}
+
+/** Title/subtitle use one brand font in buildScene; patch the subtitle layer
+ * back to the source screen's exact font/color/weight (titles and subtitles
+ * can use different families, e.g. Archivo SemiExpanded vs Archivo). */
+function patchSubtitleStyle(
+  scene: Scene,
+  style: ReturnType<typeof extractScreenStyle>,
+): Scene {
+  if (!style.subFont && !style.subColor && style.subWeight == null)
+    return scene;
+  const sub = scene.layers.filter((l) => l.type === "text")[1];
+  if (!sub) return scene;
+  return {
+    ...scene,
+    layers: scene.layers.map((l) =>
+      l.id === sub.id && l.type === "text"
+        ? {
+            ...l,
+            fontFamily: style.subFont ?? l.fontFamily,
+            color: style.subColor ?? l.color,
+            fontWeight: style.subWeight ?? l.fontWeight,
+          }
+        : l,
+    ),
+  };
+}
+
+function targetDeviceFor(to: DeriveTarget): DeviceId {
+  if (to === "ipad") return "ipad-13";
+  return to === "duo-outer" ? "iphone-duo-outer" : "iphone-duo-inner";
+}
+
+/**
+ * Rebuild each screen of an existing device set on another device: re-lays
+ * the same title/subtitle/screenshot out on the target (ipad-13, or the
+ * iPhone Duo's outer/inner display) with `title-top`, title on top and the
+ * device large. There is no Duo simulator, so the iPhone-shaped screenshot
+ * is kept as-is and shown letterboxed inside the Duo frame (see scene-view).
+ * Writes to the target's own device id, so the source set is never touched.
+ * Re-running for the same locale replaces only the previously derived set.
+ */
+export async function deriveScreens(
+  projectId: string,
+  input: DeriveInput,
+): Promise<Screen[]> {
+  const p = await getProject(projectId);
+  const targetDeviceId = targetDeviceFor(input.to);
+  const targetDevice = getDevice(targetDeviceId);
+  const source = await listScreens(p.id, { device: input.from.device });
+  if (!source.length)
+    throw new BadRequest(`No screens for device ${input.from.device}`);
+  const locales = input.locales?.length
+    ? input.locales
+    : [...new Set(source.map((s) => s.locale))];
+
+  const inserted: Screen[] = [];
+  for (const locale of locales) {
+    const src = source
+      .filter((s) => s.locale === locale)
+      .sort((a, b) => a.position - b.position);
+    if (!src.length) continue;
+    await db
+      .delete(screens)
+      .where(
+        and(
+          eq(screens.projectId, p.id),
+          eq(screens.locale, locale),
+          eq(screens.device, targetDeviceId),
+        ),
+      );
+    const rows = src.map((s, i) => {
+      const style = extractScreenStyle(s.scene);
+      let scene = buildScene(targetDevice, "title-top", {
+        title: style.title,
+        subtitle: style.subtitle,
+        screenshot: style.screenshot,
+        brand: style.brand,
+      });
+      scene = patchSubtitleStyle(scene, style);
+      return {
+        projectId: p.id,
+        locale,
+        device: targetDeviceId,
+        position: i,
+        groupId: s.groupId,
+        scene,
+      };
+    });
+    inserted.push(...(await db.insert(screens).values(rows).returning()));
+  }
+  await touch(p.id);
+  return inserted;
+}
+
+// ---- Apple export (every App Store size, every locale, in one ZIP) ----
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Strip the alpha channel and pin the exact pixel size: App Store Connect
+ * rejects screenshots that carry any alpha channel, even fully opaque. */
+async function flattenForStore(
+  png: Buffer,
+  width: number,
+  height: number,
+): Promise<Uint8Array> {
+  const out = await sharp(png)
+    .resize(width, height, { fit: "fill" })
+    .flatten({ background: "#ffffff" })
+    .removeAlpha()
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+  return new Uint8Array(out);
+}
+
+function appleReadme(locales: string[]): string {
+  return `Screeny Apple App Store export
+================================
+
+Upload each folder to the matching screenshot slot in App Store Connect
+(each image is already flattened to RGB, no alpha channel, at the exact
+required pixel size):
+
+  <locale>/iphone-6.9/          iPhone 6.9" Display       (1320x2868)
+  <locale>/iphone-6.5/          iPhone 6.5" Display       (1242x2688)
+  <locale>/iphone-duo-outer/    iPhone Duo, outer display (1398x2034)  [only if Duo screens exist]
+  <locale>/iphone-duo-inner/    iPhone Duo, inner display (2007x2853) [only if Duo screens exist]
+  <locale>/ipad-13/             iPad 13" Display          (2064x2752) [only if iPad screens exist]
+
+The iPhone 6.5" folder is generated by rescaling the 6.9" set when no native
+6.5" screens exist; App Store Connect accepts either size per its iPhone
+Display requirements, so this folder is still a valid upload on its own.
+
+iPhone Duo: App Store Connect does not accept Duo screenshot uploads yet
+(support ships later in 2026) and only requires them starting April 2027.
+Keep this folder ready and upload it once the slot opens.
+
+iPad: only needed if the app actually supports iPad. Barcode currently has
+supportsTablet=false, so treat this folder as optional / future-proofing
+rather than something to upload today.
+
+Locales included: ${locales.join(", ")}
+Generated by Screeny.
+`;
+}
+
+export async function exportAppleZip(projectId: string): Promise<Buffer> {
+  const p = await getProject(projectId);
+  const all = await listScreens(p.id);
+  if (!all.length) throw new BadRequest("No screens to export");
+  const locales = [...new Set(all.map((s) => s.locale))].sort();
+  const by = (locale: string, device: string) =>
+    all
+      .filter((s) => s.locale === locale && s.device === device)
+      .sort((a, b) => a.position - b.position);
+
+  const files: Record<string, Uint8Array> = {};
+  for (const locale of locales) {
+    const nine = by(locale, "iphone-6.9");
+    const sixfive = by(locale, "iphone-6.5");
+    const ipad = by(locale, "ipad-13");
+    const duoOuter = by(locale, "iphone-duo-outer");
+    const duoInner = by(locale, "iphone-duo-inner");
+
+    for (const [i, s] of nine.entries())
+      files[`${locale}/iphone-6.9/${pad2(i + 1)}.png`] = await flattenForStore(
+        await renderSceneToPng(s.scene),
+        DEVICES["iphone-6.9"].width,
+        DEVICES["iphone-6.9"].height,
+      );
+
+    const sixfiveSource = sixfive.length ? sixfive : nine;
+    for (const [i, s] of sixfiveSource.entries()) {
+      const scene = sixfive.length
+        ? s.scene
+        : rescaleScene(s.scene, DEVICES["iphone-6.5"]);
+      files[`${locale}/iphone-6.5/${pad2(i + 1)}.png`] =
+        await flattenForStore(
+          await renderSceneToPng(scene),
+          DEVICES["iphone-6.5"].width,
+          DEVICES["iphone-6.5"].height,
+        );
+    }
+
+    for (const [i, s] of ipad.entries())
+      files[`${locale}/ipad-13/${pad2(i + 1)}.png`] = await flattenForStore(
+        await renderSceneToPng(s.scene),
+        DEVICES["ipad-13"].width,
+        DEVICES["ipad-13"].height,
+      );
+
+    for (const [i, s] of duoOuter.entries())
+      files[`${locale}/iphone-duo-outer/${pad2(i + 1)}.png`] =
+        await flattenForStore(
+          await renderSceneToPng(s.scene),
+          DEVICES["iphone-duo-outer"].width,
+          DEVICES["iphone-duo-outer"].height,
+        );
+
+    for (const [i, s] of duoInner.entries())
+      files[`${locale}/iphone-duo-inner/${pad2(i + 1)}.png`] =
+        await flattenForStore(
+          await renderSceneToPng(s.scene),
+          DEVICES["iphone-duo-inner"].width,
+          DEVICES["iphone-duo-inner"].height,
+        );
+  }
+  files["README.txt"] = new TextEncoder().encode(appleReadme(locales));
+  return Buffer.from(zipSync(files, { level: 0 }));
 }

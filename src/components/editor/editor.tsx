@@ -263,6 +263,60 @@ export function Editor({
     }
   }
 
+  async function exportAppleZip() {
+    setExporting(true);
+    const t = toast.loading("Building Apple App Store ZIP");
+    try {
+      const res = await fetch(`/api/projects/${project.id}/export/apple`);
+      if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${project.slug}-appstore.zip`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast.success("Apple ZIP downloaded", { id: t });
+    } catch (e) {
+      toast.error((e as Error).message, { id: t });
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const [deriving, setDeriving] = useState(false);
+  const [deriveTarget, setDeriveTarget] = useState<
+    "ipad" | "duo-outer" | "duo-inner"
+  >("ipad");
+  async function derive() {
+    setDeriving(true);
+    const t = toast.loading(`Deriving ${deriveTarget}`);
+    try {
+      const rows = await api<ScreenDto[]>(
+        `/api/projects/${project.id}/derive`,
+        {
+          method: "POST",
+          json: { from: { device }, to: deriveTarget, locales },
+        },
+      );
+      setScreens((p) => [
+        ...p.filter(
+          (s) =>
+            !rows.some(
+              (r) =>
+                r.id === s.id ||
+                (r.device === s.device && r.locale === s.locale),
+            ),
+        ),
+        ...rows,
+      ]);
+      toast.success(`${rows.length} screens derived`, { id: t });
+    } catch (e) {
+      toast.error((e as Error).message, { id: t });
+    } finally {
+      setDeriving(false);
+    }
+  }
+
   async function propagate() {
     if (!active) return;
     try {
@@ -589,6 +643,28 @@ export function Editor({
           >
             <Sparkles className="size-4" /> Generate
           </Button>
+          <Select
+            value={deriveTarget}
+            onValueChange={(v) => setDeriveTarget(v as typeof deriveTarget)}
+          >
+            <SelectTrigger className="h-8 w-36 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ipad">iPad 13&quot;</SelectItem>
+              <SelectItem value="duo-outer">Duo (outer)</SelectItem>
+              <SelectItem value="duo-inner">Duo (inner)</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={derive}
+            disabled={deriving || !visible.length}
+            title="Rebuild the current locale/device set on the selected target"
+          >
+            <Frame className="size-4" /> Derive
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -603,6 +679,15 @@ export function Editor({
             disabled={exporting || !screens.length}
           >
             <Download className="size-4" /> Export all
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportAppleZip}
+            disabled={exporting || !screens.length}
+            title="Every App Store size, every locale, flattened to RGB"
+          >
+            <Download className="size-4" /> Apple export
           </Button>
         </div>
       </header>

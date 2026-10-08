@@ -8,12 +8,14 @@ import {
   TEMPLATE_LABELS,
   type TemplateId,
 } from "@/lib/templates";
-import { generateSchema } from "@/lib/validation";
+import { generateSchema, deriveSchema } from "@/lib/validation";
 import {
   addAsset,
   createProject,
   deleteScreen,
   exportZip,
+  exportAppleZip,
+  deriveScreens,
   generateScreens,
   getProject,
   getScreen,
@@ -309,6 +311,53 @@ const handler = createMcpHandler(
         const url = await storeFile({
           dir: `exports/${p.id}`,
           name: `${p.slug}-${locale ?? "all"}-${device ?? "all"}.zip`,
+          data: zip,
+          contentType: "application/zip",
+        });
+        return text({ url: origin() + url, bytes: zip.length });
+      },
+    );
+
+    server.registerTool(
+      "derive_screens",
+      {
+        title: "Derive iPad or iPhone Duo screens",
+        description:
+          "Rebuild an existing iPhone screen set on another device: to='ipad' re-lays each screen's title/subtitle/screenshot out on ipad-13; to='duo-outer'/'duo-inner' re-lay it on the iPhone Duo's outer or inner display (there's no Duo simulator, so the iPhone screenshot is shown letterboxed, not cropped). " +
+          "Writes to its own device id (ipad-13, iphone-duo-outer, iphone-duo-inner) so the source set is untouched. Defaults to every locale the source device has.",
+        inputSchema: deriveSchema.extend({ project: z.string() }),
+      },
+      async ({ project, ...input }) => {
+        const p = await getProject(project);
+        const rows = await deriveScreens(p.id, {
+          ...input,
+          from: { device: input.from.device as DeviceId },
+        });
+        return text({
+          created: rows.map((s) => ({
+            id: s.id,
+            locale: s.locale,
+            device: s.device,
+            position: s.position,
+          })),
+        });
+      },
+    );
+
+    server.registerTool(
+      "export_apple_zip",
+      {
+        title: "Export Apple App Store ZIP",
+        description:
+          "Render every App Store size for every locale (iPhone 6.9/6.5, iPad 13 and duo variants where present) flattened to RGB at the exact store pixel size, and return a download URL for the ZIP (includes a README mapping folders to App Store Connect slots).",
+        inputSchema: z.object({ project: z.string() }),
+      },
+      async ({ project }) => {
+        const p = await getProject(project);
+        const zip = await exportAppleZip(p.id);
+        const url = await storeFile({
+          dir: `exports/${p.id}`,
+          name: `${p.slug}-appstore.zip`,
           data: zip,
           contentType: "application/zip",
         });
