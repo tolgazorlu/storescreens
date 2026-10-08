@@ -13,6 +13,7 @@ export type TemplateId =
   | "feature-list"
   | "two-phones"
   | "duo"
+  | "pair"
   | "plain"
   | "text-only";
 
@@ -25,6 +26,7 @@ export const TEMPLATE_IDS: TemplateId[] = [
   "feature-list",
   "two-phones",
   "duo",
+  "pair",
   "plain",
   "text-only",
 ];
@@ -38,6 +40,7 @@ export const TEMPLATE_LABELS: Record<TemplateId, string> = {
   "feature-list": "Title + 3 bullet rows, phone below",
   "two-phones": "Two phones, one tilted",
   duo: "Two phones side by side, one tilted",
+  pair: "Two iPhones, wide canvas",
   plain: "Phone only",
   "text-only": "Text only (no mockup)",
 };
@@ -386,6 +389,45 @@ export function buildScene(
       layers.push(
         mockup(frontX, frontY, mwFront, 4, p.screenshot2 ?? p.screenshot),
       );
+      break;
+    }
+    case "pair": {
+      // Wide canvases (iPad, iPhone Duo) for an iPhone-only app: two iPhone
+      // frames side by side so the screenshots keep their real aspect and the
+      // canvas has no empty side bands or letterboxing.
+      layers.push(title("center"));
+      const subH = p.subtitle ? subSize * 3 : 0;
+      if (p.subtitle)
+        layers.push(
+          sub(p.subtitle, pad, titleY + titleH, W - pad * 2, "center"),
+        );
+      const top = titleY + titleH + subH + Math.round(H * 0.025);
+      const gap = Math.round(W * 0.045);
+      const availH = H - top - Math.round(H * 0.035);
+      const mw = Math.min(
+        Math.floor((W - pad * 1.2 - gap) / 2),
+        Math.floor(availH / PHONE_ASPECT),
+      );
+      const mh = Math.round(mw * PHONE_ASPECT);
+      const x0 = Math.round((W - (mw * 2 + gap)) / 2);
+      const y0 = Math.round(top + (availH - mh) / 2);
+      const phone = (x: number, src: string | null | undefined): Layer => ({
+        id: uid("m"),
+        type: "mockup",
+        frame: "iphone",
+        src: src ?? null,
+        frameColor: brand.frameColor,
+        shadow: true,
+        x,
+        y: y0,
+        w: mw,
+        h: mh,
+        rotation: 0,
+        opacity: 1,
+        locked: false,
+      });
+      layers.push(phone(x0, p.screenshot));
+      layers.push(phone(x0 + mw + gap, p.screenshot2 ?? p.screenshot));
       break;
     }
     case "plain": {

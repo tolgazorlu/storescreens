@@ -814,10 +814,14 @@ export async function deriveScreens(
       );
     const rows = src.map((s, i) => {
       const style = extractScreenStyle(s.scene);
-      let scene = buildScene(targetDevice, "title-top", {
+      // Pair each screenshot with the next one (wrapping) so wide canvases
+      // show two real-aspect iPhones instead of a letterboxed device.
+      const next = extractScreenStyle(src[(i + 1) % src.length].scene);
+      let scene = buildScene(targetDevice, "pair", {
         title: style.title,
         subtitle: style.subtitle,
         screenshot: style.screenshot,
+        screenshot2: src.length > 1 ? next.screenshot : style.screenshot,
         brand: style.brand,
       });
       scene = patchSubtitleStyle(scene, style);
