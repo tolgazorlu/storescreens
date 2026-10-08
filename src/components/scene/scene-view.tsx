@@ -321,6 +321,16 @@ function BidiText({
   );
 }
 
+function darken(hex: string, factor: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const r = Math.round(((n >> 16) & 0xff) * factor);
+  const g = Math.round(((n >> 8) & 0xff) * factor);
+  const b = Math.round((n & 0xff) * factor);
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
 function MockupView({
   layer,
   resolveSrc,
@@ -331,11 +341,24 @@ function MockupView({
   const w = layer.w;
   const h = layer.h;
   const isTablet = layer.frame === "ipad";
-  const bezel = Math.round(w * (isTablet ? 0.045 : 0.032));
-  const outerRadius = Math.round(w * (isTablet ? 0.07 : 0.165));
+  const isDuoOuter = layer.frame === "duo-outer";
+  const isDuoInner = layer.frame === "duo-inner";
+  // iPad Pro: thin uniform bezel, large corner radius, no home button.
+  // Duo outer: compact cover display, thin bezel, big radius, pill camera.
+  // Duo inner: unfolded panel, very thin even bezel, faint fold crease.
+  const bezel = Math.round(
+    w * (isTablet ? 0.022 : isDuoOuter ? 0.035 : isDuoInner ? 0.02 : 0.032),
+  );
+  const outerRadius = Math.round(
+    w * (isTablet ? 0.09 : isDuoOuter ? 0.12 : isDuoInner ? 0.1 : 0.165),
+  );
   const innerRadius = Math.max(0, outerRadius - bezel);
   const screenW = w - bezel * 2;
   const screenH = h - bezel * 2;
+  // No real in-app screenshot exists at the Duo's (or an unsupported iPad)
+  // aspect ratio: show the iPhone-shaped capture at its own aspect,
+  // letterboxed, instead of cropping it with cover.
+  const letterbox = isTablet || isDuoOuter || isDuoInner;
   const frameStyle: CSSProperties = {
     width: w,
     height: h,
@@ -346,6 +369,15 @@ function MockupView({
   };
   if (layer.shadow)
     frameStyle.boxShadow = `0 ${Math.round(w * 0.04)}px ${Math.round(w * 0.05)}px rgba(0,0,0,0.35)`;
+  if (isTablet || isDuoOuter || isDuoInner)
+    // Subtle edge highlight so the flat aluminum bezel reads as a frame,
+    // not a flat color block.
+    frameStyle.boxShadow = [
+      frameStyle.boxShadow,
+      "inset 0 0 0 1px rgba(255,255,255,0.12)",
+    ]
+      .filter(Boolean)
+      .join(", ");
 
   return (
     <div style={{ ...layerBox(layer) }}>
@@ -358,9 +390,11 @@ function MockupView({
             width: screenW,
             height: screenH,
             display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             overflow: "hidden",
             borderRadius: innerRadius,
-            background: "#e5e5e5",
+            background: letterbox ? darken(layer.frameColor, 0.75) : "#e5e5e5",
           }}
         >
           {layer.src ? (
@@ -370,10 +404,29 @@ function MockupView({
               alt=""
               width={screenW}
               height={screenH}
-              style={{ width: screenW, height: screenH, objectFit: "cover" }}
+              style={{
+                width: screenW,
+                height: screenH,
+                objectFit: letterbox ? "contain" : "cover",
+              }}
             />
           ) : (
             <Placeholder w={screenW} h={screenH} />
+          )}
+          {isDuoInner && (
+            // Faint vertical fold crease down the middle of the unfolded panel.
+            <div
+              style={{
+                position: "absolute",
+                left: Math.round(screenW / 2 - screenW * 0.004),
+                top: 0,
+                width: Math.round(screenW * 0.008),
+                height: screenH,
+                display: "flex",
+                background:
+                  "linear-gradient(90deg, rgba(0,0,0,0), rgba(0,0,0,0.18), rgba(0,0,0,0))",
+              }}
+            />
           )}
         </div>
         {layer.frame === "iphone" && (
@@ -387,6 +440,48 @@ function MockupView({
               display: "flex",
               background: "#000",
               borderRadius: Math.round(w * 0.05),
+            }}
+          />
+        )}
+        {layer.frame === "ipad" && (
+          <div
+            style={{
+              position: "absolute",
+              left: Math.round((w - w * 0.016) / 2),
+              top: Math.round(bezel / 2 - w * 0.008),
+              width: Math.round(w * 0.016),
+              height: Math.round(w * 0.016),
+              display: "flex",
+              background: "#000",
+              borderRadius: Math.round(w * 0.016),
+            }}
+          />
+        )}
+        {isDuoOuter && (
+          <div
+            style={{
+              position: "absolute",
+              left: Math.round((w - w * 0.16) / 2),
+              top: Math.round(bezel / 2 - w * 0.022),
+              width: Math.round(w * 0.16),
+              height: Math.round(w * 0.044),
+              display: "flex",
+              background: "#000",
+              borderRadius: Math.round(w * 0.022),
+            }}
+          />
+        )}
+        {isDuoInner && (
+          <div
+            style={{
+              position: "absolute",
+              left: Math.round((w - w * 0.014) / 2),
+              top: Math.round(bezel / 2 - w * 0.007),
+              width: Math.round(w * 0.014),
+              height: Math.round(w * 0.014),
+              display: "flex",
+              background: "#000",
+              borderRadius: Math.round(w * 0.014),
             }}
           />
         )}

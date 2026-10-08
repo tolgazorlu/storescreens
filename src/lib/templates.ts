@@ -12,6 +12,7 @@ export type TemplateId =
   | "split"
   | "feature-list"
   | "two-phones"
+  | "duo"
   | "plain"
   | "text-only";
 
@@ -23,6 +24,7 @@ export const TEMPLATE_IDS: TemplateId[] = [
   "split",
   "feature-list",
   "two-phones",
+  "duo",
   "plain",
   "text-only",
 ];
@@ -35,6 +37,7 @@ export const TEMPLATE_LABELS: Record<TemplateId, string> = {
   split: "Title left, phone right (cropped)",
   "feature-list": "Title + 3 bullet rows, phone below",
   "two-phones": "Two phones, one tilted",
+  duo: "Two phones side by side, one tilted",
   plain: "Phone only",
   "text-only": "Text only (no mockup)",
 };
@@ -92,7 +95,12 @@ export function buildScene(
   const subSize = Math.round(W * 0.038);
   const layers: Layer[] = [];
   const isTablet = device.frame === "ipad";
-  const mockAspect = isTablet ? 1.36 : PHONE_ASPECT;
+  const isDuo = device.frame === "duo-outer" || device.frame === "duo-inner";
+  const mockAspect = isTablet
+    ? 1.36
+    : isDuo
+      ? device.height / device.width
+      : PHONE_ASPECT;
   const dy = Math.round(H * phoneOffsetY);
 
   const text = (
@@ -241,8 +249,27 @@ export function buildScene(
         layers.push(
           sub(p.subtitle, pad, titleY + titleH, W - pad * 2, "center"),
         );
-      const mw = Math.round(W * 0.78);
-      layers.push(mockup(Math.round((W - mw) / 2), Math.round(H * 0.34), mw));
+      if (isTablet || isDuo) {
+        // Non-phone aspect ratios (iPad, Duo outer/inner) are too short
+        // relative to their width for the phone template's fixed
+        // fractions: size the device by the space actually left under
+        // the title so it never overflows the canvas.
+        const headerBottom =
+          titleY + titleH + Math.round(W * (p.subtitle ? 0.14 : 0.04));
+        const bottomMargin = Math.round(H * 0.05);
+        const availH = Math.max(
+          Math.round(H * 0.3),
+          H - headerBottom - bottomMargin,
+        );
+        const maxW = Math.round(W * 0.82);
+        const mw = Math.min(maxW, Math.round(availH / mockAspect));
+        layers.push(mockup(Math.round((W - mw) / 2), headerBottom, mw));
+      } else {
+        const mw = Math.round(W * 0.78);
+        layers.push(
+          mockup(Math.round((W - mw) / 2), Math.round(H * 0.34), mw),
+        );
+      }
       break;
     }
     case "caption-bottom": {
@@ -337,6 +364,28 @@ export function buildScene(
         ),
       );
       layers.push(mockup(Math.round(W * 0.02), Math.round(H * 0.46), mw, -6));
+      break;
+    }
+    case "duo": {
+      // Two upright phones side by side: a larger one in front (raised,
+      // overlapping to the right) and a smaller one behind (lower, to the
+      // left). Fractions of H keep both fully on-canvas across aspect
+      // ratios (iPhone ~2.05, iPad ~1.36).
+      layers.push(title("center"));
+      if (p.subtitle)
+        layers.push(
+          sub(p.subtitle, pad, titleY + titleH, W - pad * 2, "center"),
+        );
+      const mwBack = Math.round(W * 0.5);
+      const mwFront = Math.round(W * 0.62);
+      const backX = Math.round(W * 0.08);
+      const backY = Math.round(H * 0.4);
+      const frontX = Math.round(W - mwFront - W * 0.06);
+      const frontY = Math.round(H * 0.32);
+      layers.push(mockup(backX, backY, mwBack, -4, p.screenshot));
+      layers.push(
+        mockup(frontX, frontY, mwFront, 4, p.screenshot2 ?? p.screenshot),
+      );
       break;
     }
     case "plain": {

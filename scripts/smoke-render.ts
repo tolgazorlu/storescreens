@@ -84,6 +84,34 @@ async function main() {
       await writeFile(path.join(REF, `wise-${id}.png`), png);
     console.log(`wise-${id}`, png.length, "bytes", Date.now() - t0, "ms");
   }
+
+  // iPad / Duo frames: title-top must size the device from available
+  // space, not overflow the canvas (see templates.ts "compact" branch).
+  for (const id of ["ipad-13", "iphone-duo-outer", "iphone-duo-inner"] as const) {
+    const scene = buildScene(DEVICES[id], "title-top", {
+      title: "FİYAT LİSTEN\nTEK ADIMDA",
+      subtitle:
+        "Excel’den içe aktar, stok ve maliyetle birlikte. 2.000 ürüne kadar.",
+      brand: { background: { type: "solid", color: "#9FE870" }, textColor: "#163300" },
+      screenshot:
+        "https://raw.githubusercontent.com/github/explore/main/topics/react/react.png",
+    });
+    const overflow =
+      scene.layers.some(
+        (l) => l.type === "mockup" && l.y + l.h > scene.height,
+      );
+    const png = await renderSceneToPng(scene);
+    await writeFile(path.join(OUT, `screeny-${id}.png`), png);
+    console.log(
+      id,
+      png.length,
+      "bytes",
+      overflow ? "OVERFLOW!" : "fits",
+      Date.now() - t0,
+      "ms",
+    );
+    if (overflow) throw new Error(`${id}: mockup overflows the canvas`);
+  }
 }
 main().catch((e) => {
   console.error(e);
