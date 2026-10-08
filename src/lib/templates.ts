@@ -1,3 +1,4 @@
+import { bezelFor } from "@/lib/bezels";
 import type { Device } from "./devices";
 import type { Scene, Layer, Background, TextLayer } from "./scene";
 import { uid } from "./scene";
@@ -99,11 +100,14 @@ export function buildScene(
   const layers: Layer[] = [];
   const isTablet = device.frame === "ipad";
   const isDuo = device.frame === "duo-outer" || device.frame === "duo-inner";
-  const mockAspect = isTablet
-    ? 1.36
-    : isDuo
-      ? device.height / device.width
-      : PHONE_ASPECT;
+  const bz = bezelFor(device.frame);
+  const mockAspect = bz
+    ? bz.height / bz.width
+    : isTablet
+      ? 1.36
+      : isDuo
+        ? device.height / device.width
+        : PHONE_ASPECT;
   const dy = Math.round(H * phoneOffsetY);
 
   const text = (

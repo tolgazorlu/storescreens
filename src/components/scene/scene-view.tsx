@@ -1,3 +1,4 @@
+import { bezelFor, type Bezel } from "@/lib/bezels";
 import type { CSSProperties } from "react";
 import type { Scene, Layer, MockupLayer, TextLayer } from "@/lib/scene";
 import { backgroundCss } from "@/lib/scene";
@@ -331,6 +332,71 @@ function darken(hex: string, factor: number): string {
   return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 }
 
+/** Official Apple bezel PNG over the screenshot, which fills the screen hole. */
+function BezelMockup({
+  layer,
+  bezel,
+  resolveSrc,
+}: {
+  layer: MockupLayer;
+  bezel: Bezel;
+  resolveSrc: (s: string) => string;
+}) {
+  const sx = layer.w / bezel.width;
+  const sy = layer.h / bezel.height;
+  const hx = Math.round(bezel.hole.x * sx);
+  const hy = Math.round(bezel.hole.y * sy);
+  const hw = Math.round(bezel.hole.w * sx);
+  const hh = Math.round(bezel.hole.h * sy);
+  const fit = layer.screenFit === "contain" ? "contain" : "cover";
+  return (
+    <div style={{ ...layerBox(layer) }}>
+      <div
+        style={{
+          width: layer.w,
+          height: layer.h,
+          display: "flex",
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            left: hx,
+            top: hy,
+            width: hw,
+            height: hh,
+            display: "flex",
+            overflow: "hidden",
+            background: "#000000",
+          }}
+        >
+          {layer.src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={resolveSrc(layer.src)}
+              alt=""
+              width={hw}
+              height={hh}
+              style={{ width: hw, height: hh, objectFit: fit, objectPosition: "top" }}
+            />
+          ) : (
+            <Placeholder w={hw} h={hh} />
+          )}
+        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={resolveSrc(bezel.file)}
+          alt=""
+          width={layer.w}
+          height={layer.h}
+          style={{ position: "absolute", left: 0, top: 0, width: layer.w, height: layer.h }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function MockupView({
   layer,
   resolveSrc,
@@ -340,6 +406,8 @@ function MockupView({
 }) {
   const w = layer.w;
   const h = layer.h;
+  const bezel_ = bezelFor(layer.frame);
+  if (bezel_) return <BezelMockup layer={layer} bezel={bezel_} resolveSrc={resolveSrc} />;
   const isTablet = layer.frame === "ipad";
   const isDuoOuter = layer.frame === "duo-outer";
   const isDuoInner = layer.frame === "duo-inner";
@@ -358,7 +426,10 @@ function MockupView({
   // No real in-app screenshot exists at the Duo's (or an unsupported iPad)
   // aspect ratio: show the iPhone-shaped capture at its own aspect,
   // letterboxed, instead of cropping it with cover.
-  const letterbox = isTablet || isDuoOuter || isDuoInner;
+  const fitMode = layer.screenFit ?? "auto";
+  const letterbox =
+    fitMode === "contain" ||
+    (fitMode === "auto" && (isTablet || isDuoOuter || isDuoInner));
   const frameStyle: CSSProperties = {
     width: w,
     height: h,

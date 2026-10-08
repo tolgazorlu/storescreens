@@ -9,6 +9,7 @@ import { fitScene } from "@/lib/fit";
 import { SceneView, TextContent } from "@/components/scene/scene-view";
 import { readFileBytes } from "@/lib/storage";
 import { FONTS, FONT_WEIGHTS, fontFile } from "@/lib/fonts";
+import { bezelFor } from "@/lib/bezels";
 
 let fontsPromise: Promise<Font[]> | null = null;
 
@@ -51,6 +52,17 @@ async function inlineImages(scene: Scene): Promise<Map<string, string>> {
     if ((l.type === "image" || l.type === "mockup") && l.src) srcs.add(l.src);
   }
   const map = new Map<string, string>();
+  const bezels = new Set<string>();
+  for (const l of scene.layers) {
+    const b = l.type === "mockup" ? bezelFor(l.frame) : undefined;
+    if (b) bezels.add(b.file);
+  }
+  await Promise.all(
+    [...bezels].map(async (file) => {
+      const bytes = await readFile(path.join(process.cwd(), "public", file));
+      map.set(file, `data:image/png;base64,${bytes.toString("base64")}`);
+    }),
+  );
   await Promise.all(
     [...srcs].map(async (src) => {
       if (src.startsWith("data:")) return map.set(src, src);

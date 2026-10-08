@@ -57,6 +57,8 @@ export const mockupLayerSchema = base.extend({
   src: z.string().nullable().default(null),
   frameColor: z.string().default("#111111"),
   shadow: z.boolean().default(true),
+  /** auto: cover on iPhone/Android, contain (letterbox) on iPad/Duo. Use cover for native captures. */
+  screenFit: z.enum(["auto", "cover", "contain"]).optional(),
 });
 
 export const iconLayerSchema = base.extend({
