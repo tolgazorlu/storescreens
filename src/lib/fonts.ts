@@ -27,6 +27,28 @@ export type FontFamily = {
 
 export const FONTS: FontFamily[] = [
   { id: "inter", name: "Inter", file: "Inter", scripts: ["latin"] },
+  // Display/business families. Static instances cut from the Google Fonts
+  // variable TTFs with fontTools (satori cannot read variable fonts).
+  { id: "archivo", name: "Archivo", file: "Archivo", scripts: ["latin"] },
+  {
+    id: "archivo-semiexpanded",
+    name: "Archivo SemiExpanded",
+    file: "ArchivoSemiExpanded",
+    scripts: ["latin"],
+  },
+  {
+    id: "plus-jakarta-sans",
+    name: "Plus Jakarta Sans",
+    file: "PlusJakartaSans",
+    scripts: ["latin"],
+  },
+  {
+    id: "bricolage-grotesque",
+    name: "Bricolage Grotesque",
+    file: "BricolageGrotesque",
+    scripts: ["latin"],
+  },
+  { id: "cairo", name: "Cairo", file: "Cairo", scripts: ["arabic", "latin"] },
   {
     id: "noto-sans-arabic",
     name: "Noto Sans Arabic",
