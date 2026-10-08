@@ -812,18 +812,34 @@ export async function deriveScreens(
           eq(screens.device, targetDeviceId),
         ),
       );
-    const rows = src.map((s, i) => {
+    // Native captures for the target device win over the iPhone screenshot:
+    // assets named "<device>-<locale>-<NN>.png" (NN = 01-based position).
+    const assets = await listAssets(p.id);
+    const nativeFor = (i: number) => {
+      const name = `${targetDeviceId}-${locale}-${String(i + 1).padStart(2, "0")}.png`;
+      return assets.find((a) => a.name === name)?.url ?? null;
+    };
+    // When native captures exist for this device, only derive the screens
+    // that have one; a letterboxed iPhone shot would look out of place.
+    const hasNative = src.some((_, i) => nativeFor(i));
+    const picked = src
+      .map((s, i) => ({ s, native: nativeFor(i) }))
+      .filter((x) => !hasNative || x.native);
+    const rows = picked.map(({ s, native }, i) => {
       const style = extractScreenStyle(s.scene);
-      // Pair each screenshot with the next one (wrapping) so wide canvases
-      // show two real-aspect iPhones instead of a letterboxed device.
-      const next = extractScreenStyle(src[(i + 1) % src.length].scene);
-      let scene = buildScene(targetDevice, "pair", {
+      let scene = buildScene(targetDevice, "title-top", {
         title: style.title,
         subtitle: style.subtitle,
-        screenshot: style.screenshot,
-        screenshot2: src.length > 1 ? next.screenshot : style.screenshot,
+        screenshot: native ?? style.screenshot,
         brand: style.brand,
       });
+      if (native)
+        scene = {
+          ...scene,
+          layers: scene.layers.map((l) =>
+            l.type === "mockup" ? { ...l, screenFit: "cover" as const } : l,
+          ),
+        };
       scene = patchSubtitleStyle(scene, style);
       return {
         projectId: p.id,
