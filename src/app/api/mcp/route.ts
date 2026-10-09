@@ -15,6 +15,7 @@ import {
   deleteScreen,
   exportZip,
   exportAppleZip,
+  exportCreativeZip,
   deriveScreens,
   generateScreens,
   getProject,
@@ -358,6 +359,26 @@ const handler = createMcpHandler(
         const url = await storeFile({
           dir: `exports/${p.id}`,
           name: `${p.slug}-appstore.zip`,
+          data: zip,
+          contentType: "application/zip",
+        });
+        return text({ url: origin() + url, bytes: zip.length });
+      },
+    );
+    server.registerTool(
+      "export_creative_zip",
+      {
+        title: "Export App Store creative assets ZIP",
+        description:
+          "Render the project's App Store creative assets (devices appstore-header 3840x1646, appstore-search 3840x2560, appstore-universal 5244x2950; generate them with template 'creative') per locale as RGB PNGs and return a download URL.",
+        inputSchema: z.object({ project: z.string() }),
+      },
+      async ({ project }) => {
+        const p = await getProject(project);
+        const zip = await exportCreativeZip(p.id);
+        const url = await storeFile({
+          dir: `exports/${p.id}`,
+          name: `${p.slug}-creative-assets.zip`,
           data: zip,
           contentType: "application/zip",
         });

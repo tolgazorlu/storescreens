@@ -41,7 +41,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { api } from "@/lib/fetcher";
-import { DEVICES, DEVICE_IDS, type DeviceId } from "@/lib/devices";
+import { DEVICES, DEVICE_IDS, isCreative, type DeviceId } from "@/lib/devices";
 import type { Scene, Layer } from "@/lib/scene";
 import { Canvas, type CanvasOverlays } from "./canvas";
 import { GridView } from "./grid-view";
@@ -256,6 +256,26 @@ export function Editor({
       a.click();
       URL.revokeObjectURL(a.href);
       toast.success("ZIP downloaded", { id: t });
+    } catch (e) {
+      toast.error((e as Error).message, { id: t });
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function exportCreativeZip() {
+    setExporting(true);
+    const t = toast.loading("Building creative assets ZIP");
+    try {
+      const res = await fetch(`/api/projects/${project.id}/export/creative`);
+      if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${project.slug}-creative-assets.zip`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast.success("Creative assets downloaded", { id: t });
     } catch (e) {
       toast.error((e as Error).message, { id: t });
     } finally {
@@ -688,6 +708,17 @@ export function Editor({
             title="Every App Store size, every locale, flattened to RGB"
           >
             <Download className="size-4" /> Apple export
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportCreativeZip}
+            disabled={
+              exporting || !screens.some((s) => isCreative(s.device))
+            }
+            title="Product page header, search result and universal assets (iOS 27+)"
+          >
+            <Download className="size-4" /> Creative export
           </Button>
         </div>
       </header>
