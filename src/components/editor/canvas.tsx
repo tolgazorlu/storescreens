@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Scene, Layer } from "@/lib/scene";
 import { backgroundCss } from "@/lib/scene";
+import { safeAreaForSize } from "@/lib/devices";
 import { LayerView } from "@/components/scene/scene-view";
 
 export type CanvasOverlays = {
@@ -199,6 +200,8 @@ export function Canvas({
 
   const sel = scene.layers.find((l) => l.id === selected);
   const pad = Math.round(scene.width * 0.06);
+  // Creative assets: Apple's Art Safe Area from the official template.
+  const artSafe = safeAreaForSize(scene.width, scene.height);
 
   return (
     <div ref={wrap} className="relative h-full w-full overflow-auto">
@@ -242,11 +245,13 @@ export function Canvas({
               <div
                 style={{
                   position: "absolute",
-                  left: pad,
-                  top: pad,
-                  width: scene.width - pad * 2,
-                  height: scene.height - pad * 2,
-                  border: `${1 / scale}px dashed rgba(255,255,255,0.35)`,
+                  left: artSafe?.x ?? pad,
+                  top: artSafe?.y ?? pad,
+                  width: artSafe?.w ?? scene.width - pad * 2,
+                  height: artSafe?.h ?? scene.height - pad * 2,
+                  border: artSafe
+                    ? `${2 / scale}px solid rgba(80,255,80,0.8)`
+                    : `${1 / scale}px dashed rgba(255,255,255,0.35)`,
                   pointerEvents: "none",
                 }}
               />

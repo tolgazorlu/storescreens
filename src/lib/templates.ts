@@ -15,6 +15,7 @@ export type TemplateId =
   | "two-phones"
   | "duo"
   | "pair"
+  | "creative"
   | "plain"
   | "text-only";
 
@@ -28,6 +29,7 @@ export const TEMPLATE_IDS: TemplateId[] = [
   "two-phones",
   "duo",
   "pair",
+  "creative",
   "plain",
   "text-only",
 ];
@@ -42,6 +44,7 @@ export const TEMPLATE_LABELS: Record<TemplateId, string> = {
   "two-phones": "Two phones, one tilted",
   duo: "Two phones side by side, one tilted",
   pair: "Two iPhones, wide canvas",
+  creative: "Creative asset: title, hero, side images",
   plain: "Phone only",
   "text-only": "Text only (no mockup)",
 };
@@ -58,6 +61,10 @@ export type TemplateParams = {
   screenshot?: string | null;
   /** Second screenshot for two-phones. */
   screenshot2?: string | null;
+  /** Third image (creative template: right side). */
+  screenshot3?: string | null;
+  /** width/height of screenshot, lets layouts place neighbours next to its real edges. */
+  screenshotAspect?: number;
   logo?: string | null;
   bullets?: Bullet[];
   brand?: Partial<Brand>;
@@ -432,6 +439,68 @@ export function buildScene(
       });
       layers.push(phone(x0, p.screenshot));
       layers.push(phone(x0 + mw + gap, p.screenshot2 ?? p.screenshot));
+      break;
+    }
+    case "creative": {
+      // App Store creative asset (header / search / universal). Title + hero
+      // stay inside Apple's Art Safe Area; side images (screenshot2/3) sit at
+      // the hero's height just outside it and may be cropped on narrow
+      // devices, so they must be decorative, not essential.
+      const sa = device.safeArea ?? {
+        x: Math.round(W * 0.2),
+        y: Math.round(H * 0.2),
+        w: Math.round(W * 0.6),
+        h: Math.round(H * 0.6),
+      };
+      const tSize = Math.round(sa.h * 0.135 * titleScale);
+      const tH = Math.round(tSize * 1.3);
+      layers.push(
+        text(p.title ?? "Headline", {
+          x: sa.x - Math.round(sa.w * 0.15),
+          y: sa.y,
+          w: Math.round(sa.w * 1.3),
+          h: tH,
+          fontSize: tSize,
+          align: "center",
+          lineHeight: 1.1,
+          minFontSize: Math.round(tSize * 0.6),
+        }),
+      );
+      const heroY = sa.y + tH + Math.round(sa.h * 0.06);
+      const heroH = sa.y + sa.h - heroY;
+      const img = (
+        src: string | null | undefined,
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+      ): Layer => ({
+        id: uid("i"),
+        type: "image",
+        src: src ?? "",
+        fit: "contain",
+        radius: 0,
+        x: Math.round(x),
+        y: Math.round(y),
+        w: Math.round(w),
+        h: Math.round(h),
+        rotation: 0,
+        opacity: 1,
+        locked: false,
+      });
+      if (p.screenshot) layers.push(img(p.screenshot, sa.x, heroY, sa.w, heroH));
+      // Side boxes: same height as the hero, square-ish (widgets, icons).
+      const heroW = Math.min(
+        sa.w,
+        p.screenshotAspect ? heroH * p.screenshotAspect : sa.w,
+      );
+      const heroL = sa.x + (sa.w - heroW) / 2;
+      const gap = Math.round(heroH * 0.12);
+      const sideW = Math.min(heroH, heroL - gap - Math.round(W * 0.02));
+      if (p.screenshot2 && sideW > 0)
+        layers.push(img(p.screenshot2, heroL - gap - sideW, heroY, sideW, heroH));
+      if (p.screenshot3 && sideW > 0)
+        layers.push(img(p.screenshot3, heroL + heroW + gap, heroY, sideW, heroH));
       break;
     }
     case "plain": {

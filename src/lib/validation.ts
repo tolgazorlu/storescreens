@@ -17,6 +17,7 @@ export const screenSpecSchema = z.object({
   subtitle: localized.optional(),
   screenshot: localized.nullable().optional(),
   screenshot2: localized.nullable().optional(),
+  screenshot3: localized.nullable().optional(),
   bullets: z.array(bulletSchema).max(4).optional(),
   titleScale: z.number().min(0.3).max(3).optional(),
   phoneScale: z.number().min(0.3).max(3).optional(),
