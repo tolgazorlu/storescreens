@@ -456,9 +456,9 @@ export function buildScene(
       const tH = Math.round(tSize * 1.3);
       layers.push(
         text(p.title ?? "Headline", {
-          x: sa.x - Math.round(sa.w * 0.15),
+          x: sa.x,
           y: sa.y,
-          w: Math.round(sa.w * 1.3),
+          w: sa.w,
           h: tH,
           fontSize: tSize,
           align: "center",
