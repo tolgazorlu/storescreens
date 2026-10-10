@@ -771,7 +771,7 @@ function Num({
         lang="en"
         step={step}
         value={value}
-        className="h-8 px-2 text-xs"
+        className="h-8 px-2 text-xs tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </Field>
