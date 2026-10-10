@@ -22,6 +22,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Scene, Layer } from "@/lib/scene";
 import { uid } from "@/lib/scene";
 import type { AssetDto } from "./types";
@@ -43,6 +48,14 @@ const ICON = {
   image: ImageIcon,
   rect: Square,
   icon: Sparkles,
+} as const;
+
+const LAYER_NAME = {
+  text: "Text",
+  mockup: "Phone mockup",
+  image: "Image",
+  rect: "Shape",
+  icon: "Icon",
 } as const;
 
 export function Inspector({
@@ -144,16 +157,17 @@ export function Inspector({
             {(["text", "mockup", "image", "icon", "rect"] as const).map((k) => {
               const I = ICON[k];
               return (
-                <Button
-                  key={k}
-                  size="icon"
-                  variant="ghost"
-                  className="size-7"
-                  onClick={() => addLayer(k)}
-                  aria-label={`Add ${k}`}
-                >
-                  <I className="size-3.5" />
-                </Button>
+                <Tip key={k} label={`Add ${LAYER_NAME[k].toLowerCase()}`}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-7"
+                    onClick={() => addLayer(k)}
+                    aria-label={`Add ${LAYER_NAME[k].toLowerCase()}`}
+                  >
+                    <I className="size-3.5" />
+                  </Button>
+                </Tip>
               );
             })}
           </div>
@@ -266,52 +280,60 @@ export function Inspector({
               {layer.type}
             </span>
             <div className="flex gap-0.5">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="size-7"
-                onClick={() => moveLayer(layer.id, 1)}
-                aria-label="Bring forward"
-              >
-                <ArrowUp className="size-3.5" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="size-7"
-                onClick={() => moveLayer(layer.id, -1)}
-                aria-label="Send backward"
-              >
-                <ArrowDown className="size-3.5" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="size-7"
-                onClick={() => onLayer(layer.id, { locked: !layer.locked })}
-                aria-label="Lock"
-              >
-                {layer.locked ? (
-                  <Lock className="size-3.5" />
-                ) : (
-                  <Unlock className="size-3.5" />
-                )}
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="size-7"
-                onClick={() => {
-                  onScene((s) => ({
-                    ...s,
-                    layers: s.layers.filter((l) => l.id !== layer.id),
-                  }));
-                  onSelect(null);
-                }}
-                aria-label="Delete layer"
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
+              <Tip label="Bring forward">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  onClick={() => moveLayer(layer.id, 1)}
+                  aria-label="Bring forward"
+                >
+                  <ArrowUp className="size-3.5" />
+                </Button>
+              </Tip>
+              <Tip label="Send backward">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  onClick={() => moveLayer(layer.id, -1)}
+                  aria-label="Send backward"
+                >
+                  <ArrowDown className="size-3.5" />
+                </Button>
+              </Tip>
+              <Tip label={layer.locked ? "Unlock" : "Lock"}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  onClick={() => onLayer(layer.id, { locked: !layer.locked })}
+                  aria-label={layer.locked ? "Unlock" : "Lock"}
+                >
+                  {layer.locked ? (
+                    <Lock className="size-3.5" />
+                  ) : (
+                    <Unlock className="size-3.5" />
+                  )}
+                </Button>
+              </Tip>
+              <Tip label="Delete layer">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  onClick={() => {
+                    onScene((s) => ({
+                      ...s,
+                      layers: s.layers.filter((l) => l.id !== layer.id),
+                    }));
+                    onSelect(null);
+                  }}
+                  aria-label="Delete layer"
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </Tip>
             </div>
           </div>
 
@@ -724,5 +746,20 @@ function Color({
         className="w-full min-w-0 bg-transparent font-mono text-[11px] uppercase outline-none"
       />
     </div>
+  );
+}
+
+function Tip({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
