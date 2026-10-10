@@ -369,7 +369,7 @@ export function Inspector({
                       onLayer(layer.id, { fontWeight: Number(v) as 400 })
                     }
                   >
-                    <SelectTrigger className="h-7 text-xs">
+                    <SelectTrigger className="h-8 w-full text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -388,7 +388,7 @@ export function Inspector({
                       onLayer(layer.id, { align: v as "left" })
                     }
                   >
-                    <SelectTrigger className="h-7 text-xs">
+                    <SelectTrigger className="h-8 w-full text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -409,7 +409,7 @@ export function Inspector({
                     value={layer.fontFamily}
                     onValueChange={(v) => onLayer(layer.id, { fontFamily: v })}
                   >
-                    <SelectTrigger className="h-7 text-xs">
+                    <SelectTrigger className="h-8 w-full text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -428,7 +428,7 @@ export function Inspector({
                       onLayer(layer.id, { textTransform: v as "none" })
                     }
                   >
-                    <SelectTrigger className="h-7 text-xs">
+                    <SelectTrigger className="h-8 w-full text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -444,7 +444,7 @@ export function Inspector({
                       onLayer(layer.id, { fit: v as "shrink" })
                     }
                   >
-                    <SelectTrigger className="h-7 text-xs">
+                    <SelectTrigger className="h-8 w-full text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -468,7 +468,7 @@ export function Inspector({
                       onLayer(layer.id, { dir: v as "auto" })
                     }
                   >
-                    <SelectTrigger className="h-7 text-xs">
+                    <SelectTrigger className="h-8 w-full text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -504,7 +504,7 @@ export function Inspector({
                     onLayer(layer.id, { frame: v as "iphone" })
                   }
                 >
-                  <SelectTrigger className="h-7 text-xs">
+                  <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -527,7 +527,7 @@ export function Inspector({
                     onLayer(layer.id, { shadow: v === "on" })
                   }
                 >
-                  <SelectTrigger className="h-7 text-xs">
+                  <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -543,7 +543,7 @@ export function Inspector({
                     onLayer(layer.id, { src: v === "__none" ? null : v })
                   }
                 >
-                  <SelectTrigger className="h-7 text-xs">
+                  <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -566,7 +566,7 @@ export function Inspector({
                   value={layer.src}
                   onValueChange={(src) => onLayer(layer.id, { src })}
                 >
-                  <SelectTrigger className="h-7 text-xs">
+                  <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -585,7 +585,7 @@ export function Inspector({
                     onLayer(layer.id, { fit: v as "cover" })
                   }
                 >
-                  <SelectTrigger className="h-7 text-xs">
+                  <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -609,7 +609,7 @@ export function Inspector({
                   value={layer.icon}
                   onValueChange={(icon) => onLayer(layer.id, { icon })}
                 >
-                  <SelectTrigger className="h-7 text-xs">
+                  <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -691,7 +691,7 @@ function Num({
         lang="en"
         step={step}
         value={value}
-        className="h-7 px-1.5 text-xs"
+        className="h-8 px-2 text-xs"
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </Field>
@@ -706,7 +706,7 @@ function Color({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex h-7 items-center gap-1 rounded-md border border-input px-1">
+    <div className="flex h-8 min-w-0 items-center gap-1.5 rounded-md border border-input px-1.5 dark:bg-input/30">
       <input
         type="color"
         value={/^#[0-9a-f]{6}$/i.test(value) ? value : "#000000"}
@@ -716,7 +716,7 @@ function Color({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-transparent font-mono text-[11px] outline-none"
+        className="w-full min-w-0 bg-transparent font-mono text-[11px] uppercase outline-none"
       />
     </div>
   );
