@@ -26,6 +26,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -454,24 +461,20 @@ export function Editor({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {(locales.length ? locales : [locale]).map((l) => (
+            {[...new Set([...locales, locale])].sort().map((l) => (
               <SelectItem key={l} value={l}>
                 {l}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <IconBtn
-          label="Add locale"
-          onClick={() => {
-            const l = prompt("Locale code (e.g. en, tr, de):")
-              ?.trim()
-              .toLowerCase();
-            if (l) setLocale(l);
+        <AddLocale
+          existing={locales}
+          onAdd={(l) => {
+            setLocale(l);
+            setActiveId(null);
           }}
-        >
-          <Plus className="size-4" />
-        </IconBtn>
+        />
         <Select value={device} onValueChange={(v) => setDevice(v as DeviceId)}>
           <SelectTrigger className="h-8 w-auto max-w-60 text-xs">
             <SelectValue>
@@ -940,5 +943,71 @@ function IconBtn({
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>
+  );
+}
+
+/** Small popover that switches the editor to a new locale code. */
+function AddLocale({
+  existing,
+  onAdd,
+}: {
+  existing: string[];
+  onAdd: (locale: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+  const code = value.trim().toLowerCase();
+  const valid = /^[a-z]{2,3}(-[a-z0-9]{2,4})?$/i.test(code);
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) setValue("");
+      }}
+    >
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon-sm" aria-label="Add locale">
+              <Plus className="size-4" />
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Add locale</TooltipContent>
+      </Tooltip>
+      <PopoverContent align="start" className="w-64 p-3">
+        <form
+          className="space-y-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!valid) return;
+            onAdd(code);
+            setOpen(false);
+            setValue("");
+          }}
+        >
+          <Label htmlFor="new-locale" className="text-xs">
+            Locale code
+          </Label>
+          <div className="flex gap-1.5">
+            <Input
+              id="new-locale"
+              autoFocus
+              placeholder="de, pt-br, ar"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              className="h-8 text-sm"
+            />
+            <Button type="submit" size="sm" disabled={!valid}>
+              {existing.includes(code) ? "Open" : "Add"}
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Then generate or add screens for it.
+          </p>
+        </form>
+      </PopoverContent>
+    </Popover>
   );
 }
