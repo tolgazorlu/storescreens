@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, inArray, desc } from "drizzle-orm";
+import { and, asc, eq, inArray, desc, sql } from "drizzle-orm";
 import {
   db,
   dbReady,
@@ -55,6 +55,42 @@ export function slugify(s: string) {
 export async function listProjects() {
   await dbReady;
   return db.select().from(projects).orderBy(desc(projects.updatedAt));
+}
+
+/** Project rows plus what the project list shows: counts, locales and a cover scene. */
+export async function listProjectSummaries() {
+  const rows = await listProjects();
+  const stats = await db
+    .select({
+      projectId: screens.projectId,
+      count: sql<number>`count(*)`,
+      locales: sql<string>`group_concat(distinct ${screens.locale})`,
+    })
+    .from(screens)
+    .groupBy(screens.projectId);
+  const byId = new Map(stats.map((s) => [s.projectId, s]));
+  return Promise.all(
+    rows.map(async (p) => {
+      // Prefer the main iPhone set for the cover, then any portrait screen.
+      const [cover] = await db
+        .select({ scene: screens.scene })
+        .from(screens)
+        .where(eq(screens.projectId, p.id))
+        .orderBy(
+          sql`case when ${screens.device} = 'iphone-6.9' then 0 when ${screens.device} like 'appstore-%' then 2 else 1 end`,
+          asc(screens.locale),
+          asc(screens.position),
+        )
+        .limit(1);
+      const st = byId.get(p.id);
+      return {
+        project: p,
+        screenCount: Number(st?.count ?? 0),
+        locales: st?.locales ? st.locales.split(",").sort() : [],
+        cover: cover?.scene ?? null,
+      };
+    }),
+  );
 }
 
 export async function getProject(idOrSlug: string): Promise<Project> {
