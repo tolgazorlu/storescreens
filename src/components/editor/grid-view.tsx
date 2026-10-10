@@ -30,7 +30,7 @@ export function GridView({
   if (!screens.length)
     return (
       <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        No screens yet.
+        No screens in this set yet.
       </div>
     );
 
@@ -48,6 +48,10 @@ export function GridView({
               key={s.id}
               draggable
               onDragStart={() => setDragId(s.id)}
+              onDragEnd={() => {
+                setDragId(null);
+                setOver(null);
+              }}
               onDragOver={(e) => {
                 e.preventDefault();
                 setOver(s.id);
@@ -55,7 +59,7 @@ export function GridView({
               onDragLeave={() => setOver(null)}
               onDrop={() => drop(s.id)}
               onClick={() => onOpen(s.id)}
-              className={`group relative overflow-hidden rounded-md text-left transition ${s.id === activeId ? "ring-2 ring-foreground" : "ring-1 ring-border hover:ring-muted-foreground"} ${over === s.id && dragId !== s.id ? "ring-2 ring-[#ff3d7f]" : ""}`}
+              className={`group relative overflow-hidden rounded-md text-left transition ${s.id === activeId ? "ring-2 ring-foreground" : "ring-1 ring-border hover:ring-muted-foreground"} ${over === s.id && dragId !== s.id ? "ring-2 ring-foreground/60 ring-offset-2 ring-offset-background" : ""} ${dragId === s.id ? "opacity-40" : ""}`}
               style={{ aspectRatio: `${s.scene.width} / ${s.scene.height}` }}
             >
               <div
