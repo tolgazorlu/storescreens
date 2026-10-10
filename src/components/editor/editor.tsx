@@ -59,6 +59,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { api } from "@/lib/fetcher";
+import { useConfirm } from "@/components/confirm-dialog";
 import { DEVICES, DEVICE_IDS, isCreative, type DeviceId } from "@/lib/devices";
 import type { Scene, Layer } from "@/lib/scene";
 import { Canvas, type CanvasOverlays } from "./canvas";
@@ -95,6 +96,7 @@ export function Editor({
   initialScreens: ScreenDto[];
   initialBrand: Brand;
 }) {
+  const { confirm, dialog } = useConfirm();
   const [brand, setBrand] = useState<Brand>(initialBrand);
   const [brandOpen, setBrandOpen] = useState(false);
   const [assets, setAssets] = useState(initialAssets);
@@ -248,6 +250,13 @@ export function Editor({
   }
   async function remove() {
     if (!active) return;
+    const n = visible.findIndex((x) => x.id === active.id) + 1;
+    const ok = await confirm({
+      title: `Delete screen ${n}?`,
+      description: `Removes it from ${locale} / ${DEVICES[device].label}. Other locales keep their copy.`,
+      confirmLabel: "Delete screen",
+    });
+    if (!ok) return;
     await api(`/api/screens/${active.id}`, { method: "DELETE" });
     setScreens((p) => p.filter((s) => s.id !== active.id));
     setActiveId(null);
@@ -449,6 +458,7 @@ export function Editor({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      {dialog}
       <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/projects" aria-label="Back">
