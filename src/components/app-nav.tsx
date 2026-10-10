@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Plug } from "lucide-react";
+import { LayoutGrid, Moon, Plug, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 import {
   Tooltip,
   TooltipContent,
@@ -42,7 +43,7 @@ export function AppNav() {
             <TooltipTrigger asChild>
               <Link
                 href={href}
-                aria-label={label}
+                aria-label="Toggle theme"
                 aria-current={active ? "page" : undefined}
                 className={`flex size-8 items-center justify-center rounded-md transition-colors ${
                   active
@@ -57,6 +58,28 @@ export function AppNav() {
           </Tooltip>
         );
       })}
+      <ThemeToggle />
     </aside>
+  );
+}
+
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const dark = resolvedTheme !== "light";
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={() => setTheme(dark ? "light" : "dark")}
+          aria-label="Toggle theme"
+          className="mt-auto flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+        >
+          {/* Both icons render; CSS picks one so SSR and client agree. */}
+          <Sun className="hidden size-4 dark:block" />
+          <Moon className="size-4 dark:hidden" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right">Toggle theme</TooltipContent>
+    </Tooltip>
   );
 }
