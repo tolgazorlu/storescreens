@@ -814,18 +814,16 @@ export function Editor({
                   setSelectedLayer(null);
                 }}
                 onReorder={reorder}
-                trailing={
-                  <div className="flex items-center gap-1">
-                    <IconBtn label="Add screen" onClick={addScreen}>
-                      <Plus className="size-4" />
-                    </IconBtn>
-                    <IconBtn label="Duplicate" onClick={duplicate}>
+                onAdd={addScreen}
+                actions={
+                  <>
+                    <IconBtn label="Duplicate screen" onClick={duplicate}>
                       <Copy className="size-4" />
                     </IconBtn>
                     <IconBtn label="Delete screen" onClick={remove}>
                       <Trash2 className="size-4" />
                     </IconBtn>
-                  </div>
+                  </>
                 }
               />
             </>
