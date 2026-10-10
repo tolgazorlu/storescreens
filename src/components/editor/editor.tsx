@@ -8,6 +8,7 @@ import {
   Palette,
   ChevronLeft,
   ChevronDown,
+  MoreHorizontal,
   Apple,
   Image as ImageIcon,
   Download,
@@ -557,35 +558,48 @@ export function Editor({
         </Seg>
 
         <div className="ml-auto flex items-center gap-1">
-          <Seg>
-            <SegBtn
-              label="Propagate layout to other locales"
-              onClick={propagate}
-              disabled={!active?.groupId}
-            >
-              <Languages className="size-4" />
-            </SegBtn>
-            <SegBtn
-              label="Download copy CSV"
-              onClick={() =>
-                window.open(`/api/projects/${project.id}/copy`, "_blank")
-              }
-            >
-              <FileDown className="size-4" />
-            </SegBtn>
-            <SegBtn
-              label="Import copy CSV"
-              onClick={() => {
-                const i = document.createElement("input");
-                i.type = "file";
-                i.accept = ".csv,text/csv";
-                i.onchange = () => i.files?.[0] && importCsv(i.files[0]);
-                i.click();
-              }}
-            >
-              <FileUp className="size-4" />
-            </SegBtn>
-          </Seg>
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm" aria-label="More">
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Copy and locales</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuItem
+                disabled={!active?.groupId}
+                onSelect={propagate}
+              >
+                <Languages />
+                Copy this layout to other locales
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() =>
+                  window.open(`/api/projects/${project.id}/copy`, "_blank")
+                }
+              >
+                <FileDown />
+                Download copy as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  const i = document.createElement("input");
+                  i.type = "file";
+                  i.accept = ".csv,text/csv";
+                  i.onchange = () => i.files?.[0] && importCsv(i.files[0]);
+                  i.click();
+                }}
+              >
+                <FileUp />
+                Import copy from CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant={brandOpen ? "secondary" : "outline"}
             size="sm"
