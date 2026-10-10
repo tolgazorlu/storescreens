@@ -168,12 +168,17 @@ export function Inspector({
     });
   }
 
-  if (!scene) return <aside className="w-64 shrink-0 border-l border-border" />;
+  if (!scene)
+    return (
+      <aside className="flex w-64 shrink-0 items-center justify-center border-l border-border p-6 text-center text-xs text-muted-foreground">
+        Select a screen to edit its layers.
+      </aside>
+    );
 
   return (
     <aside className="flex w-64 shrink-0 flex-col overflow-y-auto border-l border-border text-sm">
-      <section className="border-b border-border p-3">
-        <div className="mb-2 flex items-center justify-between">
+      <section className="border-b border-border">
+        <div className="flex h-11 items-center justify-between border-b border-border pr-2 pl-3">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Layers
           </span>
@@ -196,7 +201,7 @@ export function Inspector({
             })}
           </div>
         </div>
-        <ul className="space-y-0.5">
+        <ul className="max-h-64 space-y-0.5 overflow-y-auto p-2">
           {[...scene.layers].reverse().map((l) => {
             const I = ICON[l.type];
             const label = layerLabel(l, assetName);
