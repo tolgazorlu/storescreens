@@ -98,7 +98,7 @@ export function BrandPanel({
                 value=""
                 onValueChange={(id) => setDraft(applyPreset(id))}
               >
-                <SelectTrigger className="h-8 text-xs">
+                <SelectTrigger className="h-8 w-full text-xs">
                   <SelectValue placeholder="Apply preset" />
                 </SelectTrigger>
                 <SelectContent>
@@ -143,7 +143,7 @@ export function BrandPanel({
                 })
               }
             >
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-8 w-full text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -224,7 +224,7 @@ export function BrandPanel({
               value={draft.fontFamily}
               onValueChange={(fontFamily) => set({ fontFamily })}
             >
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-8 w-full text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -243,7 +243,7 @@ export function BrandPanel({
                 set({ titleWeight: Number(v) as Brand["titleWeight"] })
               }
             >
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-8 w-full text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -260,7 +260,7 @@ export function BrandPanel({
               value={draft.titleCase}
               onValueChange={(v) => set({ titleCase: v as Brand["titleCase"] })}
             >
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-8 w-full text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -339,7 +339,7 @@ function Num({
         lang="en"
         step={step}
         value={value}
-        className="h-8 px-1.5 text-xs"
+        className="h-8 px-2 text-xs"
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </Field>
@@ -354,7 +354,7 @@ function ColorInput({
   onChange: (v: string) => void;
 }) {
   return (
-    <label className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-input px-1.5">
+    <label className="flex h-8 min-w-0 cursor-pointer items-center gap-1.5 rounded-md border border-input px-1.5 dark:bg-input/30">
       <input
         type="color"
         value={/^#[0-9a-f]{6}$/i.test(value) ? value : "#000000"}
@@ -364,7 +364,7 @@ function ColorInput({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-transparent font-mono text-[11px] outline-none"
+        className="w-full min-w-0 bg-transparent font-mono text-[11px] uppercase outline-none"
       />
     </label>
   );
