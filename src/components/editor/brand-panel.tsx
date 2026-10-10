@@ -3,7 +3,6 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -312,12 +311,12 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1">
-      <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+    <label className="block space-y-1">
+      <span className="block text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
         {label}
-      </Label>
+      </span>
       {children}
-    </div>
+    </label>
   );
 }
 
@@ -354,7 +353,7 @@ function ColorInput({
   onChange: (v: string) => void;
 }) {
   return (
-    <label className="flex h-8 min-w-0 cursor-pointer items-center gap-1.5 rounded-md border border-input px-1.5 dark:bg-input/30">
+    <div className="flex h-8 min-w-0 items-center gap-1.5 rounded-md border border-input px-1.5 dark:bg-input/30">
       <input
         type="color"
         value={/^#[0-9a-f]{6}$/i.test(value) ? value : "#000000"}
@@ -366,6 +365,6 @@ function ColorInput({
         onChange={(e) => onChange(e.target.value)}
         className="w-full min-w-0 bg-transparent font-mono text-[11px] uppercase outline-none"
       />
-    </label>
+    </div>
   );
 }

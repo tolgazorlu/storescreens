@@ -18,7 +18,6 @@ import {
   AlignEndVertical,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -749,12 +748,12 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1">
-      <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+    <label className="block space-y-1">
+      <span className="block text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
         {label}
-      </Label>
+      </span>
       {children}
-    </div>
+    </label>
   );
 }
 
