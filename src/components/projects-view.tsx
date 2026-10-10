@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { api } from "@/lib/fetcher";
+import { useConfirm } from "@/components/confirm-dialog";
 
 type P = { id: string; name: string; slug: string; updatedAt: string };
 
@@ -27,6 +28,7 @@ export function ProjectsView({ projects }: { projects: P[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const { confirm, dialog } = useConfirm();
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -36,7 +38,13 @@ export function ProjectsView({ projects }: { projects: P[] }) {
   }
 
   async function remove(p: P) {
-    if (!confirm(`Delete "${p.name}" and all its screens?`)) return;
+    const ok = await confirm({
+      title: `Delete ${p.name}?`,
+      description:
+        "Every screen and uploaded asset in this project is removed. This cannot be undone.",
+      confirmLabel: "Delete project",
+    });
+    if (!ok) return;
     await api(`/api/projects/${p.id}`, { method: "DELETE" });
     toast("Project deleted");
     router.refresh();
@@ -44,6 +52,7 @@ export function ProjectsView({ projects }: { projects: P[] }) {
 
   return (
     <main className="flex-1 overflow-auto p-8">
+      {dialog}
       <div className="mx-auto max-w-3xl">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-lg font-semibold tracking-tight">Projects</h1>
