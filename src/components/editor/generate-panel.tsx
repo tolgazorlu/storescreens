@@ -325,7 +325,7 @@ export function GeneratePanel({
                     placeholder={"One bullet per line (max 4)"}
                     value={r.bullets}
                     rows={3}
-                    className="rounded-md border border-input bg-transparent px-2 py-1 text-xs outline-none"
+                    className="rounded-md border border-input bg-transparent px-2 py-1.5 text-xs outline-none focus-visible:border-ring dark:bg-input/30"
                     onChange={(e) => set(i, { bullets: e.target.value })}
                   />
                 )}
@@ -400,9 +400,10 @@ export function GeneratePanel({
           <input
             type="checkbox"
             checked={replace}
+            className="size-3.5 accent-foreground"
             onChange={(e) => setReplace(e.target.checked)}
           />
-          Replace {locale}/{device}
+          Replace existing {locale} · {DEVICES[device].label}
         </label>
         <Button onClick={run} disabled={busy || !rows.length}>
           {busy ? "Generating" : `Generate ${rows.length}`}
@@ -427,7 +428,7 @@ function ShotPick({
     <button
       onClick={onClick}
       title={label}
-      className={`flex h-12 w-7 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-[#222] ${active ? "ring-2 ring-foreground" : "ring-1 ring-border hover:ring-muted-foreground"}`}
+      className={`flex h-12 w-7 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-muted ${active ? "ring-2 ring-foreground" : "ring-1 ring-border hover:ring-muted-foreground"}`}
     >
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element
