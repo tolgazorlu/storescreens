@@ -40,7 +40,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -440,7 +442,12 @@ export function Editor({
             <ChevronLeft className="size-4" />
           </Link>
         </Button>
-        <span className="text-sm font-medium">{project.name}</span>
+        <span
+          className="max-w-56 truncate text-sm font-medium"
+          title={project.name}
+        >
+          {project.name}
+        </span>
         <div className="mx-2 h-5 w-px bg-border" />
         <Select value={locale} onValueChange={setLocale}>
           <SelectTrigger className="h-8 w-20 text-xs">
@@ -466,14 +473,29 @@ export function Editor({
           <Plus className="size-4" />
         </IconBtn>
         <Select value={device} onValueChange={(v) => setDevice(v as DeviceId)}>
-          <SelectTrigger className="h-8 w-48 text-xs">
-            <SelectValue />
+          <SelectTrigger className="h-8 w-auto max-w-60 text-xs">
+            <SelectValue>
+              <span className="truncate">{DEVICES[device].label}</span>
+            </SelectValue>
           </SelectTrigger>
-          <SelectContent>
-            {DEVICE_IDS.map((id) => (
-              <SelectItem key={id} value={id}>
-                {DEVICES[id].label} · {DEVICES[id].width}×{DEVICES[id].height}
-              </SelectItem>
+          <SelectContent position="popper" align="start" className="w-80">
+            {(
+              [
+                ["Screenshots", DEVICE_IDS.filter((id) => !isCreative(id))],
+                ["Creative assets", DEVICE_IDS.filter((id) => isCreative(id))],
+              ] as const
+            ).map(([group, ids]) => (
+              <SelectGroup key={group}>
+                <SelectLabel>{group}</SelectLabel>
+                {ids.map((id) => (
+                  <SelectItem key={id} value={id}>
+                    <span className="flex-1">{DEVICES[id].label}</span>
+                    <span className="ml-3 font-mono text-[11px] text-muted-foreground">
+                      {DEVICES[id].width}×{DEVICES[id].height}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             ))}
           </SelectContent>
         </Select>
