@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronDown,
   MoreHorizontal,
+  Smartphone,
   Apple,
   Image as ImageIcon,
   Download,
@@ -779,7 +780,16 @@ export function Editor({
         />
 
         <main className="flex min-w-0 flex-1 flex-col bg-[#141414]">
-          {view === "grid" ? (
+          {!visible.length ? (
+            <EmptySet
+              label={`${locale} · ${DEVICES[device].label}`}
+              onBlank={addScreen}
+              onGenerate={() => {
+                setBrandOpen(false);
+                setGenOpen(true);
+              }}
+            />
+          ) : view === "grid" ? (
             <GridView
               screens={visible}
               activeId={active?.id ?? null}
@@ -828,21 +838,14 @@ export function Editor({
               />
             </>
           ) : (
-            <div className="flex flex-1 items-center justify-center text-center text-sm text-muted-foreground">
-              <div>
-                <p>
-                  No screens for {locale} / {DEVICES[device].label}.
-                </p>
-                <div className="mt-3 flex justify-center gap-2">
-                  <Button size="sm" variant="outline" onClick={addScreen}>
-                    <Plus className="size-4" /> Blank screen
-                  </Button>
-                  <Button size="sm" onClick={() => setGenOpen(true)}>
-                    <Sparkles className="size-4" /> Generate
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <EmptySet
+              label={`${locale} · ${DEVICES[device].label}`}
+              onBlank={addScreen}
+              onGenerate={() => {
+                setBrandOpen(false);
+                setGenOpen(true);
+              }}
+            />
           )}
         </main>
 
@@ -1023,5 +1026,38 @@ function AddLocale({
         </form>
       </PopoverContent>
     </Popover>
+  );
+}
+
+function EmptySet({
+  label,
+  onBlank,
+  onGenerate,
+}: {
+  label: string;
+  onBlank: () => void;
+  onGenerate: () => void;
+}) {
+  return (
+    <div className="flex flex-1 items-center justify-center p-6">
+      <div className="flex max-w-xs flex-col items-center text-center">
+        <div className="mb-4 flex size-12 items-center justify-center rounded-xl border border-border bg-card">
+          <Smartphone className="size-5 text-muted-foreground" />
+        </div>
+        <h2 className="text-sm font-medium">No screens yet</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {label} is empty. Generate a set from your screenshots or start from a
+          blank screen.
+        </p>
+        <div className="mt-4 flex gap-2">
+          <Button size="sm" variant="outline" onClick={onBlank}>
+            <Plus className="size-4" /> Blank screen
+          </Button>
+          <Button size="sm" onClick={onGenerate}>
+            <Sparkles className="size-4" /> Generate
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
