@@ -273,7 +273,7 @@ export function GeneratePanel({
                     value={r.template}
                     onValueChange={(v) => set(i, { template: v as TemplateId })}
                   >
-                    <SelectTrigger className="h-7 flex-1 text-xs">
+                    <SelectTrigger className="h-7 min-w-0 flex-1 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -286,7 +286,7 @@ export function GeneratePanel({
                   </Select>
                   <button
                     onClick={() => moveRow(i, -1)}
-                    className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                    className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
                     disabled={i === 0}
                     aria-label="Move up"
                   >
@@ -294,7 +294,7 @@ export function GeneratePanel({
                   </button>
                   <button
                     onClick={() => moveRow(i, 1)}
-                    className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                    className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
                     disabled={i === rows.length - 1}
                     aria-label="Move down"
                   >
@@ -302,7 +302,7 @@ export function GeneratePanel({
                   </button>
                   <button
                     onClick={() => setRows(rows.filter((_, j) => j !== i))}
-                    className="text-muted-foreground hover:text-destructive"
+                    className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     aria-label="Remove"
                   >
                     <Trash2 className="size-3.5" />
@@ -330,7 +330,7 @@ export function GeneratePanel({
                   />
                 )}
                 {r.template !== "text-only" && (
-                  <div className="flex gap-1 overflow-x-auto pb-0.5">
+                  <div className="-mx-0.5 flex gap-1.5 overflow-x-auto p-0.5">
                     <ShotPick
                       active={r.screenshot === null}
                       onClick={() => set(i, { screenshot: null })}
@@ -348,7 +348,7 @@ export function GeneratePanel({
                   </div>
                 )}
                 {r.template === "two-phones" && (
-                  <div className="flex gap-1 overflow-x-auto pb-0.5">
+                  <div className="-mx-0.5 flex gap-1.5 overflow-x-auto p-0.5">
                     <span className="w-5 self-center text-[10px] text-muted-foreground">
                       2nd
                     </span>
