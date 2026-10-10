@@ -181,7 +181,7 @@ export function Inspector({
         <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Background
         </span>
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           <Select
             value={scene.background.type}
             onValueChange={(t) =>
@@ -208,7 +208,7 @@ export function Inspector({
               }))
             }
           >
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="col-span-2 h-8 w-full text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -217,12 +217,17 @@ export function Inspector({
             </SelectContent>
           </Select>
           {scene.background.type === "solid" ? (
-            <Color
-              value={scene.background.color}
-              onChange={(color) =>
-                onScene((s) => ({ ...s, background: { type: "solid", color } }))
-              }
-            />
+            <div className="col-span-2">
+              <Color
+                value={scene.background.color}
+                onChange={(color) =>
+                  onScene((s) => ({
+                    ...s,
+                    background: { type: "solid", color },
+                  }))
+                }
+              />
+            </div>
           ) : (
             <>
               <Color
