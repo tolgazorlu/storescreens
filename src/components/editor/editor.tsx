@@ -7,6 +7,9 @@ import {
   FileUp,
   Palette,
   ChevronLeft,
+  ChevronDown,
+  Apple,
+  Image as ImageIcon,
   Download,
   Plus,
   Trash2,
@@ -22,6 +25,17 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -50,6 +64,15 @@ import { useFittedSizes } from "./use-fit";
 import type { AssetDto, ProjectDto, ScreenDto } from "./types";
 
 type View = "single" | "grid";
+
+type DeriveTarget = "ipad" | "duo-outer" | "duo-inner";
+const DERIVE_TARGETS = [
+  ["ipad", 'iPad 13"'],
+  ["duo-outer", "iPhone Duo (outer)"],
+  ["duo-inner", "iPhone Duo (inner)"],
+] as const satisfies readonly (readonly [DeriveTarget, string])[];
+const deriveLabel = (t: DeriveTarget) =>
+  DERIVE_TARGETS.find(([id]) => id === t)?.[1] ?? t;
 
 export function Editor({
   project,
@@ -272,12 +295,9 @@ export function Editor({
     );
 
   const [deriving, setDeriving] = useState(false);
-  const [deriveTarget, setDeriveTarget] = useState<
-    "ipad" | "duo-outer" | "duo-inner"
-  >("ipad");
-  async function derive() {
+  async function derive(deriveTarget: DeriveTarget) {
     setDeriving(true);
-    const t = toast.loading(`Deriving ${deriveTarget}`);
+    const t = toast.loading(`Deriving ${deriveLabel(deriveTarget)}`);
     try {
       const rows = await api<ScreenDto[]>(
         `/api/projects/${project.id}/derive`,
@@ -586,61 +606,81 @@ export function Editor({
           >
             <Sparkles className="size-4" /> Generate
           </Button>
-          <Select
-            value={deriveTarget}
-            onValueChange={(v) => setDeriveTarget(v as typeof deriveTarget)}
-          >
-            <SelectTrigger className="h-8 w-36 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ipad">iPad 13&quot;</SelectItem>
-              <SelectItem value="duo-outer">Duo (outer)</SelectItem>
-              <SelectItem value="duo-inner">Duo (inner)</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={derive}
-            disabled={deriving || !visible.length}
-            title="Rebuild the current locale/device set on the selected target"
-          >
-            <Frame className="size-4" /> Derive
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => exportZip(false)}
-            disabled={exporting || !visible.length}
-          >
-            <Download className="size-4" /> {locale}/{device}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => exportZip(true)}
-            disabled={exporting || !screens.length}
-          >
-            <Download className="size-4" /> Export all
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={exportAppleZip}
-            disabled={exporting || !screens.length}
-            title="Every App Store size, every locale, flattened to RGB"
-          >
-            <Download className="size-4" /> Apple export
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={exportCreativeZip}
-            disabled={exporting || !screens.some((s) => isCreative(s.device))}
-            title="Product page header, search result and universal assets (iOS 27+)"
-          >
-            <Download className="size-4" /> Creative export
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" disabled={exporting || deriving}>
+                <Download className="size-4" /> Export
+                <ChevronDown className="size-3.5 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuLabel className="text-xs text-muted-foreground">
+                Download
+              </DropdownMenuLabel>
+              <DropdownMenuItem
+                disabled={!visible.length}
+                onSelect={() => exportZip(false)}
+              >
+                <Download />
+                <span className="flex-1">This set</span>
+                <span className="font-mono text-[11px] text-muted-foreground">
+                  {locale} · {DEVICES[device].label}
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!screens.length}
+                onSelect={() => exportZip(true)}
+              >
+                <Download />
+                <span className="flex-1">All screens</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {screens.length}
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs text-muted-foreground">
+                App Store
+              </DropdownMenuLabel>
+              <DropdownMenuItem
+                disabled={!screens.length}
+                onSelect={exportAppleZip}
+              >
+                <Apple />
+                <div className="flex flex-col">
+                  <span>Every App Store size</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    All locales, flattened RGB
+                  </span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!screens.some((s) => isCreative(s.device))}
+                onSelect={exportCreativeZip}
+              >
+                <ImageIcon />
+                <div className="flex flex-col">
+                  <span>Creative assets</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    Header, search result, universal
+                  </span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger disabled={!visible.length}>
+                  <Frame />
+                  Derive from this set
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-44">
+                  {DERIVE_TARGETS.map(([id, label]) => (
+                    <DropdownMenuItem key={id} onSelect={() => derive(id)}>
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
