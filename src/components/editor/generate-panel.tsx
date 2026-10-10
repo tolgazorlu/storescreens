@@ -181,7 +181,7 @@ export function GeneratePanel({
           <Input
             value={locale}
             onChange={(e) => setLocale(e.target.value)}
-            className="h-8"
+            className="h-8 text-xs"
           />
         </Field>
         <Field label="Device">
@@ -189,7 +189,7 @@ export function GeneratePanel({
             value={device}
             onValueChange={(v) => setDevice(v as DeviceId)}
           >
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-8 w-full text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -203,7 +203,7 @@ export function GeneratePanel({
         </Field>
         <Field label="Logo">
           <Select value={logo} onValueChange={setLogo}>
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-8 w-full text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -217,7 +217,7 @@ export function GeneratePanel({
           </Select>
         </Field>
         <Field label="Brand">
-          <div className="flex h-8 items-center gap-1.5 rounded-md border border-input px-2 text-xs text-muted-foreground">
+          <div className="flex h-8 items-center gap-1.5 rounded-md border border-input px-2 text-xs text-muted-foreground dark:bg-input/30">
             <span
               className="size-3 rounded-sm"
               style={{
