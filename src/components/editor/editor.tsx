@@ -779,7 +779,7 @@ export function Editor({
           }}
         />
 
-        <main className="flex min-w-0 flex-1 flex-col bg-[#141414]">
+        <main className="flex min-w-0 flex-1 flex-col bg-canvas">
           {!visible.length ? (
             <EmptySet
               label={`${locale} · ${DEVICES[device].label}`}

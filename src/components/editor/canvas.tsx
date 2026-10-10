@@ -207,7 +207,7 @@ export function Canvas({
     <div ref={wrap} className="relative h-full w-full overflow-auto">
       <div className="flex min-h-full min-w-full items-center justify-center p-6">
         <div
-          className="relative shrink-0 shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_20px_60px_rgba(0,0,0,0.5)]"
+          className="relative shrink-0 shadow-[0_20px_60px_rgba(0,0,0,0.35)] ring-1 ring-foreground/10"
           style={{ width: scene.width * scale, height: scene.height * scale }}
           onPointerDown={() => onSelect(null)}
         >
