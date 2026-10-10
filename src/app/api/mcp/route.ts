@@ -39,7 +39,7 @@ import { ICON_IDS } from "@/lib/icons";
 
 /** Request origin, so tool results can return absolute URLs the agent can fetch. */
 const originStore = new AsyncLocalStorage<string>();
-const origin = () => originStore.getStore() ?? "http://localhost:3000";
+const origin = () => originStore.getStore() ?? "http://localhost:4110";
 
 export const maxDuration = 300;
 

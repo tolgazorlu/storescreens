@@ -11,7 +11,7 @@ Single user, no auth, no cloud: SQLite + files under `./data`.
 
 ```bash
 pnpm install
-pnpm dev        # http://localhost:3000
+pnpm dev        # http://localhost:4110
 ```
 
 That's it. Tables are created on first request. Set `SCREENY_DATA_DIR`
@@ -20,7 +20,7 @@ to move the database and uploads somewhere else.
 ## Connect an agent
 
 ```bash
-claude mcp add --transport http screeny http://localhost:3000/api/mcp
+claude mcp add --transport http screeny http://localhost:4110/api/mcp
 ```
 
 MCP tools: `list_meta`, `list_projects`, `create_project`, `get_project`,
@@ -58,4 +58,4 @@ flex or absolute layout only, inline styles, no `undefined` style values.
 
 - `pnpm smoke` renders every template to `/tmp/screeny-*.png`.
 - `pnpm mcp:smoke` exercises the MCP server against a running dev server
-  (`B=http://localhost:3000` to override).
+  (`B=http://localhost:4110` to override).

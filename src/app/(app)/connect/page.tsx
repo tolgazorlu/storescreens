@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ConnectPage() {
   const h = await headers();
-  const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host") ?? "localhost:3000"}`;
+  const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host") ?? "localhost:4110"}`;
   const mcpUrl = `${origin}/api/mcp`;
   return (
     <main className="flex-1 overflow-auto p-8">

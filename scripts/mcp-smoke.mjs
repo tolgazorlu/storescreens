@@ -1,10 +1,10 @@
 
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
-// Usage: B=http://localhost:3000 node scripts/mcp-smoke.mjs
+// Usage: B=http://localhost:4110 node scripts/mcp-smoke.mjs
 // Runs entirely against its own "Smoke Test" project (created on demand),
 // never against a real project: picking "the first project" here once
 // clobbered a production screen set via generate_screens(replace:true).
-const B = process.env.B ?? "http://localhost:3000";
+const B = process.env.B ?? "http://localhost:4110";
 const transport = new StreamableHTTPClientTransport(new URL(B + "/api/mcp"));
 const client = new Client({ name: "test", version: "0" });
 await client.connect(transport);

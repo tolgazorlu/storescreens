@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 4110",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 4110",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "smoke": "TSX_TSCONFIG_PATH=tsconfig.scripts.json tsx scripts/smoke-render.ts",
