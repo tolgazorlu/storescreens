@@ -230,70 +230,46 @@ export function Editor({
       json: { ids },
     });
   }
-  async function exportZip(all: boolean) {
+  /** Fetch a ZIP route and save it, with one loading toast for the whole run. */
+  async function download(url: string, filename: string, label: string) {
     setExporting(true);
-    const t = toast.loading(
+    const t = toast.loading(label);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast.success(`${filename} downloaded`, { id: t });
+    } catch (e) {
+      toast.error((e as Error).message, { id: t });
+    } finally {
+      setExporting(false);
+    }
+  }
+  const exportZip = (all: boolean) =>
+    download(
+      `/api/projects/${project.id}/export${
+        all ? "" : `?locale=${encodeURIComponent(locale)}&device=${device}`
+      }`,
+      `${project.slug}-${all ? "all" : `${locale}-${device}`}.zip`,
       all ? "Rendering all screens" : `Rendering ${visible.length} screens`,
     );
-    try {
-      const q = all
-        ? ""
-        : `?locale=${encodeURIComponent(locale)}&device=${device}`;
-      const res = await fetch(`/api/projects/${project.id}/export${q}`);
-      if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
-      const blob = await res.blob();
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${project.slug}-${all ? "all" : `${locale}-${device}`}.zip`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      toast.success("ZIP downloaded", { id: t });
-    } catch (e) {
-      toast.error((e as Error).message, { id: t });
-    } finally {
-      setExporting(false);
-    }
-  }
-
-  async function exportCreativeZip() {
-    setExporting(true);
-    const t = toast.loading("Building creative assets ZIP");
-    try {
-      const res = await fetch(`/api/projects/${project.id}/export/creative`);
-      if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
-      const blob = await res.blob();
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${project.slug}-creative-assets.zip`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      toast.success("Creative assets downloaded", { id: t });
-    } catch (e) {
-      toast.error((e as Error).message, { id: t });
-    } finally {
-      setExporting(false);
-    }
-  }
-
-  async function exportAppleZip() {
-    setExporting(true);
-    const t = toast.loading("Building Apple App Store ZIP");
-    try {
-      const res = await fetch(`/api/projects/${project.id}/export/apple`);
-      if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
-      const blob = await res.blob();
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${project.slug}-appstore.zip`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      toast.success("Apple ZIP downloaded", { id: t });
-    } catch (e) {
-      toast.error((e as Error).message, { id: t });
-    } finally {
-      setExporting(false);
-    }
-  }
+  const exportCreativeZip = () =>
+    download(
+      `/api/projects/${project.id}/export/creative`,
+      `${project.slug}-creative-assets.zip`,
+      "Building creative assets ZIP",
+    );
+  const exportAppleZip = () =>
+    download(
+      `/api/projects/${project.id}/export/apple`,
+      `${project.slug}-appstore.zip`,
+      "Building Apple App Store ZIP",
+    );
 
   const [deriving, setDeriving] = useState(false);
   const [deriveTarget, setDeriveTarget] = useState<
