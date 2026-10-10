@@ -10,6 +10,12 @@ import {
   ArrowUp,
   ArrowDown,
   Trash2,
+  AlignHorizontalJustifyCenter,
+  AlignVerticalJustifyCenter,
+  AlignStartHorizontal,
+  AlignEndHorizontal,
+  AlignStartVertical,
+  AlignEndVertical,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,12 +39,25 @@ import type { AssetDto } from "./types";
 import { FONTS, DEFAULT_FONT } from "@/lib/fonts";
 import { ICON_IDS } from "@/lib/icons";
 
+export type AlignKind =
+  "left" | "hcenter" | "right" | "top" | "vcenter" | "bottom";
+
+const ALIGN = [
+  ["left", "Align left", AlignStartVertical],
+  ["hcenter", "Center horizontally", AlignHorizontalJustifyCenter],
+  ["right", "Align right", AlignEndVertical],
+  ["top", "Align top", AlignStartHorizontal],
+  ["vcenter", "Center vertically", AlignVerticalJustifyCenter],
+  ["bottom", "Align bottom", AlignEndHorizontal],
+] as const;
+
 type Props = {
   scene: Scene | null;
   selected: string | null;
   onSelect: (id: string | null) => void;
   onLayer: (id: string, patch: Partial<Layer>) => void;
   onScene: (fn: (s: Scene) => Scene) => void;
+  onAlign: (kind: AlignKind) => void;
   assets: AssetDto[];
 };
 
@@ -64,6 +83,7 @@ export function Inspector({
   onSelect,
   onLayer,
   onScene,
+  onAlign,
   assets,
 }: Props) {
   const layer = scene?.layers.find((l) => l.id === selected) ?? null;
@@ -339,6 +359,22 @@ export function Inspector({
                 </Button>
               </Tip>
             </div>
+          </div>
+
+          <div className="flex justify-between rounded-md border border-border p-0.5">
+            {ALIGN.map(([kind, label, I]) => (
+              <Tip key={kind} label={label}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  onClick={() => onAlign(kind)}
+                  aria-label={label}
+                >
+                  <I className="size-3.5" />
+                </Button>
+              </Tip>
+            ))}
           </div>
 
           <div className="grid grid-cols-4 gap-1.5">

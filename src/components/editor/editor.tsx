@@ -19,12 +19,6 @@ import {
   BoxSelect,
   Undo2,
   Redo2,
-  AlignHorizontalJustifyCenter,
-  AlignVerticalJustifyCenter,
-  AlignStartHorizontal,
-  AlignEndHorizontal,
-  AlignStartVertical,
-  AlignEndVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -45,7 +39,7 @@ import { DEVICES, DEVICE_IDS, isCreative, type DeviceId } from "@/lib/devices";
 import type { Scene, Layer } from "@/lib/scene";
 import { Canvas, type CanvasOverlays } from "./canvas";
 import { GridView } from "./grid-view";
-import { Inspector } from "./inspector";
+import { Inspector, type AlignKind } from "./inspector";
 import { AssetsPanel } from "./assets-panel";
 import { GeneratePanel } from "./generate-panel";
 import { BrandPanel } from "./brand-panel";
@@ -166,9 +160,7 @@ export function Editor({
   }, [active, history]);
 
   // ---- align selected layer ----
-  function align(
-    kind: "left" | "hcenter" | "right" | "top" | "vcenter" | "bottom",
-  ) {
+  function align(kind: AlignKind) {
     if (!active || !selectedLayer) return;
     const l = active.scene.layers.find((x) => x.id === selectedLayer);
     if (!l) return;
@@ -442,7 +434,6 @@ export function Editor({
   }, [active, selectedLayer, updateLayer, updateScene, history]);
 
   const fitted = useFittedSizes(active?.scene ?? null);
-  const hasSel = Boolean(active && selectedLayer);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -568,50 +559,6 @@ export function Editor({
             <Redo2 className="size-4" />
           </SegBtn>
         </Seg>
-        <Seg>
-          <SegBtn
-            label="Align left"
-            onClick={() => align("left")}
-            disabled={!hasSel}
-          >
-            <AlignStartVertical className="size-4" />
-          </SegBtn>
-          <SegBtn
-            label="Center horizontally"
-            onClick={() => align("hcenter")}
-            disabled={!hasSel}
-          >
-            <AlignHorizontalJustifyCenter className="size-4" />
-          </SegBtn>
-          <SegBtn
-            label="Align right"
-            onClick={() => align("right")}
-            disabled={!hasSel}
-          >
-            <AlignEndVertical className="size-4" />
-          </SegBtn>
-          <SegBtn
-            label="Align top"
-            onClick={() => align("top")}
-            disabled={!hasSel}
-          >
-            <AlignStartHorizontal className="size-4" />
-          </SegBtn>
-          <SegBtn
-            label="Center vertically"
-            onClick={() => align("vcenter")}
-            disabled={!hasSel}
-          >
-            <AlignVerticalJustifyCenter className="size-4" />
-          </SegBtn>
-          <SegBtn
-            label="Align bottom"
-            onClick={() => align("bottom")}
-            disabled={!hasSel}
-          >
-            <AlignEndHorizontal className="size-4" />
-          </SegBtn>
-        </Seg>
 
         <div className="ml-auto flex items-center gap-1">
           <Seg>
@@ -713,9 +660,7 @@ export function Editor({
             variant="outline"
             size="sm"
             onClick={exportCreativeZip}
-            disabled={
-              exporting || !screens.some((s) => isCreative(s.device))
-            }
+            disabled={exporting || !screens.some((s) => isCreative(s.device))}
             title="Product page header, search result and universal assets (iOS 27+)"
           >
             <Download className="size-4" /> Creative export
@@ -869,6 +814,7 @@ export function Editor({
             onSelect={setSelectedLayer}
             onLayer={(id, patch) => updateLayer(id, patch)}
             onScene={(fn) => active && updateScene(active.id, fn)}
+            onAlign={align}
             assets={assets}
           />
         )}
