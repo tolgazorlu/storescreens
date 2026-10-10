@@ -67,6 +67,10 @@ export function Inspector({
   assets,
 }: Props) {
   const layer = scene?.layers.find((l) => l.id === selected) ?? null;
+  const assetName = (url: string | null) =>
+    assets
+      .find((a) => url != null && (a.url === url || url.endsWith(a.url)))
+      ?.name.replace(/\.[a-z]+$/i, "");
 
   function addLayer(kind: Layer["type"]) {
     if (!scene) return;
@@ -175,7 +179,7 @@ export function Inspector({
         <ul className="space-y-0.5">
           {[...scene.layers].reverse().map((l) => {
             const I = ICON[l.type];
-            const label = l.type === "text" ? l.text.split("\n")[0] : l.type;
+            const label = layerLabel(l, assetName);
             return (
               <li
                 key={l.id}
@@ -277,7 +281,7 @@ export function Inspector({
         <section className="space-y-3 p-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {layer.type}
+              {LAYER_NAME[layer.type]}
             </span>
             <div className="flex gap-0.5">
               <Tip label="Bring forward">
@@ -681,6 +685,19 @@ export function Inspector({
       )}
     </aside>
   );
+}
+
+/** Human name for a layer row: its text, its asset file, or its kind. */
+function layerLabel(
+  l: Layer,
+  assetName: (url: string | null) => string | undefined,
+): string {
+  if (l.type === "text") return l.text.split("\n")[0] || "Empty text";
+  if (l.type === "mockup")
+    return assetName(l.src) ?? (l.src ? "Phone mockup" : "Empty mockup");
+  if (l.type === "image") return assetName(l.src) ?? "Image";
+  if (l.type === "icon") return `Icon · ${l.icon}`;
+  return LAYER_NAME[l.type];
 }
 
 function Field({
