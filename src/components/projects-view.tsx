@@ -17,6 +17,12 @@ import { api } from "@/lib/fetcher";
 
 type P = { id: string; name: string; slug: string; updatedAt: string };
 
+/** Fixed locale so the server and the browser render the same string. */
+const dateFmt = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
 export function ProjectsView({ projects }: { projects: P[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -81,7 +87,7 @@ export function ProjectsView({ projects }: { projects: P[] }) {
                 <Link href={`/p/${p.slug}`} className="flex-1">
                   <div className="text-sm font-medium">{p.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {p.slug} · {new Date(p.updatedAt).toLocaleString()}
+                    {p.slug} · {dateFmt.format(new Date(p.updatedAt))}
                   </div>
                 </Link>
                 <Button
