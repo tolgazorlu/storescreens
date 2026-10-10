@@ -71,13 +71,14 @@ export async function listProjectSummaries() {
   const byId = new Map(stats.map((s) => [s.projectId, s]));
   return Promise.all(
     rows.map(async (p) => {
-      // Prefer the main iPhone set for the cover, then any portrait screen.
+      // Cover: the English main iPhone set first, creative canvases last.
       const [cover] = await db
         .select({ scene: screens.scene })
         .from(screens)
         .where(eq(screens.projectId, p.id))
         .orderBy(
           sql`case when ${screens.device} = 'iphone-6.9' then 0 when ${screens.device} like 'appstore-%' then 2 else 1 end`,
+          sql`case when ${screens.locale} = 'en' then 0 else 1 end`,
           asc(screens.locale),
           asc(screens.position),
         )
