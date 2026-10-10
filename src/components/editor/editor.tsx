@@ -376,11 +376,17 @@ export function Editor({
   // ---- keyboard ----
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      const tag = (e.target as HTMLElement)?.tagName;
+      const el = e.target as HTMLElement | null;
       if (
-        tag === "INPUT" ||
-        tag === "TEXTAREA" ||
-        (e.target as HTMLElement)?.isContentEditable
+        el?.closest?.(
+          'input,textarea,select,[contenteditable="true"],[role="menu"],[role="listbox"],[role="dialog"]',
+        )
+      )
+        return;
+      // A focused button keeps native Tab order and arrow keys.
+      if (
+        el?.closest?.('button,a,[role="combobox"]') &&
+        (e.key === "Tab" || e.key.startsWith("Arrow"))
       )
         return;
       const mod = e.metaKey || e.ctrlKey;
