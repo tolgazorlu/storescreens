@@ -10,6 +10,7 @@ import { SceneView, TextContent } from "@/components/scene/scene-view";
 import { readFileBytes } from "@/lib/storage";
 import { FONTS, FONT_WEIGHTS, fontFile } from "@/lib/fonts";
 import { bezelFor } from "@/lib/bezels";
+import { PUBLIC_DIR } from "@/lib/paths";
 
 let fontsPromise: Promise<Font[]> | null = null;
 
@@ -23,12 +24,7 @@ function loadFonts(): Promise<Font[]> {
           weight: weight as Font["weight"],
           style: "normal" as const,
           data: await readFile(
-            path.join(
-              process.cwd(),
-              "public",
-              "fonts",
-              fontFile(family, weight),
-            ),
+            path.join(PUBLIC_DIR, "fonts", fontFile(family, weight)),
           ),
         })),
       ),
@@ -59,7 +55,7 @@ async function inlineImages(scene: Scene): Promise<Map<string, string>> {
   }
   await Promise.all(
     [...bezels].map(async (file) => {
-      const bytes = await readFile(path.join(process.cwd(), "public", file));
+      const bytes = await readFile(path.join(PUBLIC_DIR, file));
       map.set(file, `data:image/png;base64,${bytes.toString("base64")}`);
     }),
   );
