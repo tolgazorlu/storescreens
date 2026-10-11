@@ -112,5 +112,29 @@ the `projects`/`new` commands. `missing-argument` needs `new`.
 Next: `projects` + `new` (idempotent) commands, then mark `home-view-projects`, `unknown-flag`,
 `missing-argument`, `projects-list`, `new-project`, `new-idempotent` after verifying.
 
+## Iteration 6: projects + new (home-view-projects, unknown-flag, missing-argument, projects-list, new-project, new-idempotent)
+
+What changed:
+- `src/cli/commands/projects.ts`: `screeny projects` lists `slug  screens: N  name: ...`, or
+  `projects: no projects yet` + `help:`; `--json` gives `[{slug,name,screens}]`.
+- `src/cli/commands/new.ts`: `screeny new <name...>` creates a project. If `slugify(name)` is
+  already taken it prints `project: <slug> already exists` and exits 0 (no `-2` duplicate).
+  `--json` returns the project row plus `created: true|false`. Missing name is exit 2.
+- `src/cli/main.ts`: dispatches `projects` and `new`.
+
+Evidence (temp cwd, temp `SCREENY_DATA_DIR`, stdin `</dev/null`, after `pnpm build:cli`):
+- `projects`: `projects: no projects yet` + help, exit 0; `projects --json`: `[]`, exit 0.
+- `new`: `error: missing project name` + `help:`, exit 2 (`--json` gives `{error,help}`).
+- `projects --bogus`: `error: unknown flag --bogus` + `help:`, exit 2.
+- `new 'Demo App'`: `project: created demo-app`, exit 0.
+- `new demo` twice: second prints `project: demo already exists`, exit 0; `new demo --json`
+  has `"created": false`.
+- `projects`: `projects[2]:` with `demo  screens: 0` and `demo-app  screens: 0`; `--json` array
+  of `{slug,name,screens}`. No-arg home lists both with `screens: 0` and 3 `help:` lines.
+- Temp cwd stayed empty. `pnpm lint` exit 0, `pnpm typecheck` exit 0.
+
+Next: `add-image` + `add-image-errors` (milestone 7), or the `test:cli` harness (milestone 6) since
+`verify.sh` needs `pnpm test:cli`.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->

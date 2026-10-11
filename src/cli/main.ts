@@ -1,5 +1,7 @@
 import { parseArgs } from "./args";
 import { CliError, print, printError, printJson, usageError } from "./output";
+import { newProject } from "./commands/new";
+import { projects } from "./commands/projects";
 import { loadService } from "./service";
 
 declare const __SCREENY_VERSION__: string;
@@ -48,6 +50,8 @@ async function run(argv: string[]) {
     return;
   }
   if (command === undefined || command.startsWith("--")) return home(argv);
+  if (command === "projects") return projects(argv.slice(1));
+  if (command === "new") return newProject(argv.slice(1));
   throw usageError(`unknown command ${command}`, HOME_HELP);
 }
 
