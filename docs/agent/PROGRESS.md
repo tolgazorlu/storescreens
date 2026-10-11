@@ -87,5 +87,30 @@ Evidence:
 Next: AXI core (`unknown-command`, `unknown-flag`, `missing-argument`, `json-errors`), then
 `home-view-empty`.
 
+## Iteration 5: AXI core + home view (home-view-empty, home-view-json, unknown-command, json-errors)
+
+What changed:
+- `src/cli/output.ts`: `CliError` (message, help, exit code 1|2), `usageError`, and printers that
+  write `error:`/`help:` lines or `{"error","help"}` JSON to stdout.
+- `src/cli/args.ts`: `parseArgs(argv, spec, help)` with per-command flag specs (boolean/string,
+  `--x v` and `--x=v`), `--json` always accepted, unknown flags rejected by name (exit 2).
+- `src/cli/main.ts`: dispatcher; no-arg (or flags-only) invocation prints the home view
+  (`bin:`, `description:`, `projects[N]:` list with screens count or `projects: no projects yet`,
+  2-3 `help:` lines; `--json` gives `{bin,description,projects,help}`). Unknown commands exit 2.
+  Unexpected exceptions become `error:` + `help:` with exit 1.
+
+Evidence (temp cwd, temp `SCREENY_DATA_DIR`, after `pnpm build:cli`):
+- `screeny`: bin/description/`projects: no projects yet`/2 help lines, exit 0.
+- `screeny --json`: parses, keys `bin description projects help`, projects `[]`, exit 0.
+- `screeny nope`: `error: unknown command nope` + `help:`, exit 2; `--json` gives `{error,help}`, exit 2.
+- `screeny --bogus`: `error: unknown flag --bogus`, exit 2. Temp cwd contains only the data dir.
+- `pnpm lint` exit 0, `pnpm typecheck` exit 0.
+
+Not yet: `home-view-projects` and `unknown-flag` (its step uses `screeny projects --bogus`) need
+the `projects`/`new` commands. `missing-argument` needs `new`.
+
+Next: `projects` + `new` (idempotent) commands, then mark `home-view-projects`, `unknown-flag`,
+`missing-argument`, `projects-list`, `new-project`, `new-idempotent` after verifying.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->
