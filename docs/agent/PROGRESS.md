@@ -40,5 +40,29 @@ Evidence:
 
 Next: `build-cli-script` (esbuild devDependency, `src/cli/main.ts`, `pnpm build:cli` -> `dist-cli/screeny.js`).
 
+## Iteration 3: build-cli-script (+ dist-ignored)
+
+What changed:
+- `esbuild` added as a devDependency (same 0.28.2 tsx already pulled in; lockfile updated).
+- `scripts/build-cli.mjs`: bundles `src/cli/main.ts` to `dist-cli/screeny.js` (ESM, node20,
+  `packages: "external"`, tsconfig paths for `@/`, `server-only` aliased to
+  `scripts/server-only-shim.ts`, shebang banner, version injected via `define`). Cleans `dist-cli/` first.
+- `package.json`: `build:cli` script. `src/cli/main.ts`: minimal entry (prints version for
+  `--version`/`-v`/`version`, otherwise `bin: screeny`); full AXI core comes with later features.
+- `dist-cli/` added to `.gitignore` and eslint `globalIgnores` (needed so the harness never commits
+  the bundle), so `dist-ignored` is marked passing too.
+
+Evidence:
+- `pnpm build:cli`: exit 0. `ls dist-cli`: only `screeny.js`. `head -1`: `#!/usr/bin/env node`.
+- `node dist-cli/screeny.js --version`: `0.1.0`.
+- `grep -cE "satori|libsql|resvg|sharp" dist-cli/screeny.js`: 0.
+- Probe build with the same options importing `@/lib/service`: 19 inputs, 0 from node_modules;
+  externals `drizzle-orm @libsql/client zod satori @resvg/resvg-js react bidi-js fflate sharp node:*`
+  (no `server-only`, so the alias applies).
+- With `dist-cli/` present: `pnpm lint` exit 0, `pnpm typecheck` exit 0, `git status` shows no dist-cli files.
+
+Next: `server-only-alias` / `path-alias-resolution` (make `src/cli/main.ts` dynamically import
+`@/lib/service` after setting `SCREENY_PUBLIC_DIR` from the bundle location), then `version-flags`.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->
