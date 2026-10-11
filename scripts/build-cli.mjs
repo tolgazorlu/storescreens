@@ -1,6 +1,6 @@
 // Bundles src/cli/main.ts into a single ESM file, dist-cli/screeny.js.
 import { build } from "esbuild";
-import { readFile, rm } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -24,3 +24,5 @@ await build({
   define: { __SCREENY_VERSION__: JSON.stringify(pkg.version) },
   logLevel: "warning",
 });
+// Mark the bundle as ESM so node does not warn and reparse it.
+await writeFile(path.join(outdir, "package.json"), '{ "type": "module" }\n');

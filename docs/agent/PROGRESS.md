@@ -64,5 +64,28 @@ Evidence:
 Next: `server-only-alias` / `path-alias-resolution` (make `src/cli/main.ts` dynamically import
 `@/lib/service` after setting `SCREENY_PUBLIC_DIR` from the bundle location), then `version-flags`.
 
+## Iteration 4: server-only-alias + path-alias-resolution (+ version-flags)
+
+What changed:
+- `src/cli/service.ts`: `loadService()` sets `SCREENY_PUBLIC_DIR` (if unset) to `<bundle dir>/../public`
+  and then dynamically imports `@/lib/service`. esbuild wraps the service graph in lazy `__esm`
+  inits, so `PUBLIC_DIR` is evaluated after the env var is set.
+- `src/cli/main.ts`: non-version invocations load the service layer and print a provisional
+  `bin: screeny` / `projects: N` (real home view comes with `home-view-empty`).
+- `scripts/build-cli.mjs` writes `dist-cli/package.json` (`{"type":"module"}`) so node no longer
+  prints the MODULE_TYPELESS_PACKAGE_JSON warning when running the bundle.
+
+Evidence:
+- `node --input-type=module -e 'import "server-only"'` throws; the bundle (which pulls in
+  service/render/storage, all importing `server-only`) runs fine, and `git diff src/lib` is empty.
+- From a temp cwd: `SCREENY_DATA_DIR=$T/d node <repo>/dist-cli/screeny.js` prints
+  `bin: screeny` / `projects: 0`, exit 0; temp cwd contains only `d` (no `data`/`public`).
+- Resolved public dir is `<repo>/public` and `<repo>/public/fonts/Inter-Regular.ttf` exists.
+- `--version`, `-v`, `version`: each prints exactly `0.1.0` (one line), exit 0.
+- `pnpm lint` exit 0, `pnpm typecheck` exit 0.
+
+Next: AXI core (`unknown-command`, `unknown-flag`, `missing-argument`, `json-errors`), then
+`home-view-empty`.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->
