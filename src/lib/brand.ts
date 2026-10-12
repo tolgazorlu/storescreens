@@ -36,8 +36,8 @@ export const BRAND_PRESETS: Record<
   string,
   { label: string; brand: Partial<Brand> }
 > = {
-  "wise-bright": {
-    label: "Wise bright",
+  "lime-bright": {
+    label: "Lime bright",
     brand: {
       background: { type: "solid", color: "#9FE870" },
       textColor: "#163300",
