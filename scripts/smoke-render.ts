@@ -63,8 +63,8 @@ async function main() {
   if (process.env.UPDATE_REF) await writeFile(path.join(REF, "fit.png"), dePng);
   console.log("fit", dePng.length, "bytes", Date.now() - t0, "ms");
 
-  // Brand preset across the layout templates (reference: scripts/reference/wise-*.png).
-  const wise = applyPreset("wise-bright");
+  // Brand preset across the layout templates (reference: scripts/reference/lime-*.png).
+  const wise = applyPreset("lime-bright");
   for (const id of ["hero-bleed", "feature-list", "two-phones"] as const) {
     const scene = buildScene(DEVICES["iphone-6.9"], id, {
       title: "Scan, sell, done",
@@ -79,10 +79,10 @@ async function main() {
         "https://raw.githubusercontent.com/github/explore/main/topics/react/react.png",
     });
     const png = await renderSceneToPng(scene);
-    await writeFile(path.join(OUT, `screeny-wise-${id}.png`), png);
+    await writeFile(path.join(OUT, `screeny-lime-${id}.png`), png);
     if (process.env.UPDATE_REF)
-      await writeFile(path.join(REF, `wise-${id}.png`), png);
-    console.log(`wise-${id}`, png.length, "bytes", Date.now() - t0, "ms");
+      await writeFile(path.join(REF, `lime-${id}.png`), png);
+    console.log(`lime-${id}`, png.length, "bytes", Date.now() - t0, "ms");
   }
 
   // iPad / Duo frames: title-top must size the device from available
