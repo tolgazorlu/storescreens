@@ -1014,8 +1014,8 @@ iPhone Duo: App Store Connect does not accept Duo screenshot uploads yet
 (support ships later in 2026) and only requires them starting April 2027.
 Keep this folder ready and upload it once the slot opens.
 
-iPad: only needed if the app actually supports iPad. Barcode currently has
-supportsTablet=false, so treat this folder as optional / future-proofing
+iPad: only needed if the app actually supports iPad. If the app ships with
+supportsTablet=false, treat this folder as optional / future-proofing
 rather than something to upload today.
 
 Locales included: ${locales.join(", ")}

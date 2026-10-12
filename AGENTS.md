@@ -1,7 +1,7 @@
 # Screeny agent notes
 
-Factory protocol: ~/projects/cortex/playbooks/factory.md. Project note:
-~/projects/cortex/projects/screeny.md.
+Maintainer notes (only if present on this machine): `~/projects/cortex/playbooks/factory.md`
+and `~/projects/cortex/projects/screeny.md`.
 
 - Local single-user tool: no auth, SQLite + files in `./data` (gitignored).
   Do not add accounts, cloud storage or deploy config.
@@ -13,7 +13,9 @@ Factory protocol: ~/projects/cortex/playbooks/factory.md. Project note:
 - Fonts: full Inter TTFs in `public/fonts` (fontsource subsets lack
   Turkish glyphs under satori).
 - `serverExternalPackages` must include satori, harfbuzzjs, resvg, libsql.
-- Verify: `pnpm lint`, `pnpm typecheck`, `pnpm smoke`, `pnpm mcp:smoke`.
+- The server binds 127.0.0.1 and `src/proxy.ts` refuses requests whose Host is not loopback
+  or whose Origin is another site. Keep both.
+- Verify: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm smoke`, `pnpm mcp:smoke`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
