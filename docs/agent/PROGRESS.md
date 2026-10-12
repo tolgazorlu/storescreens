@@ -244,5 +244,24 @@ Evidence (after `pnpm build:cli`, temp cwd outside the repo, `SCREENY_DATA_DIR=$
 Next: `no-prompts` needs `skill` and `mcp` commands to exist first; next is `data-dir-isolation`,
 then `mcp-tools-module`.
 
+## Iteration 15: mcp-tools-module
+
+Changed: moved all 16 MCP tool registrations verbatim from `src/app/api/mcp/route.ts` into
+`src/lib/mcp-tools.ts`, which exports `registerScreenyTools(server, origin)`. The route still
+exists and now only wires `createMcpHandler` + the request-origin store to that function, so the
+stdio CLI can reuse the same tools.
+
+Evidence:
+- `pnpm lint` exit 0, `pnpm typecheck` exit 0, `pnpm smoke` exit 0.
+- `SCREENY_DATA_DIR=$(mktemp -d) next dev -p 4119` + `B=http://localhost:4119 pnpm mcp:smoke`:
+  exit 0, `tools: list_meta, list_projects, create_project, get_project, upload_asset, set_brand,
+  generate_screens, update_screen_text, propagate_layout, export_copy_csv, import_copy_csv,
+  delete_screen, export_zip, derive_screens, export_apple_zip, export_creative_zip` (same 16 names),
+  generate/update/zip/derive/apple zip all succeeded.
+- `verify.sh` still fails only at the missing `test:cli` script.
+
+Next: `data-dir-isolation` needs `test/cli.test.mjs` (test-cli-suite); take `mcp-stdio-initialize`
+(a `screeny mcp` command over the SDK stdio transport using `registerScreenyTools`).
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->
