@@ -31,6 +31,45 @@ Devices: `iphone-6.9` 1320x2868, `iphone-6.5` 1242x2688, `ipad-13`
 2064x2752, `android-phone` 1080x1920. Templates: `hero`, `title-top`,
 `caption-bottom`, `split`, `plain`, `text-only`.
 
+## CLI and MCP
+
+The `screeny` CLI drives the same flow without the dev server. Build the
+bundle once, then alias it:
+
+```bash
+pnpm build:cli                      # writes dist-cli/screeny.js
+alias screeny="node $PWD/dist-cli/screeny.js"
+screeny                             # home view: projects + next commands
+```
+
+```bash
+screeny new "Demo App"
+screeny add-image demo-app ./shots/home.png
+screeny generate demo-app --spec ./spec.json
+screeny render demo-app --out ./out          # out/<locale>/*.png
+screeny export demo-app --apple --out ./out  # out/demo-app-appstore.zip
+```
+
+`spec.json` lists screens for a device and locale, e.g.
+`{"device":"iphone-6.9","locale":"en","screens":[{"template":"hero","title":"Plan your week","screenshot":"home.png"}]}`.
+Add `--json` to any command for machine output. Exit codes: 0 ok, 1
+runtime error, 2 usage error. Commands never prompt.
+
+Register the stdio MCP server (no dev server needed):
+
+```bash
+claude mcp add screeny -- node "$PWD/dist-cli/screeny.js" mcp
+```
+
+Install the agent skill (full command and spec reference) for Claude Code:
+
+```bash
+screeny skill install            # ~/.claude/skills/screeny/SKILL.md
+screeny skill                    # or just print it
+```
+
+`pnpm test:cli` builds the bundle and runs the end-to-end CLI tests.
+
 ## Editor
 
 - Tab: single / all-screens view. G: grid overlay. Safe-area and layer

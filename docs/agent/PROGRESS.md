@@ -380,5 +380,22 @@ untouched, --force overwritten exit 0, unknown flag exit 2. Marked `skill-instal
 
 Next: `readme-cli-section` (README "CLI and MCP" section), the last failing feature.
 
+## Iteration 22: readme-cli-section
+
+Changed: README gains a "CLI and MCP" section: `pnpm build:cli` plus an alias for
+`dist-cli/screeny.js`, the new/add-image/generate/render/export flow with an inline spec,
+`--json` and exit codes, stdio MCP registration
+(`claude mcp add screeny -- node "$PWD/dist-cli/screeny.js" mcp`), `screeny skill install` /
+`screeny skill`, and `pnpm test:cli`.
+
+Evidence: ran every README CLI example from a temp cwd with a temp `SCREENY_DATA_DIR`: project
+created, asset added, 1 screen generated, `out/en/appstore-iphone-6.9-01.png` rendered,
+`out/demo-app-appstore.zip` exported, `skill install --dir <tmp>` wrote SKILL.md, all exit 0.
+`bash docs/agent/verify.sh` -> exit 0, "verify: all checks passed", test:cli tests 17, pass 17,
+fail 0. Marked `readme-cli-section` passing. The `claude mcp add` line was not executed (it would
+edit the user's Claude config); its stdio target is covered by verify.sh's mcp stdio stage.
+
+Next: all features in features.json pass; the stop condition is met.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->
