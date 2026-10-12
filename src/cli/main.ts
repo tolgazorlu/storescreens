@@ -1,5 +1,6 @@
 import { parseArgs } from "./args";
 import { CliError, print, printError, printJson, usageError } from "./output";
+import { addImage } from "./commands/add-image";
 import { newProject } from "./commands/new";
 import { projects } from "./commands/projects";
 import { loadService } from "./service";
@@ -52,6 +53,7 @@ async function run(argv: string[]) {
   if (command === undefined || command.startsWith("--")) return home(argv);
   if (command === "projects") return projects(argv.slice(1));
   if (command === "new") return newProject(argv.slice(1));
+  if (command === "add-image") return addImage(argv.slice(1));
   throw usageError(`unknown command ${command}`, HOME_HELP);
 }
 

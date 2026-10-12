@@ -136,5 +136,26 @@ Evidence (temp cwd, temp `SCREENY_DATA_DIR`, stdin `</dev/null`, after `pnpm bui
 Next: `add-image` + `add-image-errors` (milestone 7), or the `test:cli` harness (milestone 6) since
 `verify.sh` needs `pnpm test:cli`.
 
+## Iteration 10: add-image (add-image, add-image-errors)
+
+What changed:
+- `src/cli/commands/add-image.ts`: `screeny add-image <project> <file> [--kind screenshot|logo|image]`.
+  File path resolves against the caller's cwd; PNG/JPEG sniffed by magic bytes (the service's
+  `imageSize` only reads those, other files were silently stored as 0x0); unknown project maps
+  `NotFound` to `error: project X not found` with a projects/new help line. Prints asset id, url,
+  kind and size; `--json` prints the asset row.
+- `src/cli/main.ts`: dispatches `add-image`.
+
+Evidence (temp cwd, temp `SCREENY_DATA_DIR`, stdin `</dev/null`, after `pnpm build:cli`):
+- `add-image demo s.png` (1x1 PNG): `asset: <id>`, `url: /files/p/<pid>/<rand>-s.png`, exit 0;
+  file present under `$SCREENY_DATA_DIR/files/p/<pid>/`. `--json` prints the asset object, exit 0.
+- `add-image demo nope.png`: `error: cannot read file nope.png` + help, exit 1.
+- `add-image ghost s.png`: `error: project ghost not found` + help, exit 1 (`--json` gives `{error,help}`).
+- `add-image demo`: `error: missing image file` + help, exit 2. `--kind foo`: exit 2.
+- `add-image demo x.txt`: `error: x.txt is not a PNG or JPEG image`, exit 1, nothing stored.
+- `pnpm lint` exit 0, `pnpm typecheck` exit 0.
+
+Next: `generate --spec` (generate-from-spec, generate-validation, generate-with-image).
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->
