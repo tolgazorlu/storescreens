@@ -1,7 +1,7 @@
-# Storeframe agent notes
+# Storescreens agent notes
 
 Maintainer notes (only if present on this machine): `~/projects/cortex/playbooks/factory.md`
-and `~/projects/cortex/projects/storeframe.md`.
+and `~/projects/cortex/projects/storescreens.md`.
 
 - Local single-user tool: no auth, SQLite + files in `./data` (gitignored).
   Do not add accounts, cloud storage or deploy config.

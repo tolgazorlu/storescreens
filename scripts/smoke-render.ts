@@ -18,7 +18,7 @@ async function main() {
       logo: "https://raw.githubusercontent.com/github/explore/main/topics/react/react.png",
     });
     const png = await renderSceneToPng(scene);
-    await writeFile(path.join(OUT, `storeframe-${id}.png`), png);
+    await writeFile(path.join(OUT, `storescreens-${id}.png`), png);
     console.log(id, png.length, "bytes", Date.now() - t0, "ms");
   }
 
@@ -29,7 +29,7 @@ async function main() {
     subtitle: "صدّر إلى PDF أو Excel في ثوانٍ. الأرقام ١٢٣٤٥ تبقى صحيحة.",
   });
   const png = await renderSceneToPng(ar);
-  await writeFile(path.join(OUT, "storeframe-arabic.png"), png);
+  await writeFile(path.join(OUT, "storescreens-arabic.png"), png);
   if (process.env.UPDATE_REF) {
     await mkdir(REF, { recursive: true });
     await writeFile(path.join(REF, "arabic.png"), png);
@@ -42,7 +42,7 @@ async function main() {
     fontFamily: "Noto Sans Hebrew",
   });
   const hePng = await renderSceneToPng(he);
-  await writeFile(path.join(OUT, "storeframe-hebrew.png"), hePng);
+  await writeFile(path.join(OUT, "storescreens-hebrew.png"), hePng);
   if (process.env.UPDATE_REF)
     await writeFile(path.join(REF, "hebrew.png"), hePng);
   console.log("hebrew", hePng.length, "bytes", Date.now() - t0, "ms");
@@ -59,7 +59,7 @@ async function main() {
     ),
   };
   const dePng = await renderSceneToPng(de);
-  await writeFile(path.join(OUT, "storeframe-fit.png"), dePng);
+  await writeFile(path.join(OUT, "storescreens-fit.png"), dePng);
   if (process.env.UPDATE_REF) await writeFile(path.join(REF, "fit.png"), dePng);
   console.log("fit", dePng.length, "bytes", Date.now() - t0, "ms");
 
@@ -79,7 +79,7 @@ async function main() {
         "https://raw.githubusercontent.com/github/explore/main/topics/react/react.png",
     });
     const png = await renderSceneToPng(scene);
-    await writeFile(path.join(OUT, `storeframe-lime-${id}.png`), png);
+    await writeFile(path.join(OUT, `storescreens-lime-${id}.png`), png);
     if (process.env.UPDATE_REF)
       await writeFile(path.join(REF, `lime-${id}.png`), png);
     console.log(`lime-${id}`, png.length, "bytes", Date.now() - t0, "ms");
@@ -101,7 +101,7 @@ async function main() {
         (l) => l.type === "mockup" && l.y + l.h > scene.height,
       );
     const png = await renderSceneToPng(scene);
-    await writeFile(path.join(OUT, `storeframe-${id}.png`), png);
+    await writeFile(path.join(OUT, `storescreens-${id}.png`), png);
     console.log(
       id,
       png.length,

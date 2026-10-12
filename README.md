@@ -1,4 +1,4 @@
-# Storeframe
+# Storescreens
 
 Local store-screenshot generator for App Store and Google Play. Upload
 in-app screenshots and a logo, generate screens from templates per locale
@@ -18,7 +18,7 @@ scripts/fetch-bezels.sh   # optional: Apple's official iPad / iPhone Duo bezels 
 pnpm dev                  # http://localhost:4110
 ```
 
-That's it. Tables are created on first request. Set `STOREFRAME_DATA_DIR`
+That's it. Tables are created on first request. Set `STORESCREENS_DATA_DIR`
 to move the database and uploads somewhere else. Without the bezels, iPad
 and Duo mockups fall back to a generic drawn frame.
 
@@ -29,7 +29,7 @@ what keeps other websites and other machines out of your projects.
 ## Connect an agent
 
 ```bash
-claude mcp add --transport http storeframe http://localhost:4110/api/mcp
+claude mcp add --transport http storescreens http://localhost:4110/api/mcp
 ```
 
 MCP tools: `list_meta`, `list_projects`, `create_project`, `get_project`,
@@ -66,6 +66,6 @@ flex or absolute layout only, inline styles, no `undefined` style values.
 ## Scripts
 
 - `pnpm test` runs the unit tests (request guard, scene validation).
-- `pnpm smoke` renders every template to `/tmp/storeframe-*.png`.
+- `pnpm smoke` renders every template to `/tmp/storescreens-*.png`.
 - `pnpm mcp:smoke` exercises the MCP server against a running dev server
   (`B=http://localhost:4110` to override).
