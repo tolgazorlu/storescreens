@@ -157,5 +157,29 @@ Evidence (temp cwd, temp `SCREENY_DATA_DIR`, stdin `</dev/null`, after `pnpm bui
 
 Next: `generate --spec` (generate-from-spec, generate-validation, generate-with-image).
 
+## Iteration 11: generate (generate-from-spec, generate-validation)
+
+What changed:
+- `src/cli/commands/generate.ts`: `screeny generate <project> --spec <file.json> [--replace]`. Spec
+  path resolves against the caller's cwd, is parsed as JSON and validated with `generateSchema`
+  (loaded via dynamic import, like the service). Every spec problem (unreadable, not JSON, schema
+  issue) is a usage error, exit 2; zod issues print as `path: message`. Unknown project is exit 1
+  with projects/new help. Prints created screen ids/locale/device; `--json` gives
+  `{project, created, screens}`.
+- `src/cli/main.ts`: dispatches `generate`.
+
+Evidence (temp cwd, temp `SCREENY_DATA_DIR`, stdin `</dev/null`, after `pnpm build:cli`):
+- `new demo` then `generate demo --spec spec.json` (iphone-6.9, en, text-only + title-top, Turkish
+  subtitle): `screens: created 2 in demo` + 2 rows + render help, exit 0. `projects`:
+  `demo  screens: 2`.
+- Unknown template: `error: invalid spec: screens.0.template: Invalid option: expected one of ...`,
+  exit 2 (`--json` gives `{error,help}`).
+- Not JSON: `error: spec nj.json is not valid JSON: Unexpected token ...` (single line), exit 2.
+- No `--spec`: `error: missing --spec`, exit 2. Missing file: exit 2. `generate ghost`: exit 1.
+- `pnpm lint` exit 0, `pnpm typecheck` exit 0.
+
+Next: `render` (render-png, render-missing-out, render-from-any-cwd), then generate-with-image and
+generate-multi-locale, which need render to check output.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->
