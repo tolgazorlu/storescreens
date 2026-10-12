@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 type Handler<P> = (req: Request, ctx: { params: P }) => Promise<Response>;
 
-/** Wrap a route handler with error mapping. No auth: Storeframe is a local, single-user tool. */
+/** Wrap a route handler with error mapping. No auth: Storescreens is a local, single-user tool. */
 export function route<P = Record<string, string>>(handler: Handler<P>) {
   return async (req: Request, ctx: { params: Promise<P> }) => {
     try {

@@ -31,7 +31,7 @@ export function AppNav() {
     <aside className="flex w-12 shrink-0 flex-col items-center gap-1 border-r border-border bg-sidebar py-3">
       <Link
         href="/projects"
-        aria-label="Storeframe"
+        aria-label="Storescreens"
         className="mb-3 flex size-8 items-center justify-center rounded-lg bg-foreground text-[13px] font-bold tracking-tight text-background"
       >
         S

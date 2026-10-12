@@ -8,7 +8,7 @@ cd "$ROOT"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 # Never touch a real data directory.
-export STOREFRAME_DATA_DIR="$TMP/data"
+export STORESCREENS_DATA_DIR="$TMP/data"
 
 step() { printf '\n== %s\n' "$1"; }
 
@@ -26,8 +26,8 @@ OUT="$TMP/smoke" pnpm smoke
 
 step "build:cli"
 pnpm build:cli
-test -f dist-cli/storeframe.js
-head -n1 dist-cli/storeframe.js | grep -qx '#!/usr/bin/env node'
+test -f dist-cli/storescreens.js
+head -n1 dist-cli/storescreens.js | grep -qx '#!/usr/bin/env node'
 
 step "test:cli"
 pnpm test:cli
@@ -35,7 +35,7 @@ pnpm test:cli
 step "end-to-end from a temp cwd"
 E2E="$TMP/e2e"
 mkdir -p "$E2E"
-export STOREFRAME_DATA_DIR="$TMP/e2e-data"
+export STORESCREENS_DATA_DIR="$TMP/e2e-data"
 cat > "$E2E/spec.json" <<'JSON'
 {
   "device": "iphone-6.9",
@@ -46,7 +46,7 @@ cat > "$E2E/spec.json" <<'JSON'
   ]
 }
 JSON
-CLI="node $ROOT/dist-cli/storeframe.js"
+CLI="node $ROOT/dist-cli/storescreens.js"
 (
   cd "$E2E"
   $CLI new demo
@@ -68,7 +68,7 @@ resp=$(printf '%s\n%s\n%s\n' \
   '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"verify","version":"0"}}}' \
   '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
   '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
-  | (cd "$E2E" && perl -e 'alarm 30; exec @ARGV' node "$ROOT/dist-cli/storeframe.js" mcp) || true)
+  | (cd "$E2E" && perl -e 'alarm 30; exec @ARGV' node "$ROOT/dist-cli/storescreens.js" mcp) || true)
 echo "$resp" | grep -q '"id":1' || { echo "mcp: no initialize response" >&2; exit 1; }
 echo "$resp" | grep -q '"list_projects"' || { echo "mcp: tools/list missing list_projects" >&2; exit 1; }
 
