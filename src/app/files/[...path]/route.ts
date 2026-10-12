@@ -23,6 +23,8 @@ export async function GET(
       headers: {
         "content-type": MIME[ext] ?? "application/octet-stream",
         "cache-control": "private, max-age=3600",
+        // An uploaded SVG still renders in <img>, but navigating to it must not run its scripts.
+        ...(ext === "svg" ? { "content-disposition": "attachment" } : {}),
       },
     });
   } catch {
