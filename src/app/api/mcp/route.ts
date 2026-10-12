@@ -81,7 +81,7 @@ const handler = createMcpHandler(
       "list_projects",
       {
         title: "List projects",
-        description: "List the user's Screeny projects (apps).",
+        description: "List the user's Storeframe projects (apps).",
         inputSchema: z.object({}),
       },
       async () => text(await listProjects()),
@@ -386,7 +386,7 @@ const handler = createMcpHandler(
       },
     );
   },
-  { serverInfo: { name: "screeny", version: "0.1.0" } },
+  { serverInfo: { name: "storeframe", version: "0.1.0" } },
 );
 
 const withOrigin = (req: Request) =>

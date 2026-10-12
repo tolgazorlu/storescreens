@@ -15,7 +15,7 @@ export default async function ConnectPage() {
             Connect an agent
           </h1>
           <p className="text-sm text-muted-foreground">
-            Screeny runs locally with no auth. Point your agent at the MCP
+            Storeframe runs locally with no auth. Point your agent at the MCP
             endpoint while{" "}
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
               pnpm dev
@@ -26,11 +26,11 @@ export default async function ConnectPage() {
         <CopyBlock title="MCP endpoint (Streamable HTTP)" text={mcpUrl} />
         <CopyBlock
           title="Claude Code"
-          text={`claude mcp add --transport http screeny ${mcpUrl}`}
+          text={`claude mcp add --transport http storeframe ${mcpUrl}`}
         />
         <CopyBlock
           title="Hermes"
-          text={`SCREENY_URL=${origin}  # the screeny skill uses the REST routes under /api`}
+          text={`STOREFRAME_URL=${origin}  # the storeframe skill uses the REST routes under /api`}
         />
         <CopyBlock
           title="REST"
