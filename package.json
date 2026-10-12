@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "smoke": "TSX_TSCONFIG_PATH=tsconfig.scripts.json tsx scripts/smoke-render.ts",
-    "mcp:smoke": "node scripts/mcp-smoke.mjs"
+    "mcp:smoke": "node scripts/mcp-smoke.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -49,7 +50,8 @@
     "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.3"
   },
   "packageManager": "pnpm@9.15.9"
 }
