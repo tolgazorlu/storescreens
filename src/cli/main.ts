@@ -7,6 +7,7 @@ import { mcp } from "./commands/mcp";
 import { newProject } from "./commands/new";
 import { projects } from "./commands/projects";
 import { render } from "./commands/render";
+import { skill } from "./commands/skill";
 import { loadService } from "./service";
 
 declare const __SCREENY_VERSION__: string;
@@ -62,6 +63,7 @@ async function run(argv: string[]) {
   if (command === "render") return render(argv.slice(1));
   if (command === "export") return exportProject(argv.slice(1));
   if (command === "mcp") return mcp(argv.slice(1));
+  if (command === "skill") return skill(argv.slice(1));
   throw usageError(`unknown command ${command}`, HOME_HELP);
 }
 

@@ -350,5 +350,20 @@ mcp stdio). Marked `no-prompts`, `data-dir-isolation`, `test-cli-suite`, `verify
 Next: `skill-print`, `skill-install` (add tests for both to test/cli.test.mjs), then
 `readme-cli-section`.
 
+## Iteration 20: skill-print
+
+Changed: `scripts/build-cli.mjs` reads `skills/screeny/SKILL.md` at build time and injects it as
+the `__SCREENY_SKILL__` define. New `src/cli/commands/skill.ts` prints it (`--json` gives
+`{ "skill": ... }`, extra arguments are usage errors); `src/cli/main.ts` routes `skill`.
+`test/cli.test.mjs` gains a `skill` block: stdout equals SKILL.md byte for byte from a temp cwd,
+and the same holds for a copy of the bundle in a temp dir (node_modules symlinked, no skills dir).
+
+Evidence: with `skills/` moved out of the repo, `node dist-cli/screeny.js skill` from /tmp printed
+the frontmatter, exit 0. `bash docs/agent/verify.sh` -> exit 0, "verify: all checks passed",
+test:cli tests 16, pass 16, fail 0. Marked `skill-print` passing.
+
+Next: `skill-install` (`skill install [--dir d] [--force]`, idempotent, tests), then
+`readme-cli-section`.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->

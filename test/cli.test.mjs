@@ -1,7 +1,15 @@
 // End-to-end tests for the built CLI (dist-cli/screeny.js). Every run gets a temp
 // SCREENY_DATA_DIR and a temp cwd, and stdin is closed so a prompt would fail fast.
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, describe, test } from "node:test";
@@ -263,5 +271,30 @@ describe("mcp stdio", () => {
     assert.equal(code, 0);
     for (const line of lines) assert.equal(JSON.parse(line).jsonrpc, "2.0");
     assert.ok(existsSync(dataDir));
+  });
+});
+
+describe("skill", () => {
+  test("skill prints the SKILL.md embedded at build time", () => {
+    const { run } = sandbox();
+    const expected = readFileSync(path.join(ROOT, "skills", "screeny", "SKILL.md"), "utf8");
+    const r = run("skill");
+    assert.equal(r.code, 0);
+    assert.equal(r.stdout, expected);
+  });
+
+  test("skill works from a bundle copy with no skills dir next to it", () => {
+    const expected = readFileSync(path.join(ROOT, "skills", "screeny", "SKILL.md"), "utf8");
+    const dir = tempDir("bundle");
+    copyFileSync(BIN, path.join(dir, "screeny.js"));
+    writeFileSync(path.join(dir, "package.json"), '{ "type": "module" }\n');
+    symlinkSync(path.join(ROOT, "node_modules"), path.join(dir, "node_modules"));
+    const r = spawnSync(process.execPath, [path.join(dir, "screeny.js"), "skill"], {
+      cwd: tempDir("cwd"),
+      stdio: ["ignore", "pipe", "pipe"],
+      encoding: "utf8",
+    });
+    assert.equal(r.status, 0);
+    assert.equal(r.stdout, expected);
   });
 });

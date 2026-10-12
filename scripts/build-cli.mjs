@@ -6,6 +6,7 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pkg = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
+const skill = await readFile(path.join(root, "skills/screeny/SKILL.md"), "utf8");
 const outdir = path.join(root, "dist-cli");
 
 await rm(outdir, { recursive: true, force: true });
@@ -21,7 +22,10 @@ await build({
   tsconfig: "tsconfig.json",
   alias: { "server-only": "./scripts/server-only-shim.ts" },
   banner: { js: "#!/usr/bin/env node" },
-  define: { __SCREENY_VERSION__: JSON.stringify(pkg.version) },
+  define: {
+    __SCREENY_VERSION__: JSON.stringify(pkg.version),
+    __SCREENY_SKILL__: JSON.stringify(skill),
+  },
   logLevel: "warning",
 });
 // Mark the bundle as ESM so node does not warn and reparse it.
