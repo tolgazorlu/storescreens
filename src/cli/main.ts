@@ -1,6 +1,7 @@
 import { parseArgs } from "./args";
 import { CliError, print, printError, printJson, usageError } from "./output";
 import { addImage } from "./commands/add-image";
+import { exportProject } from "./commands/export";
 import { generate } from "./commands/generate";
 import { newProject } from "./commands/new";
 import { projects } from "./commands/projects";
@@ -58,6 +59,7 @@ async function run(argv: string[]) {
   if (command === "add-image") return addImage(argv.slice(1));
   if (command === "generate") return generate(argv.slice(1));
   if (command === "render") return render(argv.slice(1));
+  if (command === "export") return exportProject(argv.slice(1));
   throw usageError(`unknown command ${command}`, HOME_HELP);
 }
 

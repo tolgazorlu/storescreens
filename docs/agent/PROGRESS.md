@@ -221,5 +221,28 @@ Evidence (temp cwd outside the repo, `SCREENY_DATA_DIR=$T/data`, stdin `</dev/nu
 
 Next: `export --apple` (export-apple, export-errors), then data-dir-isolation.
 
+## Iteration 14: runtime-error-exit, export --apple
+
+What changed:
+- `runtime-error-exit`: no code change; `render` already maps an unknown project to exit 1 with help.
+- `src/cli/commands/export.ts`: `screeny export <project> --apple --out <dir>` writes
+  `exportAppleZip` output to `<out>/<slug>-appstore.zip` (out dir resolved against the caller's cwd,
+  created). Missing `--apple` or `--out` is exit 2 with help. Unknown project and `BadRequest`
+  ("No screens to export") are exit 1 with help. `--json` returns `{project, file, bytes}`.
+- `src/cli/main.ts`: dispatches `export`.
+- `features.json`: `runtime-error-exit`, `export-apple`, `export-errors` set to passes:true.
+
+Evidence (after `pnpm build:cli`, temp cwd outside the repo, `SCREENY_DATA_DIR=$T/data`, stdin `</dev/null`):
+- `render missing-project --out $T/o`: `error: project missing-project not found` + `help:` line, exit 1.
+- `export demo --apple --out ./out` (2 screens): `exported: .../out/demo-appstore.zip  103308 bytes`,
+  exit 0; file starts `PK`; `unzip -l` lists `en/iphone-6.9/01-02.png`, `en/iphone-6.5/01-02.png`, `README.txt`.
+- `--json`: `{"project":"demo","file":".../out2/demo-appstore.zip","bytes":103308}`, exit 0.
+- `export demo --out ./x`: `error: missing --apple ...` + help, exit 2. Without `--out`: exit 2.
+- `export empty --apple --out ./x`: `error: No screens to export` + help, exit 1. `export ghost`: exit 1.
+- `pnpm lint` exit 0, `pnpm typecheck` exit 0. `verify.sh` still fails at the missing `test:cli` script.
+
+Next: `no-prompts` needs `skill` and `mcp` commands to exist first; next is `data-dir-isolation`,
+then `mcp-tools-module`.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->
