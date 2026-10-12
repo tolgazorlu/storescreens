@@ -181,5 +181,28 @@ Evidence (temp cwd, temp `SCREENY_DATA_DIR`, stdin `</dev/null`, after `pnpm bui
 Next: `render` (render-png, render-missing-out, render-from-any-cwd), then generate-with-image and
 generate-multi-locale, which need render to check output.
 
+## Iteration 12: render (render-png, render-filters, render-missing-out, render-from-any-cwd, generate-multi-locale)
+
+What changed:
+- `src/cli/commands/render.ts`: `screeny render <project> [--locale] [--device] --out <dir>`. Out dir
+  resolves against the caller's cwd and is created; files are named by `exportFileName`
+  (`<locale>/<store>-<device>-NN.png`). Missing `--out` is exit 2. Unknown project, a project with
+  no screens, or a filter matching nothing is exit 1 with help. `--json` lists files and sizes.
+- `src/cli/main.ts`: dispatches `render`.
+
+Evidence (temp cwd outside the repo, `SCREENY_DATA_DIR=$T/data`, stdin `</dev/null`, after `pnpm build:cli`):
+- `generate demo --spec` with `locales: [en, tr]`, `{en,tr}` title/subtitle maps (Turkish `Şık ığdır
+  çöğüş`, `İki`): `screens: created 4`, exit 0, no stderr.
+- `render demo`: `error: missing --out`, exit 2.
+- `render demo --out ./out`: 4 files (= screen count), all start `89504e47`, sizes 27200-99022 bytes,
+  exit 0. Temp cwd contains only `data dev out spec.json tr` (no `public`).
+- `--locale tr --out ./tr`: only `tr/...` files (2). `--device iphone-6.9`: 4 files.
+  `--device ipad-13` and `--locale de`: `error: no screens in demo match ...` + help, exit 1.
+- `render ghost --out x`: exit 1. `render empty --out x`: `project empty has no screens`, exit 1.
+- `pnpm lint` exit 0, `pnpm typecheck` exit 0. `verify.sh` still fails at `test:cli` (not yet added).
+
+Next: `generate-with-image` (add-image + hero screen referencing the asset, compare PNG size), then
+`export --apple`.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->

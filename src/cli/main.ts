@@ -4,6 +4,7 @@ import { addImage } from "./commands/add-image";
 import { generate } from "./commands/generate";
 import { newProject } from "./commands/new";
 import { projects } from "./commands/projects";
+import { render } from "./commands/render";
 import { loadService } from "./service";
 
 declare const __SCREENY_VERSION__: string;
@@ -56,6 +57,7 @@ async function run(argv: string[]) {
   if (command === "new") return newProject(argv.slice(1));
   if (command === "add-image") return addImage(argv.slice(1));
   if (command === "generate") return generate(argv.slice(1));
+  if (command === "render") return render(argv.slice(1));
   throw usageError(`unknown command ${command}`, HOME_HELP);
 }
 
