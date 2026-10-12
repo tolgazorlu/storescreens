@@ -1,6 +1,12 @@
 {
   "name": "screeny",
   "version": "0.1.0",
+  "description": "Local App Store and Google Play screenshot generator: in-app screenshots and a logo in, store-ready PNGs per locale and device out. Editor, REST and MCP.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tolgazorlu/screeny.git"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p 4110",
