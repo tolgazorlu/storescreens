@@ -1,5 +1,7 @@
 # Storescreens
 
+Landing page: **https://storescreens.vercel.app** (static, from `site/`). The app itself runs on your machine, see Run below.
+
 Local store-screenshot generator for App Store and Google Play. Upload
 in-app screenshots and a logo, generate screens from templates per locale
 and device, drag text and mockups around, export store-ready PNGs as a
