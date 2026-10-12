@@ -304,5 +304,27 @@ response, as real MCP clients do.
 Next: `skill-file` (skills/screeny/SKILL.md), then `skill-print` and `skill-install`; after
 those, `no-prompts` and `test-cli-suite` become possible.
 
+## Iteration 18: skill-file
+
+Changed: new `skills/screeny/SKILL.md` with frontmatter `name: screeny` and a one-line
+`description`. It documents the home view, every command (`projects`, `new`, `add-image`,
+`generate`, `render`, `export`, `mcp`, `skill`, `skill install`, `--version`), `--json`, the
+error/help format and exit codes 0/1/2, the generate spec (devices, templates, locales maps),
+a typical flow, and the MCP alternative (`screeny mcp` stdio registration plus all 16 tool
+names). Device and template ids were copied from `src/lib/devices.ts` and `src/lib/templates.ts`.
+
+Evidence: after `pnpm build:cli`, in a temp cwd with a temp `SCREENY_DATA_DIR`, ran the
+skill's typical flow using the skill's own JSON spec example (extracted with awk):
+`new "Demo App"` -> created demo-app; `add-image demo-app ./home.png` -> asset named home.png;
+`generate` -> created 2 screens (the `"screenshot": "home.png"` name reference resolved);
+`render --out ./out` -> 2 PNGs in `out/en/`; `export --apple` -> demo-app-appstore.zip
+244366 bytes; exit 0. The render row was corrected to say PNGs go to `<dir>/<locale>/`.
+
+Note: the skill already documents `screeny skill` and `skill install` per SPEC; those commands
+are not implemented yet.
+
+Next: `skill-print` (embed SKILL.md in the bundle via a text loader/define in
+scripts/build-cli.mjs, add `screeny skill`), then `skill-install`.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->
