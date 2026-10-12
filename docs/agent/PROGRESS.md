@@ -263,5 +263,24 @@ Evidence:
 Next: `data-dir-isolation` needs `test/cli.test.mjs` (test-cli-suite); take `mcp-stdio-initialize`
 (a `screeny mcp` command over the SDK stdio transport using `registerScreenyTools`).
 
+## Iteration 16: mcp-stdio-initialize, mcp-stdio-tools-list
+
+Changed: new `src/cli/commands/mcp.ts` (`screeny mcp`) serves the shared tools over stdio with
+`serveStdio` from `@modelcontextprotocol/server/stdio`; the factory builds an `McpServer`
+named `screeny` (bundle version) and calls `registerScreenyTools(server, () => "")`, after
+`loadService()` sets the public dir. Errors go to stderr. `main.ts` dispatches `mcp`.
+
+Evidence (after `pnpm build:cli`, temp cwd, temp `SCREENY_DATA_DIR`, same piped input as the
+verify.sh "mcp stdio" stage, stdin closed after `tools/list`):
+- exit 0, stderr empty, stdout 2 lines, both parse as JSON.
+- line 1: `{"result":{"protocolVersion":"2025-06-18",...,"serverInfo":{"name":"screeny","version":"0.1.0"}},"jsonrpc":"2.0","id":1}`.
+- line 2: 16 tools, includes list_projects/create_project/generate_screens, every inputSchema has `type: "object"`.
+- `pnpm lint` exit 0, `pnpm typecheck` exit 0. verify.sh still stops at the missing `test:cli` script.
+
+Note: download URLs from stdio tools are currently origin-relative (`/files/...`); file paths
+for stdio (PLAN ctx idea) are not done yet.
+
+Next: `mcp-stdio-tool-call` (create_project + list_projects over stdio), then `mcp-stdout-clean`.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->

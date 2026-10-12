@@ -3,6 +3,7 @@ import { CliError, print, printError, printJson, usageError } from "./output";
 import { addImage } from "./commands/add-image";
 import { exportProject } from "./commands/export";
 import { generate } from "./commands/generate";
+import { mcp } from "./commands/mcp";
 import { newProject } from "./commands/new";
 import { projects } from "./commands/projects";
 import { render } from "./commands/render";
@@ -60,6 +61,7 @@ async function run(argv: string[]) {
   if (command === "generate") return generate(argv.slice(1));
   if (command === "render") return render(argv.slice(1));
   if (command === "export") return exportProject(argv.slice(1));
+  if (command === "mcp") return mcp(argv.slice(1));
   throw usageError(`unknown command ${command}`, HOME_HELP);
 }
 
