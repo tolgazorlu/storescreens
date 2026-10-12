@@ -9,13 +9,22 @@ Single user, no auth, no cloud: SQLite + files under `./data`.
 
 ## Run
 
+Requirements: Node 22+, pnpm 9+. macOS only for `scripts/fetch-bezels.sh`
+(it mounts Apple's DMGs with `hdiutil`); everything else runs anywhere.
+
 ```bash
 pnpm install
-pnpm dev        # http://localhost:4110
+scripts/fetch-bezels.sh   # optional: Apple's official iPad / iPhone Duo bezels (Apple Design Resources)
+pnpm dev                  # http://localhost:4110
 ```
 
 That's it. Tables are created on first request. Set `SCREENY_DATA_DIR`
-to move the database and uploads somewhere else.
+to move the database and uploads somewhere else. Without the bezels, iPad
+and Duo mockups fall back to a generic drawn frame.
+
+The server binds 127.0.0.1 and refuses requests whose `Host` is not
+loopback or whose `Origin` is another site: there is no auth, so this is
+what keeps other websites and other machines out of your projects.
 
 ## Connect an agent
 
@@ -56,6 +65,7 @@ flex or absolute layout only, inline styles, no `undefined` style values.
 
 ## Scripts
 
+- `pnpm test` runs the unit tests (request guard, scene validation).
 - `pnpm smoke` renders every template to `/tmp/screeny-*.png`.
 - `pnpm mcp:smoke` exercises the MCP server against a running dev server
   (`B=http://localhost:4110` to override).
