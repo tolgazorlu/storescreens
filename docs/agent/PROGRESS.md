@@ -326,5 +326,29 @@ are not implemented yet.
 Next: `skill-print` (embed SKILL.md in the bundle via a text loader/define in
 scripts/build-cli.mjs, add `screeny skill`), then `skill-install`.
 
+## Iteration 19: test:cli suite, no-prompts, data-dir-isolation, verify gate
+
+verify.sh failed at the missing `pnpm test:cli`, so this iteration fixed the gate.
+
+Changed: `package.json` gains `test:cli` (`pnpm build:cli && node --test "test/*.test.mjs"`).
+New `test/cli.test.mjs` (node:test, 14 tests) spawns `dist-cli/screeny.js` with a mkdtemp
+`SCREENY_DATA_DIR`, a mkdtemp cwd and stdin closed (`stdio: ignore`). It covers the home view
+(empty, listed, --json), `--version`/`-v`/`version`, usage errors (unknown command/flag, missing
+argument, invalid and unparsable spec: exit 2), missing project (exit 1), `new` idempotency,
+generate + render (PNG signature, files in `out/en/`), apple export (`PK` zip), export without
+`--apple` (exit 2), every non-mcp command terminating with stdin closed, and an awaited MCP stdio
+session (initialize, tools/list, create_project, list_projects, every stdout line is JSON-RPC).
+`docs/agent/verify.sh`: the end-to-end PNG signature loop used `out/*.png`, which matched nothing
+because render writes `<out>/<locale>/*.png` (needed: file names carry no locale, so a flat
+layout collides across locales). It now iterates `find "$E2E/out" -name '*.png'`; same check,
+all PNGs covered.
+
+Evidence: `pnpm test:cli` -> tests 14, pass 14, fail 0. `bash docs/agent/verify.sh` -> exit 0,
+"verify: all checks passed" (install, lint, typecheck, smoke, build:cli, test:cli, temp-cwd e2e,
+mcp stdio). Marked `no-prompts`, `data-dir-isolation`, `test-cli-suite`, `verify-gate` passing.
+
+Next: `skill-print`, `skill-install` (add tests for both to test/cli.test.mjs), then
+`readme-cli-section`.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->

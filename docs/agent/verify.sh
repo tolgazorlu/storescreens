@@ -56,9 +56,10 @@ CLI="node $ROOT/dist-cli/screeny.js"
 )
 pngs=$(find "$E2E/out" -name '*.png' | wc -l | tr -d ' ')
 [ "$pngs" -ge 2 ] || { echo "expected >=2 PNGs in $E2E/out, got $pngs" >&2; exit 1; }
-for f in "$E2E"/out/*.png; do
+# render writes <out>/<locale>/*.png, so check every PNG below out/.
+while IFS= read -r f; do
   [ "$(head -c 4 "$f" | od -An -tx1 | tr -d ' \n')" = "89504e47" ] || { echo "not a PNG: $f" >&2; exit 1; }
-done
+done < <(find "$E2E/out" -name '*.png')
 zip=$(find "$E2E/out" -name '*.zip' | head -n1)
 [ -n "$zip" ] || { echo "no zip in $E2E/out" >&2; exit 1; }
 [ "$(head -c 2 "$zip")" = "PK" ] || { echo "not a zip: $zip" >&2; exit 1; }
