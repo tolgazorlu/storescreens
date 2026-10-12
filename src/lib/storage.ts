@@ -3,6 +3,7 @@ import { mkdir, writeFile, unlink, readFile } from "node:fs/promises";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { DATA_DIR } from "@/lib/db";
+import { localFilesPath } from "@/lib/files-url";
 
 /** Files live under data/files and are served by /files/[...path]. */
 export const FILES_DIR = path.join(DATA_DIR, "files");
@@ -30,15 +31,14 @@ export async function deleteFile(url: string) {
 }
 
 export async function readFileBytes(url: string): Promise<Buffer> {
-  if (url.startsWith("/files/")) return readFile(absPath(url));
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`fetch ${url}: ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
+  const local = localFilesPath(url);
+  if (!local) throw new Error(`unsupported image src: ${url}`);
+  return readFile(absPath(local));
 }
 
 export function absPath(url: string) {
   const rel = url.replace(/^\/files\//, "");
   const abs = path.join(FILES_DIR, rel);
-  if (!abs.startsWith(FILES_DIR)) throw new Error("Bad path");
+  if (abs !== FILES_DIR && !abs.startsWith(FILES_DIR + path.sep)) throw new Error("Bad path");
   return abs;
 }
