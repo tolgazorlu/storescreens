@@ -204,5 +204,22 @@ Evidence (temp cwd outside the repo, `SCREENY_DATA_DIR=$T/data`, stdin `</dev/nu
 Next: `generate-with-image` (add-image + hero screen referencing the asset, compare PNG size), then
 `export --apple`.
 
+## Iteration 13: generate-with-image
+
+What changed:
+- No code change needed: `generate` already resolves `screenshot` refs (asset id, asset name or
+  `/files/...` URL) via `resolveAssetRef`, and `render` loads the asset file from `SCREENY_DATA_DIR`.
+- `features.json`: `generate-with-image` set to passes:true.
+
+Evidence (temp cwd outside the repo, `SCREENY_DATA_DIR=$T/data`, stdin `</dev/null`, `dist-cli/screeny.js`):
+- Rendered a text-only screen to `shot.png` (1320x2868), `add-image img shot.png`: `asset: <id>`,
+  `url: /files/p/<project>/<hash>-shot.png`, exit 0.
+- Hero screen without screenshot, `render txt`: 210672 bytes. Hero screen with `"screenshot": "shot.png"`:
+  222987 bytes. Same with `"screenshot": "<asset url>"`: 222987 bytes, exit 0.
+- Downscaled both PNGs and inspected them: the text-only one shows the empty placeholder inside the
+  phone, the asset one shows the rendered "Shot" image inside the phone.
+
+Next: `export --apple` (export-apple, export-errors), then data-dir-isolation.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->
