@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Storescreens · App Store and Google Play screenshots, generated</title>
+    <meta name="description" content="Open-source store screenshot generator. Upload in-app screenshots and a logo, get App Store and Google Play images per locale and device. Runs locally, agents drive it over MCP." />
+    <meta property="og:title" content="Storescreens" />
+    <meta property="og:description" content="App Store and Google Play screenshots, generated on your machine. Editor, REST and MCP." />
+    <meta property="og:image" content="https://storescreens.vercel.app/img/store-01.png" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fff'/%3E%3Ctext x='16' y='22' font-family='system-ui' font-weight='700' font-size='18' text-anchor='middle' fill='%23000'%3ES%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="style.css" />
+    <!--CLARITY-->
+  </head>
+  <body>
+    <header class="nav">
+      <a class="brand" href="/"><span class="mark">S</span> Storescreens</a>
+      <nav>
+        <a href="#how">How it works</a>
+        <a href="#agents">Agents</a>
+        <a href="https://github.com/tolgazorlu/storescreens">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">Open source · MIT · runs on your machine</p>
+        <h1>Store screenshots, generated.</h1>
+        <p class="lead">
+          Upload your in-app screenshots and a logo. Get App Store and Google Play images for every
+          locale and device, from templates you can still drag around. No account, no upload to anyone's
+          cloud: a local Next.js app with SQLite under <code>./data</code>.
+        </p>
+        <div class="actions">
+          <a class="btn primary" href="https://github.com/tolgazorlu/storescreens">View on GitHub</a>
+          <code class="install">git clone https://github.com/tolgazorlu/storescreens && cd storescreens && pnpm i && pnpm dev</code>
+        </div>
+        <figure class="shot">
+          <img src="img/editor.png" width="1440" height="900" alt="The Storescreens editor: assets on the left, a 6.9 inch iPhone canvas in the middle, layers and background on the right, the screen strip at the bottom" />
+        </figure>
+      </section>
+
+      <section class="samples" aria-label="Sample output">
+        <img src="img/store-01.png" width="350" height="760" alt="Hero template: title, subtitle and a tilted phone on a dark background" />
+        <img src="img/store-02.png" width="350" height="760" alt="Title-top template: title above an upright phone" />
+        <img src="img/store-03.png" width="350" height="760" alt="Caption-bottom template: phone bleeding from the top, caption below" />
+        <p class="caption">Three templates from the same three uploads. 1320 × 2868, store-ready, exported as a ZIP per locale.</p>
+      </section>
+
+      <section id="how" class="grid3">
+        <div>
+          <h2>1. Upload</h2>
+          <p>Drop in-app screenshots (one per feature) and the app icon. Names are kept, so a script can refer to <code>home.png</code> later.</p>
+        </div>
+        <div>
+          <h2>2. Generate</h2>
+          <p>Pick a locale, a device and a template per screen; titles in the target language. One call makes the whole set, and <code>derive</code> rebuilds it for iPad and foldables.</p>
+        </div>
+        <div>
+          <h2>3. Export</h2>
+          <p>Store-size PNGs per locale and device, flattened for App Store Connect, plus the iOS 27 creative assets (header, search, universal) when you need them.</p>
+        </div>
+      </section>
+
+      <section class="features">
+        <h2>What's inside</h2>
+        <ul>
+          <li><b>Devices</b> iPhone 6.9″ and 6.5″, iPad 13″, iPhone Duo outer and inner, Android phone, App Store creative canvases.</li>
+          <li><b>Templates</b> hero, title-top, caption-bottom, split, feature-list, two-phones, duo, pair, creative, plain, text-only.</li>
+          <li><b>Editor</b> snap guides, safe-area overlay, grid, undo/redo, align buttons, per-layer inspector. What you see is what satori renders.</li>
+          <li><b>Locales</b> one set per language; Arabic and Hebrew ship with the right fonts and bidi handling.</li>
+          <li><b>Brand presets</b> a dark, light, gradient or lime look applied in one field, overridable per call.</li>
+          <li><b>Official bezels</b> Apple's product bezels for iPad and Duo, fetched from Apple's own CDN by a script.</li>
+        </ul>
+      </section>
+
+      <section id="agents" class="agents">
+        <h2>Built for agents too</h2>
+        <p>
+          Every editor action exists as a REST route and as an MCP tool. Point Claude Code or any MCP client
+          at the running app and ask for "store screenshots for my app in Turkish and English".
+        </p>
+        <pre><code>claude mcp add --transport http storescreens http://localhost:4110/api/mcp</code></pre>
+        <p class="muted">
+          The server binds 127.0.0.1 and refuses requests whose Host is not loopback or whose Origin is another
+          site. There is no auth because nothing leaves your machine.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p>MIT licensed. Made by <a href="https://github.com/tolgazorlu">tolgazorlu</a>. Fonts under the SIL Open Font License; Apple bezels under Apple Design Resources terms.</p>
+    </footer>
+  </body>
+</html>
