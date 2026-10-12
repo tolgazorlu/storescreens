@@ -365,5 +365,20 @@ test:cli tests 16, pass 16, fail 0. Marked `skill-print` passing.
 Next: `skill-install` (`skill install [--dir d] [--force]`, idempotent, tests), then
 `readme-cli-section`.
 
+## Iteration 21: skill-install
+
+Changed: `src/cli/commands/skill.ts` handles `skill install [--dir d] [--force]`. It writes the
+embedded skill to `<dir>/SKILL.md` (default `~/.claude/skills/screeny`, `--dir` resolved against
+cwd). Identical content reports "already installed" (exit 0); different content is left untouched
+and reported as a runtime error (exit 1, help points to `--force`); `--force` overwrites.
+`--json` gives `{ path, status }` with status installed/unchanged/overwritten. New test in the
+`skill` block covers all four cases against a temp `--dir`, never the real `~/.claude`.
+
+Evidence: `bash docs/agent/verify.sh` -> exit 0, "verify: all checks passed", test:cli pass 17,
+fail 0. Manual run on a temp dir: installed exit 0, already installed exit 0, edited file exit 1
+untouched, --force overwritten exit 0, unknown flag exit 2. Marked `skill-install` passing.
+
+Next: `readme-cli-section` (README "CLI and MCP" section), the last failing feature.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->

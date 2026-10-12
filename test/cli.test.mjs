@@ -297,4 +297,33 @@ describe("skill", () => {
     assert.equal(r.status, 0);
     assert.equal(r.stdout, expected);
   });
+
+  test("skill install writes SKILL.md idempotently and respects local edits", () => {
+    const { run, json } = sandbox();
+    const expected = readFileSync(path.join(ROOT, "skills", "screeny", "SKILL.md"), "utf8");
+    const dir = path.join(tempDir("skills"), "screeny");
+    const file = path.join(dir, "SKILL.md");
+
+    const first = json("skill", "install", "--dir", dir);
+    assert.equal(first.code, 0);
+    assert.deepEqual(first.body, { path: file, status: "installed" });
+    assert.equal(readFileSync(file, "utf8"), expected);
+
+    const second = run("skill", "install", "--dir", dir);
+    assert.equal(second.code, 0);
+    assert.match(second.stdout, /already installed/);
+    assert.equal(readFileSync(file, "utf8"), expected);
+
+    writeFileSync(file, "local edit\n");
+    const kept = run("skill", "install", "--dir", dir);
+    assert.equal(kept.code, 1);
+    assert.match(kept.stdout, /error: .*left untouched/);
+    assert.match(kept.stdout, /help: .*--force/);
+    assert.equal(readFileSync(file, "utf8"), "local edit\n");
+
+    const forced = json("skill", "install", "--dir", dir, "--force");
+    assert.equal(forced.code, 0);
+    assert.equal(forced.body.status, "overwritten");
+    assert.equal(readFileSync(file, "utf8"), expected);
+  });
 });
