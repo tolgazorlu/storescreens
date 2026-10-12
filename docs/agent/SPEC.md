@@ -6,7 +6,7 @@ Add a `screeny` command-line tool so people and AI agents can create and export 
 Play screenshot sets without starting the Next.js server or opening a browser. It reuses the
 existing service layer (`src/lib/service.ts`), renderer (`src/lib/render.ts`) and SQLite data
 directory, so a set made in the editor and a set made by the CLI are the same thing. It follows
-Tolga's tool standard: agent-friendly output, an MCP server, an embedded skill, end-to-end tests.
+The tool standard: agent-friendly output, an MCP server, an embedded skill, end-to-end tests.
 
 ## Non-goals
 
@@ -24,7 +24,7 @@ Tolga's tool standard: agent-friendly output, an MCP server, an embedded skill, 
   resolve in the bundle.
 - Data directory: `SCREENY_DATA_DIR` (already honoured by `src/lib/db`). Tests and the agent itself
   must always run with a temporary `SCREENY_DATA_DIR`. Never read or write
-  `~/Documents/proje-verileri` or any real data directory.
+  any real data directory.
 - Fonts are loaded from `public/fonts`; resolve that path relative to the repo root, not the cwd,
   so the CLI works from any directory.
 - CLI contract (AXI):
