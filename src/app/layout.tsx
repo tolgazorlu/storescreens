@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Screeny",
+  title: "Storeframe",
   description: "Store screenshots, generated.",
 };
 

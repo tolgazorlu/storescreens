@@ -5,11 +5,11 @@ import path from "node:path";
 import * as schema from "./schema";
 
 export const DATA_DIR =
-  process.env.SCREENY_DATA_DIR ?? path.join(process.cwd(), "data");
+  process.env.STOREFRAME_DATA_DIR ?? path.join(process.cwd(), "data");
 mkdirSync(DATA_DIR, { recursive: true });
 
 const client = createClient({
-  url: `file:${path.join(DATA_DIR, "screeny.db")}`,
+  url: `file:${path.join(DATA_DIR, "storeframe.db")}`,
 });
 
 /** Schema is tiny and append-only; create it on boot so there is no migrate step. */
