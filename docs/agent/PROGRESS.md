@@ -282,5 +282,27 @@ for stdio (PLAN ctx idea) are not done yet.
 
 Next: `mcp-stdio-tool-call` (create_project + list_projects over stdio), then `mcp-stdout-clean`.
 
+## Iteration 17: mcp-stdio-tool-call, mcp-stdout-clean
+
+Changed: no code. Both features already hold with the iteration 16 `screeny mcp` command.
+
+Evidence (after `pnpm build:cli`, temp cwd, temp `SCREENY_DATA_DIR`, a node client that spawns
+`screeny mcp` and waits for each response before sending the next request):
+- create_project {name: demo} returned the project (no isError); list_projects then returned
+  `[ { ..., "name": "demo", "slug": "demo", ... } ]`. Exit 0.
+- Second run: initialize, tools/list, create_project, generate_screens (iphone-6.9, text-only,
+  title "Hi Şğü"), export_zip, get_project on a missing project. 6 stdout lines, 0 non-JSON,
+  no trailing partial line, stderr 0 bytes, exit 0. generate and zip succeeded (zip 28594 bytes),
+  the missing project came back as a tool result with isError true, not as stdout noise.
+- `grep` over src/lib and src/cli: the only stdout writer is `src/cli/output.ts`, which the mcp
+  command does not use.
+
+Note: when requests are piped without waiting (as verify.sh does), tools/call requests run
+concurrently, so list_projects can answer before create_project finishes. Tests must await each
+response, as real MCP clients do.
+
+Next: `skill-file` (skills/screeny/SKILL.md), then `skill-print` and `skill-install`; after
+those, `no-prompts` and `test-cli-suite` become possible.
+
 ## Blocked
 <!-- Things only a human can do (credentials, accounts, decisions). -->
