@@ -4,6 +4,9 @@ import { TEMPLATE_IDS } from "@/lib/templates";
 import { backgroundSchema } from "@/lib/scene";
 import { brandSchema } from "@/lib/brand";
 
+/** BCP 47-ish tag; it becomes a folder name inside export ZIPs, so only safe characters. */
+export const localeSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]{1,9}$/, "locale must be 2-10 letters, digits, - or _");
+
 const localized = z.union([z.string(), z.record(z.string(), z.string())]);
 
 export const bulletSchema = z.object({
@@ -26,9 +29,9 @@ export const screenSpecSchema = z.object({
 
 export const generateSchema = z
   .object({
-    locale: z.string().min(2).max(10).optional(),
+    locale: localeSchema.optional(),
     /** Generate for several locales in one call; title/subtitle/screenshot may then be {locale: value} maps. */
-    locales: z.array(z.string().min(2).max(10)).min(1).max(40).optional(),
+    locales: z.array(localeSchema).min(1).max(40).optional(),
     device: z.enum(DEVICE_IDS as [string, ...string[]]),
     logo: z.string().nullable().optional(),
     /** Overrides on top of the project brand for this call. */

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { route, json } from "@/lib/api";
+import { localeSchema } from "@/lib/validation";
 import {
   deleteScreen,
   duplicateScreen,
@@ -19,7 +20,7 @@ export const PATCH = route<P>(async (req, { params }) => {
     .object({
       scene: z.unknown().optional(),
       position: z.number().optional(),
-      locale: z.string().optional(),
+      locale: localeSchema.optional(),
     })
     .parse(await req.json());
   return json(await updateScreen(params.screen, body));

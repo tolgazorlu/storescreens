@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { localFilesPath } from "@/lib/files-url";
 
 /**
  * Scene = one store screenshot. Coordinates are in output pixels
@@ -42,9 +43,15 @@ export const textLayerSchema = base.extend({
   textTransform: z.enum(["none", "uppercase"]).default("none"),
 });
 
+/** Image sources the renderer will inline: uploaded assets or inline data URLs, never remote URLs. */
+export const imageSrcSchema = z
+  .string()
+  .max(20_000_000)
+  .refine((s) => s.startsWith("data:image/") || localFilesPath(s) !== null, "src must be a /files/ asset or a data:image URL");
+
 export const imageLayerSchema = base.extend({
   type: z.literal("image"),
-  src: z.string(),
+  src: imageSrcSchema,
   fit: z.enum(["cover", "contain"]).default("contain"),
   radius: z.number().default(0),
 });
@@ -54,7 +61,7 @@ export const mockupLayerSchema = base.extend({
   frame: z
     .enum(["iphone", "ipad", "android", "duo-outer", "duo-inner"])
     .default("iphone"),
-  src: z.string().nullable().default(null),
+  src: imageSrcSchema.nullable().default(null),
   frameColor: z.string().default("#111111"),
   shadow: z.boolean().default(true),
   /** auto: cover on iPhone/Android, contain (letterbox) on iPad/Duo. Use cover for native captures. */
@@ -92,11 +99,15 @@ export const backgroundSchema = z.union([
   }),
 ]);
 
+/** Largest canvas any store asks for is 5244x2950; the cap keeps a bad scene from exhausting the renderer. */
+export const MAX_SCENE_SIZE = 8192;
+export const MAX_LAYERS = 100;
+
 export const sceneSchema = z.object({
-  width: z.number(),
-  height: z.number(),
+  width: z.number().int().min(1).max(MAX_SCENE_SIZE),
+  height: z.number().int().min(1).max(MAX_SCENE_SIZE),
   background: backgroundSchema,
-  layers: z.array(layerSchema),
+  layers: z.array(layerSchema).max(MAX_LAYERS),
 });
 
 export type TextLayer = z.infer<typeof textLayerSchema>;
