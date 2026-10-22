@@ -47,7 +47,7 @@ async function bootedUdid(): Promise<string> {
 
 async function argent(args: string[], what = `argent ${args[1]}`) {
   try {
-    await run("npx", ["-y", "@swmansion/argent", ...args], { timeout: 180_000, maxBuffer: 10 << 20 });
+    await run("npx", ["-y", "@swmansion/argent@0.30.1", ...args], { timeout: 180_000, maxBuffer: 10 << 20 });
   } catch (e) {
     const out = (e as { stdout?: string }).stdout || (e as Error).message;
     throw new BadRequest(`${what} failed: ${out.slice(-1500)}`);

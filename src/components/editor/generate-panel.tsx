@@ -122,6 +122,7 @@ export function GeneratePanel({
   const assetUrl = (id: string | null) =>
     id ? (assets.find((a) => a.id === id)?.url ?? null) : null;
   const dev = DEVICES[device];
+  const hasLayouts = !!layoutFrameFor(dev);
   const previews = useMemo(
     (): Scene[][] =>
       rows.map((r) => {
@@ -132,9 +133,9 @@ export function GeneratePanel({
           screenshot: assetUrl(r.screenshot),
           screenshot2: assetUrl(r.screenshot2),
         };
-        if (key && layoutFrameFor(dev)) return buildLayoutScenes(dev, key, { ...p, brand, frame });
+        if (key) return buildLayoutScenes(dev, key, { ...p, brand, frame });
         return [
-          buildScene(dev, key ? "title-top" : (r.template as TemplateId), {
+          buildScene(dev, r.template as TemplateId, {
             ...p,
             bullets: parseBullets(r.bullets),
             logo: logo === "__none" ? null : assetUrl(logo),
@@ -226,7 +227,10 @@ export function GeneratePanel({
         <Field label="Device">
           <Select
             value={device}
-            onValueChange={(v) => setDevice(v as DeviceId)}
+            onValueChange={(v) => {
+              setDevice(v as DeviceId);
+              if (!layoutFrameFor(DEVICES[v as DeviceId])) pickStyle("__none");
+            }}
           >
             <SelectTrigger className="h-8 w-full text-xs">
               <SelectValue />
@@ -261,7 +265,7 @@ export function GeneratePanel({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {STYLE_KEYS.map((s) => (
+              {hasLayouts && STYLE_KEYS.map((s) => (
                 <SelectItem key={s} value={s}>
                   {STYLES[s].label}
                 </SelectItem>
@@ -350,7 +354,7 @@ export function GeneratePanel({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {LAYOUT_KEYS.map((k) => (
+                      {hasLayouts && LAYOUT_KEYS.map((k) => (
                         <SelectItem key={k} value={`layout:${k}`}>
                           {LAYOUTS[k].label}
                           {LAYOUTS[k].span === 2 ? " (2 tiles)" : ""}

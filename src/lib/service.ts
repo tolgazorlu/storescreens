@@ -455,21 +455,16 @@ export async function generateScreens(
           scene,
         }),
       );
-      if (title)
-        copyRows.push({ groupId: groupIds[i], field: "title", value: title });
-      if (subtitle)
-        copyRows.push({
-          groupId: groupIds[i],
-          field: "subtitle",
-          value: subtitle,
-        });
-      bullets?.forEach((b, bi) =>
-        copyRows.push({
-          groupId: groupIds[i],
-          field: `bullet${bi + 1}`,
-          value: b.text,
-        }),
-      );
+      scenes.forEach((scene, si) => {
+        if (si > 0 && !scene.layers.some((l) => l.type === "text")) return;
+        const groupId = si === 0 ? groupIds[i] : groupIds2[i];
+        if (title) copyRows.push({ groupId, field: "title", value: title });
+        if (subtitle)
+          copyRows.push({ groupId, field: "subtitle", value: subtitle });
+        bullets?.forEach((b, bi) =>
+          copyRows.push({ groupId, field: `bullet${bi + 1}`, value: b.text }),
+        );
+      });
     }
     if (rows.length)
       inserted.push(...(await db.insert(screens).values(rows).returning()));
