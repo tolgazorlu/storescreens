@@ -229,7 +229,13 @@ export function GeneratePanel({
             value={device}
             onValueChange={(v) => {
               setDevice(v as DeviceId);
-              if (!layoutFrameFor(DEVICES[v as DeviceId])) pickStyle("__none");
+              if (layoutFrameFor(DEVICES[v as DeviceId])) return;
+              setStyle("__none");
+              setRows((rs) =>
+                rs.map((r, i) =>
+                  layoutKeyOf(r.template) ? { ...r, template: rowTemplate("__none", i) } : r,
+                ),
+              );
             }}
           >
             <SelectTrigger className="h-8 w-full text-xs">
