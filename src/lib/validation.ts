@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { DEVICE_IDS } from "@/lib/devices";
 import { TEMPLATE_IDS } from "@/lib/templates";
+import { IPHONE_FRAMES, LAYOUT_KEYS, STYLE_KEYS } from "@/lib/layouts";
 import { backgroundSchema } from "@/lib/scene";
 import { brandSchema } from "@/lib/brand";
 
@@ -15,7 +16,10 @@ export const bulletSchema = z.object({
 });
 
 export const screenSpecSchema = z.object({
-  template: z.enum(TEMPLATE_IDS as [string, ...string[]]),
+  /** Classic storescreens template. Optional when `layout` or the call's `style` picks a layout. */
+  template: z.enum(TEMPLATE_IDS as [string, ...string[]]).optional(),
+  /** goldie layout; wins over `template` and over the call's `style`. */
+  layout: z.enum(LAYOUT_KEYS).optional(),
   title: localized.optional(),
   subtitle: localized.optional(),
   screenshot: localized.nullable().optional(),
@@ -41,10 +45,17 @@ export const generateSchema = z
     textColor: z.string().optional(),
     fontFamily: z.string().optional(),
     replace: z.boolean().optional(),
+    /** goldie template style: picks a layout per screen position for screens without template/layout. */
+    style: z.enum(STYLE_KEYS).optional(),
+    /** iPhone bezel colour for goldie layouts (Android uses the Pixel 10 Pro art). */
+    frame: z.enum(IPHONE_FRAMES).optional(),
     screens: z.array(screenSpecSchema).min(1).max(10),
   })
   .refine((b) => b.locale || b.locales?.length, {
     message: "locale or locales is required",
+  })
+  .refine((b) => b.style || b.screens.every((s) => s.template || s.layout), {
+    message: "each screen needs template or layout, unless style is set",
   });
 
 export type GenerateBody = z.infer<typeof generateSchema>;
