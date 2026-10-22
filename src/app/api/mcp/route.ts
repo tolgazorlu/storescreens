@@ -34,6 +34,14 @@ import {
 import { storeFile } from "@/lib/storage";
 import { brandSchema, BRAND_PRESETS, applyPreset } from "@/lib/brand";
 import { ICON_IDS } from "@/lib/icons";
+import { IPHONE_FRAMES, LAYOUTS, STYLES } from "@/lib/layouts";
+import { captureScreens } from "@/lib/capture";
+
+const layoutMeta = () => ({
+  layouts: Object.values(LAYOUTS).map(({ key, label, description, span }) => ({ id: key, label, description, span })),
+  styles: Object.entries(STYLES).map(([id, s]) => ({ id, ...s })),
+  frames: [...IPHONE_FRAMES, "pixel-10-pro"],
+});
 
 // Local single-user tool: no auth. The server only listens on localhost.
 
@@ -59,7 +67,7 @@ const handler = createMcpHandler(
       {
         title: "Devices and templates",
         description:
-          "Returns supported export devices (App Store / Google Play sizes) and layout templates. Call this first.",
+          "Returns supported export devices (App Store / Google Play sizes), classic templates, goldie layouts and styles, and frames. Call this first.",
         inputSchema: z.object({}),
       },
       async () =>
@@ -74,6 +82,7 @@ const handler = createMcpHandler(
             id,
             label: TEMPLATE_LABELS[id],
           })),
+          ...layoutMeta(),
         }),
     );
 
@@ -176,13 +185,47 @@ const handler = createMcpHandler(
     );
 
     server.registerTool(
+      "capture_screens",
+      {
+        title: "Capture screenshots from the iOS simulator",
+        description:
+          "Launch the app on a booted iOS simulator (status bar pinned to 9:41), optionally replay an argent flow per shot, take a screenshot and upload it as a screenshot asset named <name>-<locale>.png. " +
+          "Call once per locale; locale relaunches the app in that language. Flows are argent e2e YAML fragments (no launch step) given as absolute paths; the first run downloads argent via npx. Use a Release build: debug overlays end up in the capture. Returns asset ids for generate_screens.",
+        inputSchema: z.object({
+          project: z.string(),
+          bundleId: z.string().describe("App bundle id, e.g. com.example.app"),
+          udid: z.string().optional().describe("Simulator UDID; default the booted one"),
+          locale: z.string().optional().describe("e.g. tr, en-US"),
+          shots: z
+            .array(
+              z.object({
+                name: z.string().describe("Asset name stem, e.g. home"),
+                flow: z.string().optional().describe("Absolute path of an argent flow YAML"),
+              }),
+            )
+            .min(1)
+            .max(10),
+          settleMs: z.number().int().min(0).max(30000).optional(),
+        }),
+      },
+      async ({ project, ...input }) => {
+        const p = await getProject(project);
+        const rows = await captureScreens(p.id, input);
+        const base = origin();
+        return text({ captured: rows.map((r) => ({ ...r, url: new URL(r.url, base).toString() })) });
+      },
+    );
+
+    server.registerTool(
       "generate_screens",
       {
         title: "Generate screens",
         description:
           "Create store screenshots for one locale + device from templates. Each entry gives a template, title, subtitle and a screenshot asset id (or name). " +
           "Pass locales=[...] with {locale: value} maps for title/subtitle/screenshot to generate every language in one call, or locale for one. Call once per device. Use replace=true to regenerate. Keep titles short (2-6 words) and in the target language. " +
-          "Per screen: titleScale / phoneScale / phoneOffsetY tune the layout; feature-list takes bullets [{icon?, text}]; two-phones takes screenshot2. Project brand supplies colors unless brand is passed.",
+          "Per screen: titleScale / phoneScale / phoneOffsetY tune the layout; feature-list takes bullets [{icon?, text}]; two-phones takes screenshot2. Project brand supplies colors unless brand is passed. " +
+          "goldie look (preferred for iPhone 6.9/6.5, iPad 13 and Android phone): set style (editorial, showcase, magazine, storyboard, dynamic) and leave template out, or give a screen its own layout (hero, tilt, duo, panorama, ...). " +
+          "frame picks the iPhone 17 Pro colour (blue, silver, orange); Android uses the Pixel 10 Pro frame. Panorama layouts span two store tiles and create two screens; duo layouts show screenshot2 (else the same capture).",
         inputSchema: generateSchema.extend({ project: z.string() }),
       },
       async ({ project, ...input }) => {

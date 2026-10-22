@@ -59,7 +59,17 @@ export const imageLayerSchema = base.extend({
 export const mockupLayerSchema = base.extend({
   type: z.literal("mockup"),
   frame: z
-    .enum(["iphone", "ipad", "android", "duo-outer", "duo-inner"])
+    .enum([
+      "iphone",
+      "ipad",
+      "android",
+      "duo-outer",
+      "duo-inner",
+      "iphone-17-pro-blue",
+      "iphone-17-pro-silver",
+      "iphone-17-pro-orange",
+      "pixel-10-pro",
+    ])
     .default("iphone"),
   src: imageSrcSchema.nullable().default(null),
   frameColor: z.string().default("#111111"),

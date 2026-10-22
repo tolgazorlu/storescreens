@@ -19,6 +19,14 @@ import {
   type TemplateParams,
 } from "@/lib/templates";
 import {
+  buildLayoutScenes,
+  layoutFrameFor,
+  styleLayout,
+  type IphoneFrame,
+  type LayoutKey,
+  type StyleKey,
+} from "@/lib/layouts";
+import {
   parseScene,
   type Scene,
   type TextLayer,
@@ -230,7 +238,9 @@ export async function getScreen(screenId: string): Promise<Screen> {
 export type Localized = string | Record<string, string>;
 
 export type ScreenSpec = {
-  template: TemplateId;
+  template?: TemplateId;
+  /** goldie layout; wins over template and the call's style. */
+  layout?: LayoutKey;
   title?: Localized;
   subtitle?: Localized;
   /** Asset id, asset name or absolute URL of the in-app screenshot; or a per-locale map. */
@@ -255,6 +265,9 @@ export type GenerateInput = {
   fontFamily?: string;
   /** Replace existing screens for this locale+device. */
   replace?: boolean;
+  /** goldie style: a layout per screen position for screens without template/layout. */
+  style?: StyleKey;
+  frame?: IphoneFrame;
   screens: ScreenSpec[];
 };
 
@@ -336,7 +349,22 @@ export async function generateScreens(
     : [input.locale ?? "en"];
   const brand: Partial<Brand> = { ...projectBrand(p), ...(input.brand ?? {}) };
   const groupIds = input.screens.map(() => randomUUID());
+  // A panorama's second tile is its own screen, linked across locales by its own group.
+  const groupIds2 = input.screens.map(() => randomUUID());
+  const layoutOf = (spec: ScreenSpec, i: number): LayoutKey | undefined =>
+    spec.layout ??
+    (input.style && !spec.template ? styleLayout(input.style, i) : undefined);
   const inserted: Screen[] = [];
+  // Check before replace deletes anything.
+  input.screens.forEach((spec, i) => {
+    const layout = layoutOf(spec, i);
+    if (!layout && !spec.template)
+      throw new BadRequest(
+        "each screen needs template or layout, unless style is set",
+      );
+    if (layout && !layoutFrameFor(device))
+      throw new BadRequest(`Layout ${layout} is not available on ${device.id}`);
+  });
 
   for (const locale of locales) {
     if (input.replace) {
@@ -362,7 +390,7 @@ export async function generateScreens(
       );
     let position = existing.reduce((m, r) => Math.max(m, r.position + 1), 0);
 
-    const rows = [];
+    const rows: (typeof screens.$inferInsert)[] = [];
     const copyRows: { groupId: string; field: string; value: string }[] = [];
     for (const [i, spec] of input.screens.entries()) {
       const title = pick(spec.title, locale);
@@ -393,30 +421,50 @@ export async function generateScreens(
         phoneScale: spec.phoneScale,
         phoneOffsetY: spec.phoneOffsetY,
       };
-      params.screenshotAspect = await assetAspect(p.id, params.screenshot ?? null);
-      rows.push({
-        projectId: p.id,
-        locale,
-        device: input.device,
-        position: position++,
-        groupId: groupIds[i],
-        scene: buildScene(device, spec.template, params),
-      });
-      if (title)
-        copyRows.push({ groupId: groupIds[i], field: "title", value: title });
-      if (subtitle)
-        copyRows.push({
-          groupId: groupIds[i],
-          field: "subtitle",
-          value: subtitle,
+      params.screenshotAspect = await assetAspect(
+        p.id,
+        params.screenshot ?? null,
+      );
+      const layout = layoutOf(spec, i);
+      let scenes: Scene[];
+      if (layout) {
+        scenes = buildLayoutScenes(device, layout, {
+          title,
+          subtitle,
+          screenshot: params.screenshot,
+          screenshot2: params.screenshot2,
+          brand: {
+            ...brand,
+            ...(input.background ? { background: input.background } : {}),
+            ...(input.textColor ? { textColor: input.textColor } : {}),
+            ...(input.fontFamily ? { fontFamily: input.fontFamily } : {}),
+            ...(spec.titleScale ? { titleScale: spec.titleScale } : {}),
+          },
+          frame: input.frame,
         });
-      bullets?.forEach((b, bi) =>
-        copyRows.push({
-          groupId: groupIds[i],
-          field: `bullet${bi + 1}`,
-          value: b.text,
+      } else {
+        scenes = [buildScene(device, spec.template!, params)];
+      }
+      scenes.forEach((scene, si) =>
+        rows.push({
+          projectId: p.id,
+          locale,
+          device: input.device,
+          position: position++,
+          groupId: si === 0 ? groupIds[i] : groupIds2[i],
+          scene,
         }),
       );
+      scenes.forEach((scene, si) => {
+        if (si > 0 && !scene.layers.some((l) => l.type === "text")) return;
+        const groupId = si === 0 ? groupIds[i] : groupIds2[i];
+        if (title) copyRows.push({ groupId, field: "title", value: title });
+        if (subtitle)
+          copyRows.push({ groupId, field: "subtitle", value: subtitle });
+        bullets?.forEach((b, bi) =>
+          copyRows.push({ groupId, field: `bullet${bi + 1}`, value: b.text }),
+        );
+      });
     }
     if (rows.length)
       inserted.push(...(await db.insert(screens).values(rows).returning()));

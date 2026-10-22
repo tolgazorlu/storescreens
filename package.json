@@ -15,6 +15,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "smoke": "TSX_TSCONFIG_PATH=tsconfig.scripts.json tsx scripts/smoke-render.ts",
+    "smoke:layouts": "TSX_TSCONFIG_PATH=tsconfig.scripts.json tsx scripts/smoke-layouts.ts",
     "mcp:smoke": "node scripts/mcp-smoke.mjs",
     "test": "vitest run"
   },
