@@ -368,6 +368,7 @@ function BezelMockup({
             height: hh,
             display: "flex",
             background: "#000000",
+            // No overflow:hidden: satori renders a rotated, partly off-canvas clipped hole as a black wedge; the img rounds itself.
             borderRadius: Math.round((bezel.radius ?? 0) * sx),
           }}
         >
