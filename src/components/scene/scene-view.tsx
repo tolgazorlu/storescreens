@@ -367,8 +367,8 @@ function BezelMockup({
             width: hw,
             height: hh,
             display: "flex",
-            overflow: "hidden",
             background: "#000000",
+            borderRadius: Math.round((bezel.radius ?? 0) * sx),
           }}
         >
           {layer.src ? (
@@ -378,7 +378,13 @@ function BezelMockup({
               alt=""
               width={hw}
               height={hh}
-              style={{ width: hw, height: hh, objectFit: fit, objectPosition: "top" }}
+              style={{
+                width: hw,
+                height: hh,
+                objectFit: fit,
+                objectPosition: "top",
+                borderRadius: Math.round((bezel.radius ?? 0) * sx),
+              }}
             />
           ) : (
             <Placeholder w={hw} h={hh} />
