@@ -35,12 +35,31 @@ claude mcp add --transport http storescreens http://localhost:4110/api/mcp
 ```
 
 MCP tools: `list_meta`, `list_projects`, `create_project`, `get_project`,
-`upload_asset`, `generate_screens`, `update_screen_text`, `delete_screen`,
-`export_zip`. REST mirrors them under `/api/*` (see `/connect` in the app).
+`upload_asset`, `capture_screens`, `generate_screens`, `update_screen_text`,
+`delete_screen`, `export_zip`. REST mirrors them under `/api/*` (see
+`/connect` in the app).
 
 Devices: `iphone-6.9` 1320x2868, `iphone-6.5` 1242x2688, `ipad-13`
 2064x2752, `android-phone` 1080x1920. Templates: `hero`, `title-top`,
 `caption-bottom`, `split`, `plain`, `text-only`.
+
+### goldie look
+
+The layouts, template styles and device frames of
+[goldie](https://github.com/software-mansion-labs/goldie) (MIT) are built in.
+`generate_screens` takes `style` (`editorial`, `showcase`, `magazine`,
+`storyboard`, `dynamic`) or a per-screen `layout` (`classic`, `copy-below`,
+`hero`, `offset`, `tilt`, `tilt-right`, `duo`, `duo-tilt`, `panorama`,
+`panorama-duo`, `minimal`) and `frame` (`iphone-17-pro-blue|silver|orange`;
+Android uses the Pixel 10 Pro frame). Panorama layouts span two store tiles
+and become two screens. Frame credits: `public/frames/ATTRIBUTION.md`.
+
+`capture_screens` launches an app on a booted iOS simulator in a given
+locale, pins the status bar to 9:41, optionally replays an
+[argent](https://github.com/software-mansion/argent) e2e flow per shot, and
+uploads the screenshots as assets. Call it once per locale, then pass the
+asset ids to `generate_screens` with `locales`. `pnpm smoke:layouts` renders
+every layout to `/tmp/storescreens-layouts`.
 
 ## Editor
 
