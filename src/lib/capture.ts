@@ -5,6 +5,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import sharp from "sharp";
 import { addAsset, BadRequest, getProject } from "@/lib/service";
 
 /**
@@ -64,6 +65,16 @@ async function pinStatusBar(udid: string) {
   ]);
 }
 
+/** True when everything below the status bar (top 8%) is one flat color, like a cold launch. */
+export async function isBlankFrame(png: Buffer) {
+  const { width = 0, height = 0 } = await sharp(png).metadata();
+  const top = Math.round(height * 0.08);
+  // stats() reads the input, not the pipeline, so the crop is materialized first.
+  const body = await sharp(png).extract({ left: 0, top, width, height: height - top }).png().toBuffer();
+  const { channels } = await sharp(body).stats();
+  return channels.every((c) => c.stdev < 4);
+}
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export async function captureScreens(projectId: string, input: CaptureInput) {
@@ -109,16 +120,19 @@ export async function captureScreens(projectId: string, input: CaptureInput) {
         await sleep(settle);
       }
       const file = path.join(dir, `${shot.name}.png`);
-      // A cold launch can still be blank after the settle wait: shoot until two frames match.
+      // A cold launch can still be blank after the settle wait: shoot until two non-blank frames match.
       let prev: Buffer | null = null;
       let data: Buffer = Buffer.alloc(0);
+      let blank = true;
       for (let i = 0; i < 20; i++) {
         await run("xcrun", ["simctl", "io", udid, "screenshot", "--type=png", file]);
         data = await readFile(file);
-        if (prev?.equals(data)) break;
+        blank = await isBlankFrame(data);
+        if (!blank && prev?.equals(data)) break;
         prev = data;
         await sleep(750);
       }
+      if (blank) throw new BadRequest(`shot ${shot.name} is still a blank screen; raise settleMs`);
       const name = input.locale ? `${shot.name}-${input.locale}.png` : `${shot.name}.png`;
       const a = await addAsset(p.id, {
         name,
