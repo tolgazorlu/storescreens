@@ -19,12 +19,32 @@ import {
   TEMPLATE_LABELS,
   type TemplateId,
 } from "@/lib/templates";
+import {
+  buildLayoutScenes,
+  IPHONE_FRAMES,
+  LAYOUT_KEYS,
+  LAYOUTS,
+  layoutFrameFor,
+  STYLE_KEYS,
+  STYLES,
+  styleLayout,
+  type IphoneFrame,
+  type LayoutKey,
+  type StyleKey,
+} from "@/lib/layouts";
+import type { Scene } from "@/lib/scene";
 import { SceneView } from "@/components/scene/scene-view";
 import type { AssetDto, ProjectDto, ScreenDto } from "./types";
 import type { Brand } from "@/lib/brand";
 
+/** A classic template id, or `layout:<key>` for a goldie layout. */
+type RowTemplate = TemplateId | `layout:${LayoutKey}`;
+const layoutKeyOf = (t: RowTemplate) =>
+  t.startsWith("layout:") ? (t.slice(7) as LayoutKey) : null;
+const TWO_SHOT = new Set<string>(["two-phones", "layout:duo", "layout:duo-tilt", "layout:panorama-duo"]);
+
 type Row = {
-  template: TemplateId;
+  template: RowTemplate;
   title: string;
   subtitle: string;
   screenshot: string | null;
@@ -76,9 +96,15 @@ export function GeneratePanel({
   const [logo, setLogo] = useState<string>(() => logos[0]?.id ?? "__none");
   const [replace, setReplace] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [style, setStyle] = useState<StyleKey | "__none">(() =>
+    layoutFrameFor(DEVICES[initialDevice]) ? "editorial" : "__none",
+  );
+  const [frame, setFrame] = useState<IphoneFrame>("iphone-17-pro-blue");
+  const rowTemplate = (s: StyleKey | "__none", i: number): RowTemplate =>
+    s === "__none" ? ROTATION[i % ROTATION.length] : `layout:${styleLayout(s, i)}`;
   const [rows, setRows] = useState<Row[]>(() =>
     (shots.length ? shots : [null, null, null]).slice(0, 10).map((a, i) => ({
-      template: ROTATION[i % ROTATION.length],
+      template: rowTemplate(style, i),
       title: "",
       subtitle: "",
       screenshot: a?.id ?? null,
@@ -97,21 +123,32 @@ export function GeneratePanel({
     id ? (assets.find((a) => a.id === id)?.url ?? null) : null;
   const dev = DEVICES[device];
   const previews = useMemo(
-    () =>
-      rows.map((r) =>
-        buildScene(dev, r.template, {
+    (): Scene[][] =>
+      rows.map((r) => {
+        const key = layoutKeyOf(r.template);
+        const p = {
           title: r.title || "Headline",
           subtitle: r.subtitle || undefined,
           screenshot: assetUrl(r.screenshot),
           screenshot2: assetUrl(r.screenshot2),
-          bullets: parseBullets(r.bullets),
-          logo: logo === "__none" ? null : assetUrl(logo),
-          brand,
-        }),
-      ),
+        };
+        if (key && layoutFrameFor(dev)) return buildLayoutScenes(dev, key, { ...p, brand, frame });
+        return [
+          buildScene(dev, key ? "title-top" : (r.template as TemplateId), {
+            ...p,
+            bullets: parseBullets(r.bullets),
+            logo: logo === "__none" ? null : assetUrl(logo),
+            brand,
+          }),
+        ];
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rows, dev, logo, brand, assets],
+    [rows, dev, logo, brand, assets, frame],
   );
+  const pickStyle = (s: StyleKey | "__none") => {
+    setStyle(s);
+    setRows((rs) => rs.map((r, i) => ({ ...r, template: rowTemplate(s, i) })));
+  };
 
   const set = (i: number, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
@@ -136,8 +173,11 @@ export function GeneratePanel({
             device,
             logo: logo === "__none" ? null : logo,
             replace,
+            frame,
             screens: rows.map((r) => ({
-              template: r.template,
+              ...(layoutKeyOf(r.template)
+                ? { layout: layoutKeyOf(r.template) }
+                : { template: r.template }),
               screenshot: r.screenshot,
               screenshot2: r.screenshot2,
               bullets:
@@ -215,6 +255,35 @@ export function GeneratePanel({
             </SelectContent>
           </Select>
         </Field>
+        <Field label="Style">
+          <Select value={style} onValueChange={(v) => pickStyle(v as StyleKey | "__none")}>
+            <SelectTrigger className="h-8 w-full text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STYLE_KEYS.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {STYLES[s].label}
+                </SelectItem>
+              ))}
+              <SelectItem value="__none">Classic templates</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Frame">
+          <Select value={frame} onValueChange={(v) => setFrame(v as IphoneFrame)}>
+            <SelectTrigger className="h-8 w-full text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {IPHONE_FRAMES.map((f) => (
+                <SelectItem key={f} value={f}>
+                  {f.replace("iphone-17-pro-", "iPhone 17 Pro ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
         <Field label="Brand">
           <div className="flex h-8 items-center gap-1.5 rounded-md border border-input px-2 text-xs text-muted-foreground dark:bg-input/30">
             <span
@@ -239,29 +308,34 @@ export function GeneratePanel({
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
         {rows.map((r, i) => {
-          const sc = previews[i];
-          const pw = 96;
-          const k = pw / sc.width;
+          const tiles = previews[i];
+          // A panorama previews both tiles at the same total width.
+          const pw = 96 / tiles.length;
+          const k = pw / tiles[0].width;
           return (
             <div
               key={i}
               className="flex gap-3 rounded-md border border-border p-2"
             >
               <div
-                className="shrink-0 overflow-hidden rounded-sm ring-1 ring-border"
-                style={{ width: pw, height: Math.round(sc.height * k) }}
+                className="flex shrink-0 overflow-hidden rounded-sm ring-1 ring-border"
+                style={{ width: 96, height: Math.round(tiles[0].height * k) }}
               >
-                <div
-                  style={{
-                    width: sc.width,
-                    height: sc.height,
-                    transform: `scale(${k})`,
-                    transformOrigin: "top left",
-                    pointerEvents: "none",
-                  }}
-                >
-                  <SceneView scene={sc} />
-                </div>
+                {tiles.map((sc, ti) => (
+                  <div key={ti} style={{ width: pw, height: Math.round(sc.height * k), overflow: "hidden" }}>
+                    <div
+                      style={{
+                        width: sc.width,
+                        height: sc.height,
+                        transform: `scale(${k})`,
+                        transformOrigin: "top left",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      <SceneView scene={sc} />
+                    </div>
+                  </div>
+                ))}
               </div>
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <div className="flex items-center gap-1">
@@ -270,15 +344,21 @@ export function GeneratePanel({
                   </span>
                   <Select
                     value={r.template}
-                    onValueChange={(v) => set(i, { template: v as TemplateId })}
+                    onValueChange={(v) => set(i, { template: v as RowTemplate })}
                   >
                     <SelectTrigger className="h-7 min-w-0 flex-1 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      {LAYOUT_KEYS.map((k) => (
+                        <SelectItem key={k} value={`layout:${k}`}>
+                          {LAYOUTS[k].label}
+                          {LAYOUTS[k].span === 2 ? " (2 tiles)" : ""}
+                        </SelectItem>
+                      ))}
                       {TEMPLATE_IDS.map((t) => (
                         <SelectItem key={t} value={t}>
-                          {TEMPLATE_LABELS[t]}
+                          Classic: {TEMPLATE_LABELS[t]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -346,7 +426,7 @@ export function GeneratePanel({
                     ))}
                   </div>
                 )}
-                {r.template === "two-phones" && (
+                {TWO_SHOT.has(r.template) && (
                   <div className="-mx-0.5 flex gap-1.5 overflow-x-auto p-0.5">
                     <span className="w-5 self-center text-[10px] text-muted-foreground">
                       2nd
@@ -380,7 +460,7 @@ export function GeneratePanel({
             setRows([
               ...rows,
               {
-                template: ROTATION[rows.length % ROTATION.length],
+                template: rowTemplate(style, rows.length),
                 title: "",
                 subtitle: "",
                 screenshot: null,
