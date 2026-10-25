@@ -13,6 +13,11 @@ describe("backgroundSchema backward compatibility", () => {
     expect(backgroundSchema.safeParse({ type: "mesh", colors: ["#fff", "#000"] }).success).toBe(true);
     expect(backgroundSchema.safeParse({ type: "image", src: "/files/p/a.png" }).success).toBe(true);
   });
+  it("accepts a known pattern id and rejects an unknown one", async () => {
+    const { PATTERN_IDS } = await import("@/lib/patterns");
+    expect(backgroundSchema.safeParse({ type: "pattern", id: PATTERN_IDS[0] }).success).toBe(true);
+    expect(backgroundSchema.safeParse({ type: "pattern", id: "not-a-real-pattern" }).success).toBe(false);
+  });
   it("rejects a mesh with fewer than 2 colours", () => {
     expect(backgroundSchema.safeParse({ type: "mesh", colors: ["#fff"] }).success).toBe(false);
   });
@@ -34,6 +39,14 @@ describe("backgroundSvgDataUrl", () => {
       expect(svg).not.toMatch(/feGaussianBlur/);
       expect(svg).toContain("<svg");
     }
+  });
+  it("renders a pattern background as a cover-fit image", async () => {
+    const { PATTERN_IDS, patternSrc } = await import("@/lib/patterns");
+    const bg = backgroundSchema.parse({ type: "pattern", id: PATTERN_IDS[0] });
+    const url = backgroundSvgDataUrl(bg, 400, 800);
+    const svg = Buffer.from(url.split(",")[1], "base64").toString("utf-8");
+    expect(svg).toContain(`href="${patternSrc(PATTERN_IDS[0])}"`);
+    expect(svg).toContain('preserveAspectRatio="xMidYMid slice"');
   });
   it("draws a glow and texture overlay without a blur filter", () => {
     const url = backgroundSvgDataUrl(
