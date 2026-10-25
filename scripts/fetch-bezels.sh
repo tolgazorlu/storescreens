@@ -8,7 +8,8 @@ TMP=$(mktemp -d)
 get() { # dmg-name png-name out-name
   local dmg="$TMP/$1.dmg"
   [ -f "$dmg" ] || curl -sL -o "$dmg" "https://devimages-cdn.apple.com/design/resources/download/$1.dmg"
-  local mnt; mnt=$(yes | hdiutil attach -nobrowse "$dmg" | grep -o '/Volumes/.*' | tail -1)
+  # `yes` feeds the licence prompt; as a pipe its SIGPIPE trips pipefail and set -e exits silently.
+  local mnt; mnt=$(hdiutil attach -nobrowse "$dmg" < <(yes) | grep -o '/Volumes/.*' | tail -1)
   cp "$(find "$mnt" -name "$2" | head -1)" "$OUT/$3"
   hdiutil detach -quiet "$mnt"
 }
