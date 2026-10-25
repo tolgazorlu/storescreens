@@ -47,6 +47,7 @@ async function inlineImages(scene: Scene): Promise<Map<string, string>> {
   for (const l of scene.layers) {
     if ((l.type === "image" || l.type === "mockup") && l.src) srcs.add(l.src);
   }
+  if (scene.background.type === "image") srcs.add(scene.background.src);
   const map = new Map<string, string>();
   const bezels = new Set<string>();
   for (const l of scene.layers) {
