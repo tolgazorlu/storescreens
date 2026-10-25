@@ -309,8 +309,38 @@ function HighlightText({
 }) {
   const pieces = text
     .split(/\*([^*]+)\*/)
-    .flatMap((seg, si) => seg.split(/(\s+)/).map((piece) => ({ piece, hl: si % 2 === 1 })));
+    .flatMap((seg, si) => seg.split(/(\s+)/).map((piece) => ({ piece, hl: si % 2 === 1 })))
+    .filter(({ piece }) => piece);
+  // Glue pieces with no whitespace between them (`*free*!`) into one no-wrap group so punctuation can't wrap alone.
+  const words: { piece: string; hl: boolean }[][] = [];
+  for (const p of pieces) {
+    const last = words.at(-1);
+    if (last && !/^\s+$/.test(p.piece) && !/^\s+$/.test(last[0].piece)) last.push(p);
+    else words.push([p]);
+  }
   const pad = typeof font.fontSize === "number" ? Math.round(font.fontSize * 0.08) : 0;
+  const span = ({ piece, hl }: { piece: string; hl: boolean }, key: number) =>
+    !hl ? (
+      <span key={key} style={{ whiteSpace: "pre" }}>{piece}</span>
+    ) : (
+      <span
+        key={key}
+        style={
+          pill
+            ? {
+                display: "flex",
+                whiteSpace: "pre",
+                color: contrastColor(color),
+                background: color,
+                borderRadius: pad * 2,
+                padding: `0 ${pad}px`,
+              }
+            : { color, whiteSpace: "pre" }
+        }
+      >
+        {piece}
+      </span>
+    );
   return (
     <div
       style={{
@@ -324,30 +354,15 @@ function HighlightText({
         rowGap: pad,
       }}
     >
-      {pieces.map(({ piece, hl }, i) => {
-        if (!piece) return null;
-        if (/^\s+$/.test(piece)) return <span key={i} style={{ whiteSpace: "pre" }}>{piece}</span>;
-        if (!hl) return <span key={i} style={{ whiteSpace: "pre" }}>{piece}</span>;
-        return (
-          <span
-            key={i}
-            style={
-              pill
-                ? {
-                    display: "flex",
-                    whiteSpace: "pre",
-                    color: contrastColor(color),
-                    background: color,
-                    borderRadius: pad * 2,
-                    padding: `0 ${pad}px`,
-                  }
-                : { color, whiteSpace: "pre" }
-            }
-          >
-            {piece}
-          </span>
-        );
-      })}
+      {words.map((word, i) =>
+        word.length === 1 ? (
+          span(word[0], i)
+        ) : (
+          <div key={i} style={{ display: "flex", flexWrap: "nowrap", alignItems: "center" }}>
+            {word.map(span)}
+          </div>
+        ),
+      )}
     </div>
   );
 }

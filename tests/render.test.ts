@@ -86,4 +86,29 @@ describe("*word* highlight next to punctuation", () => {
     for (let i = 0; i < data.length; i += info.channels) if (data[i] > 200 && data[i + 1] < 60 && data[i + 2] < 60) reds++;
     expect(reds).toBeGreaterThan(100);
   });
+
+  it("keeps `*free*!` on one line when the box is just wide enough for the word", async () => {
+    const textScene = (text: string, w: number) => ({
+      width: 400,
+      height: 300,
+      background: { type: "solid" as const, color: "#ffffff" },
+      layers: [
+        {
+          id: "t", type: "text" as const, x: 0, y: 0, w, h: 300, rotation: 0, opacity: 1, locked: false,
+          text, fontSize: 64, fontWeight: 700 as const, color: "#000000", align: "left" as const, lineHeight: 1.1,
+          letterSpacing: 0, dir: "auto" as const, fontFamily: "Inter", fit: "none" as const, minFontSize: 16,
+          textTransform: "none" as const, highlightColor: "#ff0000", highlightPill: false,
+        },
+      ],
+    });
+    // Rightmost red column = the rendered width of the highlighted word.
+    const word = await sharp(await renderSceneToPng(textScene("*free*", 400))).raw().toBuffer({ resolveWithObject: true });
+    let right = 0;
+    for (let i = 0; i < word.data.length; i += word.info.channels)
+      if (word.data[i] > 200 && word.data[i + 1] < 60) right = Math.max(right, (i / word.info.channels) % word.info.width);
+    const { data, info } = await sharp(await renderSceneToPng(textScene("*free*!", right + 4))).raw().toBuffer({ resolveWithObject: true });
+    let inkBelowFirstLine = 0;
+    for (let i = 100 * info.width * info.channels; i < data.length; i += info.channels) if (data[i] < 100) inkBelowFirstLine++;
+    expect(inkBelowFirstLine).toBe(0);
+  });
 });
