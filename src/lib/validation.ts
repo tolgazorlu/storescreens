@@ -3,7 +3,7 @@ import { DEVICE_IDS } from "@/lib/devices";
 import { TEMPLATE_IDS } from "@/lib/templates";
 import { IPHONE_FRAMES, LAYOUT_KEYS, STYLE_KEYS } from "@/lib/layouts";
 import { backgroundSchema } from "@/lib/scene";
-import { brandSchema } from "@/lib/brand";
+import { brandPatchSchema } from "@/lib/brand";
 
 /** BCP 47-ish tag; it becomes a folder name inside export ZIPs, so only safe characters. */
 export const localeSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]{1,9}$/, "locale must be 2-10 letters, digits, - or _");
@@ -29,8 +29,10 @@ export const screenSpecSchema = z.object({
   titleScale: z.number().min(0.3).max(3).optional(),
   phoneScale: z.number().min(0.3).max(3).optional(),
   phoneOffsetY: z.number().min(-1).max(1).optional(),
-  /** Small label above the title, for layouts with an eyebrow (e.g. "badge"). */
+  /** Small label above the title, on any layout with copy at the top. */
   eyebrow: localized.optional(),
+  /** Call-to-action pill under the subtitle, e.g. on the last screen. */
+  cta: localized.optional(),
 });
 
 export const generateSchema = z
@@ -43,7 +45,7 @@ export const generateSchema = z
     /** Named theme preset (see /api/meta `themes`); applied before `brand`, so `brand` can still override it. */
     theme: z.string().optional(),
     /** Overrides on top of the project brand (and `theme`, if set) for this call. */
-    brand: brandSchema.partial().optional(),
+    brand: brandPatchSchema.optional(),
     /** Legacy shorthands; prefer brand. */
     background: backgroundSchema.optional(),
     textColor: z.string().optional(),

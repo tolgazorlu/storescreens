@@ -474,8 +474,10 @@ export function compose(
 export type LayoutParams = {
   title?: string;
   subtitle?: string;
-  /** Small label above the title, used by layouts with `copy.eyebrow`. */
+  /** Small label above the title, on any layout with copy at the top. */
   eyebrow?: string;
+  /** Call-to-action pill drawn under the subtitle. */
+  cta?: string;
   screenshot?: string | null;
   /** Second capture for the two-device layouts; falls back to the first. */
   screenshot2?: string | null;
@@ -484,7 +486,8 @@ export type LayoutParams = {
 };
 
 /** Average glyph width as a fraction of font size, for a bold sans headline. */
-const GLYPH_WIDTH = 0.56;
+// 0.56 over-counted lines, leaving a gap under titles; an underestimate is safe since titles shrink to fit.
+const GLYPH_WIDTH = 0.52;
 
 /** Greedy word-wrap simulation: how many lines `text` takes at `fontSize` in a box of `width`.
  * More accurate than a flat char-count estimate, so the title's box height (and the gap below
@@ -494,7 +497,8 @@ export function estimateLines(text: string | undefined, fontSize: number, width:
   const charW = fontSize * GLYPH_WIDTH;
   let lines = 1;
   let lineW = 0;
-  for (const word of text.split(/\s+/)) {
+  // `*` highlight markers are not drawn.
+  for (const word of text.replace(/\*/g, "").split(/\s+/)) {
     const wordW = word.length * charW;
     const withSpace = lineW === 0 ? wordW : lineW + charW * 0.3 + wordW;
     if (withSpace > width && lineW > 0) {
@@ -505,6 +509,38 @@ export function estimateLines(text: string | undefined, fontSize: number, width:
     }
   }
   return Math.min(4, lines);
+}
+
+/** Accent-filled rounded label: the eyebrow above a title or a CTA button under it. */
+function pill(label: string, x: number, y: number, w: number, h: number, size: number, brand: Brand, upper = true): Layer[] {
+  const box = { x: Math.round(x), y, w, h, rotation: 0, opacity: 1, locked: false };
+  const lineH = Math.round(size * 1.2);
+  // Dark label on light accents, light on dark ones (relative luminance of a #rrggbb accent).
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(brand.accent.slice(i, i + 2), 16) / 255 || 0);
+  const light = 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.45;
+  return [
+    { id: uid("r"), type: "rect", color: brand.accent, radius: Math.round(h / 2), ...box },
+    {
+      id: uid("t"),
+      type: "text",
+      text: label,
+      ...box,
+      y: y + Math.round((h - lineH) / 2),
+      h: lineH,
+      fontSize: size,
+      fontWeight: 700,
+      color: light ? "#111111" : "#FFFFFF",
+      align: "center",
+      lineHeight: 1.2,
+      letterSpacing: upper ? Math.round(size * 0.02) : 0,
+      dir: "auto",
+      fontFamily: brand.fontFamily ?? DEFAULT_FONT,
+      fit: "shrink",
+      minFontSize: Math.round(size * 0.7),
+      textTransform: upper ? "uppercase" : "none",
+      highlightPill: false,
+    },
+  ];
 }
 
 /** One scene per store tile: two for a panorama, one otherwise. */
@@ -525,51 +561,16 @@ export function buildLayoutScenes(
 
   const layers: Layer[] = [];
   let eyebrowH = 0;
-  if (c.copy && spec.copy.eyebrow && p.eyebrow) {
+  if (c.copy && (spec.copy.eyebrow || c.copy.position === "top") && p.eyebrow) {
     const { box, typeWidth } = c.copy;
-    const size = Math.round(typeWidth * 0.028);
-    const padX = Math.round(size * 0.9);
-    eyebrowH = Math.round(size * 2.2);
-    const textW = Math.round(p.eyebrow.length * size * GLYPH_WIDTH) + padX * 2;
+    const size = Math.round(typeWidth * 0.04);
+    const padX = Math.round(size * 1.1);
+    eyebrowH = Math.round(size * 2.1);
+    // Uppercase glyphs run wider than the mixed-case average.
+    const textW = Math.round(p.eyebrow.length * size * 0.68) + padX * 2;
     const top = Math.round(H * TYPE.padTop);
     const left = spec.copy.align === "left" ? box.left : box.left + box.width / 2 - textW / 2;
-    layers.push({
-      id: uid("r"),
-      type: "rect",
-      color: brand.accent,
-      radius: Math.round(eyebrowH / 2),
-      x: Math.round(left),
-      y: top,
-      w: textW,
-      h: eyebrowH,
-      rotation: 0,
-      opacity: 1,
-      locked: false,
-    });
-    layers.push({
-      id: uid("t"),
-      type: "text",
-      text: p.eyebrow,
-      x: Math.round(left),
-      y: top,
-      w: textW,
-      h: eyebrowH,
-      fontSize: size,
-      fontWeight: 700,
-      color: "#111111",
-      align: "center",
-      lineHeight: 1.2,
-      letterSpacing: Math.round(size * 0.02),
-      dir: "auto",
-      fontFamily: brand.fontFamily ?? DEFAULT_FONT,
-      fit: "none",
-      minFontSize: size,
-      textTransform: "uppercase",
-      highlightPill: false,
-      rotation: 0,
-      opacity: 1,
-      locked: false,
-    });
+    layers.push(...pill(p.eyebrow, left, top, textW, eyebrowH, size, brand));
     eyebrowH += Math.round(H * 0.018);
   }
   if (c.copy && (p.title || p.subtitle)) {
@@ -583,7 +584,10 @@ export function buildLayoutScenes(
     const titleH = Math.round(titleSize * TYPE.headlineLineHeight * titleLines) + eyebrowH;
     const subH = Math.round(subSize * TYPE.subheadLineHeight * subLines);
     const gap = p.subtitle ? Math.round(titleSize * TYPE.gapOfTitle * brand.titleGap) : 0;
-    const blockH = titleH + gap + subH;
+    const ctaSize = Math.round(subSize * 0.95);
+    const ctaGap = p.cta ? Math.round(subSize * 1.2) : 0;
+    const ctaH = p.cta ? Math.round(ctaSize * 2.4) : 0;
+    const blockH = titleH + gap + subH + ctaGap + ctaH;
     const top =
       c.copy.position === "top"
         ? Math.round(H * TYPE.padTop)
@@ -624,6 +628,11 @@ export function buildLayoutScenes(
     if (p.title) layers.push(text(p.title, top + eyebrowH, titleH - eyebrowH, titleSize, false));
     if (p.subtitle)
       layers.push(text(p.subtitle, top + titleH + gap, subH, subSize, true));
+    if (p.cta) {
+      const w = Math.round(p.cta.length * ctaSize * GLYPH_WIDTH + ctaSize * 2.6);
+      const left = c.copy.align === "left" ? box.left : box.left + box.width / 2 - w / 2;
+      layers.push(...pill(p.cta, left, top + titleH + gap + subH + ctaGap, w, ctaH, ctaSize, brand, false));
+    }
   }
   if (spec.card) {
     // One rounded card behind every device, sized to their combined bounding box.

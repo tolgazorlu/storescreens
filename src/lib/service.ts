@@ -252,6 +252,7 @@ export type ScreenSpec = {
   phoneScale?: number;
   phoneOffsetY?: number;
   eyebrow?: Localized;
+  cta?: Localized;
 };
 
 export type GenerateInput = {
@@ -439,6 +440,7 @@ export async function generateScreens(
           title,
           subtitle,
           eyebrow: pick(spec.eyebrow, locale) ?? undefined,
+          cta: pick(spec.cta, locale) ?? undefined,
           screenshot: params.screenshot,
           screenshot2: params.screenshot2,
           brand: {

@@ -91,3 +91,20 @@ describe("*word* highlight parsing", () => {
     expect(subtitle?.highlightColor).toBeUndefined();
   });
 });
+
+describe("eyebrow and cta", () => {
+  it("draws the eyebrow on any top-copy layout and the cta under the subtitle", () => {
+    const [scene] = buildLayoutScenes(DEVICES["iphone-6.9"], "hero", {
+      title: "Title",
+      subtitle: "Sub",
+      eyebrow: "Feature",
+      cta: "Try it",
+      screenshot: null,
+    });
+    const texts = scene.layers.filter((l): l is TextLayer => l.type === "text");
+    const y = (t: string) => texts.find((l) => l.text === t)!.y;
+    expect(y("Feature")).toBeLessThan(y("Title"));
+    expect(y("Sub")).toBeLessThan(y("Try it"));
+    expect(sceneSchema.safeParse(scene).success).toBe(true);
+  });
+});
