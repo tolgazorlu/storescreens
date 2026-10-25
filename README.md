@@ -19,6 +19,7 @@ Requirements: Node 22+, pnpm 9+. macOS only for `scripts/fetch-bezels.sh`
 pnpm install
 scripts/fetch-bezels.sh   # optional: Apple's official iPad / iPhone Duo bezels (Apple Design Resources)
 scripts/fetch-patterns.sh # optional: Pattern Craft background patterns (see Backgrounds below)
+scripts/fetch-fonts.sh    # optional: Noto CJK / Devanagari / Bengali fonts for titles in those scripts
 pnpm dev                  # http://localhost:4110
 ```
 
@@ -59,7 +60,7 @@ Pro frame). Panorama layouts span two store tiles and become two screens.
 Frame credits: `public/frames/ATTRIBUTION.md`.
 
 `theme` picks a named colour/background preset (`GET /api/meta` -> `themes`,
-grouped `light|dark|vibrant|pastel|retro|mono|mesh`, 38 presets; it sets
+grouped `light|dark|vibrant|pastel|retro|mono|mesh`; it sets
 colours and background only, keeping the project's type and layout); `brand`
 overrides individual fields on top of it. A title's `*word*` renders in the
 theme's accent colour (or a pill, with `highlightPill`). `background` also
