@@ -100,6 +100,39 @@ function textureLayer(t: Texture, w: number, h: number): string {
   );
 }
 
+/** Background types backed by a raster asset: resvg can't decode an `<image>` whose href is
+ * itself an SVG containing a raster image, so these skip the flattened-SVG path entirely and
+ * are drawn as a plain `<img>` (see scene-view.tsx BackgroundLayer). */
+export function rasterBackgroundSrc(bg: Background): string | null {
+  if (bg.type === "image") return bg.src;
+  if (bg.type === "pattern") return patternSrc(bg.id);
+  return null;
+}
+
+function overlays(bg: Background, w: number, h: number): { defs: string; body: string } {
+  let defs = "";
+  let body = "";
+  (bg.glow ?? []).forEach((g, i) => {
+    const { defs: d, rect } = glowLayer(g, w, h, i);
+    defs += d;
+    body += rect;
+  });
+  if (bg.texture) body += textureLayer(bg.texture, w, h);
+  return { defs, body };
+}
+
+function wrapSvg(w: number, h: number, defs: string, body: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs>${defs}</defs>${body}</svg>`;
+  // btoa, not Buffer: this module runs in the browser (editor canvas) too.
+  return `data:image/svg+xml;base64,${btoa(svg)}`;
+}
+
+/** Glow blobs and texture alone (no base fill), for compositing on top of a raster background. */
+export function backgroundOverlaySvgDataUrl(bg: Background, w: number, h: number): string {
+  const { defs, body } = overlays(bg, w, h);
+  return wrapSvg(w, h, defs, body);
+}
+
 /** Build the full background (base fill + glow blobs + texture) as one flat SVG data URL. */
 export function backgroundSvgDataUrl(
   bg: Background,
@@ -167,13 +200,6 @@ export function backgroundSvgDataUrl(
       body += `<image href="${resolveSrc(patternSrc(bg.id))}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/>`;
       break;
   }
-  (bg.glow ?? []).forEach((g, i) => {
-    const { defs: d, rect } = glowLayer(g, w, h, i);
-    defs += d;
-    body += rect;
-  });
-  if (bg.texture) body += textureLayer(bg.texture, w, h);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs>${defs}</defs>${body}</svg>`;
-  // btoa, not Buffer: this module runs in the browser (editor canvas) too.
-  return `data:image/svg+xml;base64,${btoa(svg)}`;
+  const o = overlays(bg, w, h);
+  return wrapSvg(w, h, defs + o.defs, body + o.body);
 }

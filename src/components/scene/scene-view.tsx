@@ -2,7 +2,7 @@ import { bezelFor, type Bezel } from "@/lib/bezels";
 import type { CSSProperties } from "react";
 import type { Scene, Layer, MockupLayer, TextLayer } from "@/lib/scene";
 import { bgRect } from "@/lib/scene";
-import { backgroundSvgDataUrl } from "@/lib/background";
+import { backgroundSvgDataUrl, backgroundOverlaySvgDataUrl, rasterBackgroundSrc } from "@/lib/background";
 import { layoutParagraph, detectDir, hasRtl, type Word } from "@/lib/bidi";
 import { fontStack } from "@/lib/fonts";
 import { iconDataUri } from "@/lib/icons";
@@ -63,16 +63,39 @@ export function BackgroundLayer({
   resolveSrc?: (src: string) => string;
 }) {
   const rect = bgRect(scene);
+  const raster = rasterBackgroundSrc(scene.background);
+  const box = { position: "absolute" as const, left: rect.offsetX, top: 0, width: rect.width, height: rect.height };
+  if (raster) {
+    // resvg can't decode an <image> whose href is itself an SVG containing a raster image, so
+    // this bypasses backgroundSvgDataUrl's flattened-SVG approach and draws the raster directly.
+    const hasOverlay = (scene.background.glow?.length ?? 0) > 0 || !!scene.background.texture;
+    return (
+      <div style={{ ...box, display: "flex" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={resolveSrc(raster)}
+          alt=""
+          width={rect.width}
+          height={rect.height}
+          style={{ position: "absolute", left: 0, top: 0, width: rect.width, height: rect.height, objectFit: "cover" }}
+        />
+        {hasOverlay && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={backgroundOverlaySvgDataUrl(scene.background, rect.width, rect.height)}
+            alt=""
+            width={rect.width}
+            height={rect.height}
+            style={{ position: "absolute", left: 0, top: 0, width: rect.width, height: rect.height }}
+          />
+        )}
+      </div>
+    );
+  }
   const url = backgroundSvgDataUrl(scene.background, rect.width, rect.height, resolveSrc);
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={url}
-      alt=""
-      width={rect.width}
-      height={rect.height}
-      style={{ position: "absolute", left: rect.offsetX, top: 0, width: rect.width, height: rect.height }}
-    />
+    <img src={url} alt="" width={rect.width} height={rect.height} style={box} />
   );
 }
 
