@@ -77,3 +77,10 @@ describe("sceneSchema with the new background union", () => {
     expect(sceneSchema.safeParse(scene).success).toBe(true);
   });
 });
+
+describe("brand overrides", () => {
+  it("leave unset fields alone so a theme underneath survives", async () => {
+    const { brandPatchSchema } = await import("@/lib/brand");
+    expect(brandPatchSchema.parse({ fontFamily: "Cairo" })).toEqual({ fontFamily: "Cairo" });
+  });
+});

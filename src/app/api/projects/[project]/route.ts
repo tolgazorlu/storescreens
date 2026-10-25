@@ -9,7 +9,7 @@ import {
   updateBrand,
   projectBrand,
 } from "@/lib/service";
-import { brandSchema } from "@/lib/brand";
+import { brandPatchSchema } from "@/lib/brand";
 
 type P = { project: string };
 
@@ -31,7 +31,7 @@ export const PATCH = route<P>(async (req, { params }) => {
   const body = z
     .object({
       name: z.string().min(1).max(80).optional(),
-      brand: brandSchema.partial().optional(),
+      brand: brandPatchSchema.optional(),
     })
     .parse(await req.json());
   let project = await getProject(params.project);

@@ -36,6 +36,14 @@ export const brandSchema = z.object({
 
 export type Brand = z.infer<typeof brandSchema>;
 
+/** Partial brand for overrides. zod 4 still fills `.default()` inside `.partial()`, which would
+ * reset every unset field and wipe the theme/project brand underneath, so defaults are dropped. */
+export const brandPatchSchema = z.object(
+  Object.fromEntries(
+    Object.entries(brandSchema.shape).map(([k, v]) => [k, v.unwrap().optional()]),
+  ),
+) as unknown as ReturnType<typeof brandSchema.partial>;
+
 export const DEFAULT_BRAND: Brand = brandSchema.parse({});
 
 export type ThemeGroup = "light" | "dark" | "vibrant" | "pastel" | "retro" | "mono" | "mesh";
