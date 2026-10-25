@@ -12,11 +12,13 @@ Single user, no auth, no cloud: SQLite + files under `./data`.
 ## Run
 
 Requirements: Node 22+, pnpm 9+. macOS only for `scripts/fetch-bezels.sh`
-(it mounts Apple's DMGs with `hdiutil`); everything else runs anywhere.
+(it mounts Apple's DMGs with `hdiutil`) and `scripts/fetch-patterns.sh`
+(it drives Google Chrome headless); everything else runs anywhere.
 
 ```bash
 pnpm install
 scripts/fetch-bezels.sh   # optional: Apple's official iPad / iPhone Duo bezels (Apple Design Resources)
+scripts/fetch-patterns.sh # optional: Pattern Craft background patterns (see Backgrounds below)
 pnpm dev                  # http://localhost:4110
 ```
 
@@ -60,8 +62,23 @@ Frame credits: `public/frames/ATTRIBUTION.md`.
 grouped `light|dark|vibrant|pastel|retro|mono|mesh`, 38 presets); `brand`
 overrides individual fields on top of it. A title's `*word*` renders in the
 theme's accent colour (or a pill, with `highlightPill`). `background` also
-takes `radial`, `split`, `mesh` (seeded, 2-5 colours) and `image`, plus an
+takes `radial`, `split`, `mesh` (seeded, 2-5 colours), `image` and `pattern`
+(`{type:"pattern", id}`, see `GET /api/meta` -> `patterns`), plus an
 optional `texture` overlay (`grain|dots|grid|stripes|waves|halftone|concentric`).
+
+### Backgrounds: Pattern Craft
+
+258 gradient/geometric/decorative/effects patterns from
+[Pattern Craft](https://patterncraft.fun) ([megh-bari/pattern-craft](https://github.com/megh-bari/pattern-craft),
+MIT, see `docs/vendor/pattern-craft/LICENSE`) are available as
+`background: {type: "pattern", id}`, picked from a thumbnail grid in the
+editor's background panel. They're pre-rendered to WebP by real headless
+Chrome (`scripts/fetch-patterns.sh`) instead of satori, since several of
+them use CSS (radial gradients with `%` sizes, `mask-image`, hairline
+grids) satori can't reproduce; run the script once after `pnpm install`
+to fetch the images (gitignored; `public/patterns/manifest.json` is
+committed). Patterns are flat images, so they don't recolour to match a
+brand palette.
 
 `capture_screens` launches an app on a booted iOS simulator in a given
 locale, pins the status bar to 9:41, optionally replays an
