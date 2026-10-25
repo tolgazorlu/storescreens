@@ -32,7 +32,7 @@ import {
   type TextLayer,
   type MockupLayer,
 } from "@/lib/scene";
-import { brandSchema, DEFAULT_BRAND, type Brand } from "@/lib/brand";
+import { brandSchema, DEFAULT_BRAND, applyPreset, type Brand } from "@/lib/brand";
 import { renderSceneToPng } from "@/lib/render";
 import { storeFile, deleteFile } from "@/lib/storage";
 import { imageSize } from "@/lib/image-size";
@@ -251,6 +251,7 @@ export type ScreenSpec = {
   titleScale?: number;
   phoneScale?: number;
   phoneOffsetY?: number;
+  eyebrow?: Localized;
 };
 
 export type GenerateInput = {
@@ -259,6 +260,8 @@ export type GenerateInput = {
   locales?: string[];
   device: DeviceId;
   logo?: string | null;
+  /** Named theme preset id; applied before `brand`. */
+  theme?: string;
   brand?: Partial<Brand>;
   background?: Scene["background"];
   textColor?: string;
@@ -347,7 +350,11 @@ export async function generateScreens(
   const locales = input.locales?.length
     ? input.locales
     : [input.locale ?? "en"];
-  const brand: Partial<Brand> = { ...projectBrand(p), ...(input.brand ?? {}) };
+  const brand: Partial<Brand> = {
+    ...projectBrand(p),
+    ...(input.theme ? applyPreset(input.theme) : {}),
+    ...(input.brand ?? {}),
+  };
   const groupIds = input.screens.map(() => randomUUID());
   // A panorama's second tile is its own screen, linked across locales by its own group.
   const groupIds2 = input.screens.map(() => randomUUID());
@@ -431,6 +438,7 @@ export async function generateScreens(
         scenes = buildLayoutScenes(device, layout, {
           title,
           subtitle,
+          eyebrow: pick(spec.eyebrow, locale) ?? undefined,
           screenshot: params.screenshot,
           screenshot2: params.screenshot2,
           brand: {

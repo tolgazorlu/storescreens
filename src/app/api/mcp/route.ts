@@ -224,7 +224,8 @@ const handler = createMcpHandler(
           "Create store screenshots for one locale + device from templates. Each entry gives a template, title, subtitle and a screenshot asset id (or name). " +
           "Pass locales=[...] with {locale: value} maps for title/subtitle/screenshot to generate every language in one call, or locale for one. Call once per device. Use replace=true to regenerate. Keep titles short (2-6 words) and in the target language. " +
           "Per screen: titleScale / phoneScale / phoneOffsetY tune the layout; feature-list takes bullets [{icon?, text}]; two-phones takes screenshot2. Project brand supplies colors unless brand is passed. " +
-          "goldie look (preferred for iPhone 6.9/6.5, iPad 13 and Android phone): set style (editorial, showcase, magazine, storyboard, dynamic) and leave template out, or give a screen its own layout (hero, tilt, duo, panorama, ...). " +
+          "goldie look (preferred for iPhone 6.9/6.5, iPad 13 and Android phone): set style (editorial, showcase, magazine, storyboard, dynamic, bold, social, minimalist, launch) and leave template out, or give a screen its own layout (hero, tilt, duo, panorama, bold-type, card, badge, diagonal, callout, stat, bottom-copy, ...). " +
+          "theme picks a named colour/background preset (see /api/meta themes: light, dark, vibrant, pastel, retro, mono, mesh groups); brand overrides individual fields on top of it. Wrap a title word in *asterisks* to highlight it in the theme's accent colour. eyebrow adds a small label above the headline on layouts that support it (badge). " +
           "frame picks the iPhone 17 Pro colour (blue, silver, orange); Android uses the Pixel 10 Pro frame. Panorama layouts span two store tiles and create two screens; duo layouts show screenshot2 (else the same capture).",
         inputSchema: generateSchema.extend({ project: z.string() }),
       },

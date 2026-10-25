@@ -29,6 +29,8 @@ export const screenSpecSchema = z.object({
   titleScale: z.number().min(0.3).max(3).optional(),
   phoneScale: z.number().min(0.3).max(3).optional(),
   phoneOffsetY: z.number().min(-1).max(1).optional(),
+  /** Small label above the title, for layouts with an eyebrow (e.g. "badge"). */
+  eyebrow: localized.optional(),
 });
 
 export const generateSchema = z
@@ -38,7 +40,9 @@ export const generateSchema = z
     locales: z.array(localeSchema).min(1).max(40).optional(),
     device: z.enum(DEVICE_IDS as [string, ...string[]]),
     logo: z.string().nullable().optional(),
-    /** Overrides on top of the project brand for this call. */
+    /** Named theme preset (see /api/meta `themes`); applied before `brand`, so `brand` can still override it. */
+    theme: z.string().optional(),
+    /** Overrides on top of the project brand (and `theme`, if set) for this call. */
     brand: brandSchema.partial().optional(),
     /** Legacy shorthands; prefer brand. */
     background: backgroundSchema.optional(),
