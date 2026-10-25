@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { localFilesPath } from "@/lib/files-url";
+import { PATTERN_IDS } from "@/lib/patterns";
 
 /**
  * Scene = one store screenshot. Coordinates are in output pixels
@@ -168,9 +169,15 @@ export const backgroundSchema = z.discriminatedUnion("type", [
     dim: z.number().min(0).max(1).default(0),
     ...bgExtras,
   }),
+  z.object({
+    type: z.literal("pattern"),
+    /** id from public/patterns/manifest.json (see PATTERN_IDS). */
+    id: z.enum(PATTERN_IDS as [string, ...string[]]),
+    ...bgExtras,
+  }),
 ]);
 export type BackgroundType = Background["type"];
-export const BACKGROUND_TYPES = ["solid", "gradient", "radial", "split", "mesh", "image"] as const;
+export const BACKGROUND_TYPES = ["solid", "gradient", "radial", "split", "mesh", "image", "pattern"] as const;
 
 /** Largest canvas any store asks for is 5244x2950; the cap keeps a bad scene from exhausting the renderer. */
 export const MAX_SCENE_SIZE = 8192;
