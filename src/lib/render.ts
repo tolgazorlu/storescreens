@@ -10,6 +10,7 @@ import { SceneView, TextContent } from "@/components/scene/scene-view";
 import { readFileBytes } from "@/lib/storage";
 import { FONTS, fontFile, fontWeights } from "@/lib/fonts";
 import { bezelFor } from "@/lib/bezels";
+import { patternSrc } from "@/lib/patterns";
 
 let fontsPromise: Promise<Font[]> | null = null;
 
@@ -48,6 +49,7 @@ async function inlineImages(scene: Scene): Promise<Map<string, string>> {
     if ((l.type === "image" || l.type === "mockup") && l.src) srcs.add(l.src);
   }
   if (scene.background.type === "image") srcs.add(scene.background.src);
+  if (scene.background.type === "pattern") srcs.add(patternSrc(scene.background.id));
   const map = new Map<string, string>();
   const bezels = new Set<string>();
   for (const l of scene.layers) {
@@ -64,7 +66,9 @@ async function inlineImages(scene: Scene): Promise<Map<string, string>> {
     [...srcs].map(async (src) => {
       if (src.startsWith("data:")) return map.set(src, src);
       try {
-        const bytes = await readFileBytes(src);
+        const bytes = src.startsWith("/patterns/")
+          ? await readFile(path.join(process.cwd(), "public", src))
+          : await readFileBytes(src);
         map.set(
           src,
           `data:${mimeFor(src, bytes)};base64,${bytes.toString("base64")}`,

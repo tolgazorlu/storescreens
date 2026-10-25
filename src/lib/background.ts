@@ -1,4 +1,5 @@
 import type { Background, Glow, Texture } from "./scene";
+import { patternSrc } from "./patterns";
 
 /**
  * One background renderer used by both the exporter (satori/resvg) and the editor canvas (DOM):
@@ -161,6 +162,9 @@ export function backgroundSvgDataUrl(
     case "image":
       body += `<image href="${resolveSrc(bg.src)}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/>`;
       if (bg.dim > 0) body += `<rect width="${w}" height="${h}" fill="#000000" opacity="${bg.dim}"/>`;
+      break;
+    case "pattern":
+      body += `<image href="${resolveSrc(patternSrc(bg.id))}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/>`;
       break;
   }
   (bg.glow ?? []).forEach((g, i) => {
