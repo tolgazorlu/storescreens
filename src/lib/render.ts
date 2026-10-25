@@ -8,8 +8,9 @@ import type { Scene, TextLayer } from "@/lib/scene";
 import { fitScene } from "@/lib/fit";
 import { SceneView, TextContent } from "@/components/scene/scene-view";
 import { readFileBytes } from "@/lib/storage";
-import { FONTS, FONT_WEIGHTS, fontFile } from "@/lib/fonts";
+import { FONTS, fontFile, fontWeights } from "@/lib/fonts";
 import { bezelFor } from "@/lib/bezels";
+import { patternSrc } from "@/lib/patterns";
 
 let fontsPromise: Promise<Font[]> | null = null;
 
@@ -18,21 +19,17 @@ function loadFonts(): Promise<Font[]> {
   if (!fontsPromise) {
     fontsPromise = Promise.all(
       FONTS.flatMap((family) =>
-        FONT_WEIGHTS.map(async (weight) => ({
-          name: family.name,
-          weight: weight as Font["weight"],
-          style: "normal" as const,
-          data: await readFile(
-            path.join(
-              process.cwd(),
-              "public",
-              "fonts",
-              fontFile(family, weight),
-            ),
-          ),
-        })),
+        fontWeights(family).map(async (weight) => {
+          const file = path.join(process.cwd(), "public", "fonts", fontFile(family, weight));
+          // A fresh clone has no fetched fonts until scripts/fetch-fonts.sh runs.
+          const data = await readFile(file).catch((e) => {
+            if (family.fetched && e.code === "ENOENT") return null;
+            throw e;
+          });
+          return data && { name: family.name, weight: weight as Font["weight"], style: "normal" as const, data };
+        }),
       ),
-    );
+    ).then((fonts) => fonts.filter((f): f is NonNullable<typeof f> => f !== null));
   }
   return fontsPromise;
 }
@@ -51,6 +48,8 @@ async function inlineImages(scene: Scene): Promise<Map<string, string>> {
   for (const l of scene.layers) {
     if ((l.type === "image" || l.type === "mockup") && l.src) srcs.add(l.src);
   }
+  if (scene.background.type === "image") srcs.add(scene.background.src);
+  if (scene.background.type === "pattern") srcs.add(patternSrc(scene.background.id));
   const map = new Map<string, string>();
   const bezels = new Set<string>();
   for (const l of scene.layers) {
@@ -67,7 +66,9 @@ async function inlineImages(scene: Scene): Promise<Map<string, string>> {
     [...srcs].map(async (src) => {
       if (src.startsWith("data:")) return map.set(src, src);
       try {
-        const bytes = await readFileBytes(src);
+        const bytes = src.startsWith("/patterns/")
+          ? await readFile(path.join(process.cwd(), "public", src))
+          : await readFileBytes(src);
         map.set(
           src,
           `data:${mimeFor(src, bytes)};base64,${bytes.toString("base64")}`,

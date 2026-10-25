@@ -1,7 +1,8 @@
 import { bezelFor, type Bezel } from "@/lib/bezels";
 import type { CSSProperties } from "react";
 import type { Scene, Layer, MockupLayer, TextLayer } from "@/lib/scene";
-import { backgroundCss } from "@/lib/scene";
+import { bgRect } from "@/lib/scene";
+import { backgroundSvgDataUrl, backgroundOverlaySvgDataUrl, rasterBackgroundSrc } from "@/lib/background";
 import { layoutParagraph, detectDir, hasRtl, type Word } from "@/lib/bidi";
 import { fontStack } from "@/lib/fonts";
 import { iconDataUri } from "@/lib/icons";
@@ -33,10 +34,10 @@ export function SceneView({
         display: "flex",
         position: "relative",
         overflow: "hidden",
-        background: backgroundCss(scene.background),
         fontFamily: FONT_FAMILY,
       }}
     >
+      <BackgroundLayer scene={scene} resolveSrc={resolveSrc} />
       {scene.layers.map((layer) => (
         <LayerView
           key={layer.id}
@@ -46,6 +47,59 @@ export function SceneView({
         />
       ))}
     </div>
+  );
+}
+
+/**
+ * Background for one tile, shared by the exporter (satori) and the editor canvas (DOM): both
+ * just load the same baked SVG image. A panorama's `bg` rect is wider than the tile and offset,
+ * so the pattern lines up across the seam instead of each tile drawing its own copy.
+ */
+export function BackgroundLayer({
+  scene,
+  resolveSrc = (s) => s,
+}: {
+  scene: Scene;
+  resolveSrc?: (src: string) => string;
+}) {
+  const rect = bgRect(scene);
+  const raster = rasterBackgroundSrc(scene.background);
+  const box = { position: "absolute" as const, left: rect.offsetX, top: 0, width: rect.width, height: rect.height };
+  if (raster) {
+    // resvg can't decode an <image> whose href is itself an SVG containing a raster image, so
+    // this bypasses backgroundSvgDataUrl's flattened-SVG approach and draws the raster directly.
+    const bg = scene.background;
+    const hasOverlay = (bg.glow?.length ?? 0) > 0 || !!bg.texture || (bg.type === "image" && bg.dim > 0);
+    const src = resolveSrc(raster);
+    return (
+      <div style={{ ...box, display: "flex", backgroundColor: "#FFFFFF" }}>
+        {src && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt=""
+            width={rect.width}
+            height={rect.height}
+            style={{ position: "absolute", left: 0, top: 0, width: rect.width, height: rect.height, objectFit: "cover" }}
+          />
+        )}
+        {hasOverlay && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={backgroundOverlaySvgDataUrl(scene.background, rect.width, rect.height)}
+            alt=""
+            width={rect.width}
+            height={rect.height}
+            style={{ position: "absolute", left: 0, top: 0, width: rect.width, height: rect.height }}
+          />
+        )}
+      </div>
+    );
+  }
+  const url = backgroundSvgDataUrl(scene.background, rect.width, rect.height, resolveSrc);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt="" width={rect.width} height={rect.height} style={box} />
   );
 }
 
@@ -182,6 +236,18 @@ export function TextContent({
     letterSpacing: Math.round(layer.letterSpacing * k),
   };
   if (simple) {
+    if (layer.highlightColor && /\*[^*]+\*/.test(text)) {
+      return (
+        <HighlightText
+          text={text}
+          font={font}
+          justify={justify}
+          block={block}
+          color={layer.highlightColor}
+          pill={layer.highlightPill}
+        />
+      );
+    }
     return (
       <div
         style={{
@@ -200,12 +266,104 @@ export function TextContent({
   }
   return (
     <BidiText
-      text={text}
+      // `*word*` highlight markers are only supported on the simple (non-RTL) path.
+      text={text.replace(/\*([^*]+)\*/g, "$1")}
       base={base}
       justify={justify}
       font={font}
       block={block}
     />
+  );
+}
+
+/** Black or white, whichever reads better on `hex`. */
+function contrastColor(hex: string): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return "#111111";
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 0xff;
+  const g = (n >> 8) & 0xff;
+  const b = n & 0xff;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "#111111" : "#ffffff";
+}
+
+/**
+ * `*word*` in a title renders that word (or phrase) in an accent color, optionally on a
+ * highlighter pill. Scoped to the simple (non-RTL) text path.
+ */
+function HighlightText({
+  text,
+  font,
+  justify,
+  block,
+  color,
+  pill,
+}: {
+  text: string;
+  font: CSSProperties;
+  justify: string;
+  block: boolean;
+  color: string;
+  pill: boolean;
+}) {
+  const pieces = text
+    .split(/\*([^*]+)\*/)
+    .flatMap((seg, si) => seg.split(/(\s+)/).map((piece) => ({ piece, hl: si % 2 === 1 })))
+    .filter(({ piece }) => piece);
+  // Glue pieces with no whitespace between them (`*free*!`) into one no-wrap group so punctuation can't wrap alone.
+  const words: { piece: string; hl: boolean }[][] = [];
+  for (const p of pieces) {
+    const last = words.at(-1);
+    if (last && !/^\s+$/.test(p.piece) && !/^\s+$/.test(last[0].piece)) last.push(p);
+    else words.push([p]);
+  }
+  const pad = typeof font.fontSize === "number" ? Math.round(font.fontSize * 0.08) : 0;
+  const span = ({ piece, hl }: { piece: string; hl: boolean }, key: number) =>
+    !hl ? (
+      <span key={key} style={{ whiteSpace: "pre" }}>{piece}</span>
+    ) : (
+      <span
+        key={key}
+        style={
+          pill
+            ? {
+                display: "flex",
+                whiteSpace: "pre",
+                color: contrastColor(color),
+                background: color,
+                borderRadius: pad * 2,
+                padding: `0 ${pad}px`,
+              }
+            : { color, whiteSpace: "pre" }
+        }
+      >
+        {piece}
+      </span>
+    );
+  return (
+    <div
+      style={{
+        ...font,
+        display: "flex",
+        flexWrap: block ? "wrap" : "nowrap",
+        alignItems: "center",
+        textAlign: "left",
+        width: block ? "100%" : "auto",
+        justifyContent: justify,
+        rowGap: pad,
+      }}
+    >
+      {words.map((word, i) =>
+        word.length === 1 ? (
+          span(word[0], i)
+        ) : (
+          <div key={i} style={{ display: "flex", flexWrap: "nowrap", alignItems: "center" }}>
+            {word.map(span)}
+          </div>
+        ),
+      )}
+    </div>
   );
 }
 

@@ -32,10 +32,11 @@ import {
   exportFileName,
 } from "@/lib/service";
 import { storeFile } from "@/lib/storage";
-import { brandSchema, BRAND_PRESETS, applyPreset } from "@/lib/brand";
+import { brandPatchSchema, BRAND_PRESETS, applyPreset } from "@/lib/brand";
 import { ICON_IDS } from "@/lib/icons";
 import { IPHONE_FRAMES, LAYOUTS, STYLES } from "@/lib/layouts";
 import { captureScreens } from "@/lib/capture";
+import { PATTERNS } from "@/lib/patterns";
 
 const layoutMeta = () => ({
   layouts: Object.values(LAYOUTS).map(({ key, label, description, span }) => ({ id: key, label, description, span })),
@@ -72,12 +73,14 @@ const handler = createMcpHandler(
       },
       async () =>
         text({
-          brandPresets: Object.entries(BRAND_PRESETS).map(([id, p]) => ({
+          themes: Object.entries(BRAND_PRESETS).map(([id, p]) => ({
             id,
             label: p.label,
+            group: p.group,
           })),
           icons: ICON_IDS,
           devices: Object.values(DEVICES),
+          patterns: PATTERNS,
           templates: TEMPLATE_IDS.map((id) => ({
             id,
             label: TEMPLATE_LABELS[id],
@@ -173,7 +176,7 @@ const handler = createMcpHandler(
         inputSchema: z.object({
           project: z.string(),
           preset: z.string().optional(),
-          brand: brandSchema.partial().optional(),
+          brand: brandPatchSchema.optional(),
         }),
       },
       async ({ project, preset, brand }) => {
@@ -224,7 +227,8 @@ const handler = createMcpHandler(
           "Create store screenshots for one locale + device from templates. Each entry gives a template, title, subtitle and a screenshot asset id (or name). " +
           "Pass locales=[...] with {locale: value} maps for title/subtitle/screenshot to generate every language in one call, or locale for one. Call once per device. Use replace=true to regenerate. Keep titles short (2-6 words) and in the target language. " +
           "Per screen: titleScale / phoneScale / phoneOffsetY tune the layout; feature-list takes bullets [{icon?, text}]; two-phones takes screenshot2. Project brand supplies colors unless brand is passed. " +
-          "goldie look (preferred for iPhone 6.9/6.5, iPad 13 and Android phone): set style (editorial, showcase, magazine, storyboard, dynamic) and leave template out, or give a screen its own layout (hero, tilt, duo, panorama, ...). " +
+          "goldie look (preferred for iPhone 6.9/6.5, iPad 13 and Android phone): set style (editorial, showcase, magazine, storyboard, dynamic, bold, social, minimalist, launch) and leave template out, or give a screen its own layout (hero, tilt, duo, panorama, bold-type, card, badge, diagonal, callout, stat, bottom-copy, ...). " +
+          "theme picks a named colour/background preset (see /api/meta themes: light, dark, vibrant, pastel, retro, mono, mesh groups); brand overrides individual fields on top of it. background accepts {type:\"pattern\", id} for a Pattern Craft background (see list_meta patterns, one of gradients/geometric/decorative/effects). Wrap a title word in *asterisks* to highlight it in the theme's accent colour. eyebrow adds a small label above the headline on layouts with copy at the top; cta adds a button pill under the subtitle. allDevices builds the same set on every device mockup (iPhone 6.9/6.5, iPad, Android) in one call. " +
           "frame picks the iPhone 17 Pro colour (blue, silver, orange); Android uses the Pixel 10 Pro frame. Panorama layouts span two store tiles and create two screens; duo layouts show screenshot2 (else the same capture).",
         inputSchema: generateSchema.extend({ project: z.string() }),
       },

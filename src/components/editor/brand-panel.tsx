@@ -12,11 +12,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/fetcher";
-import { BRAND_PRESETS, applyPreset, type Brand } from "@/lib/brand";
+import { BRAND_PRESETS, PRESET_GROUPS, applyPreset, type Brand } from "@/lib/brand";
+import { backgroundSvgDataUrl } from "@/lib/background";
 import { FONTS } from "@/lib/fonts";
 import { DEVICES } from "@/lib/devices";
 import { buildScene } from "@/lib/templates";
 import { SceneView } from "@/components/scene/scene-view";
+import { BackgroundEditor } from "./background-editor";
 import type { ProjectDto } from "./types";
 
 /** Project brand: colors, font, title style, template knobs. Applied to every generate call. */
@@ -92,114 +94,48 @@ export function BrandPanel({
             </div>
           </div>
           <div className="flex-1 space-y-2">
-            <Field label="Preset">
-              <Select
-                value=""
-                onValueChange={(id) => setDraft(applyPreset(id))}
-              >
-                <SelectTrigger className="h-8 w-full text-xs">
-                  <SelectValue placeholder="Apply preset" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(BRAND_PRESETS).map(([id, p]) => (
-                    <SelectItem key={id} value={id}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Field label="Theme">
+              <p className="text-xs text-muted-foreground">
+                Pick a theme below, then tweak colours and type.
+              </p>
             </Field>
-            <p className="text-xs text-muted-foreground">
-              Presets replace every field below; tweak after applying.
-            </p>
           </div>
         </div>
 
+        <div className="space-y-1.5">
+          {PRESET_GROUPS.map((group) => (
+            <div key={group}>
+              <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                {group}
+              </span>
+              <div className="grid grid-cols-6 gap-1.5">
+                {Object.entries(BRAND_PRESETS)
+                  .filter(([, p]) => p.group === group)
+                  .map(([id, p]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      title={p.label}
+                      onClick={() => setDraft(applyPreset(id))}
+                      className="aspect-square rounded-md ring-1 ring-border transition hover:ring-2 hover:ring-foreground"
+                      style={{
+                        backgroundImage: `url(${backgroundSvgDataUrl(p.brand.background ?? draft.background, 64, 64)})`,
+                        backgroundSize: "cover",
+                      }}
+                    />
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
         <div className="grid grid-cols-2 gap-2">
-          <Field label="Background">
-            <Select
-              value={draft.background.type}
-              onValueChange={(t) =>
-                set({
-                  background:
-                    t === "solid"
-                      ? {
-                          type: "solid",
-                          color:
-                            draft.background.type === "solid"
-                              ? draft.background.color
-                              : draft.background.from,
-                        }
-                      : {
-                          type: "gradient",
-                          from:
-                            draft.background.type === "solid"
-                              ? draft.background.color
-                              : draft.background.from,
-                          to: "#111111",
-                          angle: 160,
-                        },
-                })
-              }
-            >
-              <SelectTrigger className="h-8 w-full text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="solid">Solid</SelectItem>
-                <SelectItem value="gradient">Gradient</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          {draft.background.type === "solid" ? (
-            <Field label="Color">
-              <ColorInput
-                value={draft.background.color}
-                onChange={(color) =>
-                  set({ background: { type: "solid", color } })
-                }
-              />
-            </Field>
-          ) : (
-            <>
-              <Field label="From">
-                <ColorInput
-                  value={draft.background.from}
-                  onChange={(from) =>
-                    set({
-                      background: {
-                        ...(draft.background as {
-                          type: "gradient";
-                          from: string;
-                          to: string;
-                          angle: number;
-                        }),
-                        from,
-                      },
-                    })
-                  }
-                />
-              </Field>
-              <Field label="To">
-                <ColorInput
-                  value={draft.background.to}
-                  onChange={(to) =>
-                    set({
-                      background: {
-                        ...(draft.background as {
-                          type: "gradient";
-                          from: string;
-                          to: string;
-                          angle: number;
-                        }),
-                        to,
-                      },
-                    })
-                  }
-                />
-              </Field>
-            </>
-          )}
+          <div className="col-span-2">
+            <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Background
+            </span>
+            <BackgroundEditor value={draft.background} onChange={(background) => set({ background })} />
+          </div>
           <Field label="Text">
             <ColorInput
               value={draft.textColor}
@@ -275,6 +211,32 @@ export function BrandPanel({
             onChange={(titleScale) => set({ titleScale })}
           />
           <Num
+            label="Subtitle scale"
+            value={draft.subtitleScale}
+            step={0.05}
+            onChange={(subtitleScale) => set({ subtitleScale })}
+          />
+          <Num
+            label="Title -> subtitle gap"
+            value={draft.titleGap}
+            step={0.1}
+            onChange={(titleGap) => set({ titleGap })}
+          />
+          <Field label="Highlight style">
+            <Select
+              value={draft.highlightPill ? "pill" : "color"}
+              onValueChange={(v) => set({ highlightPill: v === "pill" })}
+            >
+              <SelectTrigger className="h-8 w-full text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="color">*word* in accent colour</SelectItem>
+                <SelectItem value="pill">*word* on a pill</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Num
             label="Phone scale"
             value={draft.phoneScale}
             step={0.05}
@@ -287,6 +249,9 @@ export function BrandPanel({
             onChange={(phoneOffsetY) => set({ phoneOffsetY })}
           />
         </div>
+        <p className="text-xs text-muted-foreground">
+          Use *word* in a title to highlight it in the accent colour.
+        </p>
         <p className="text-xs text-muted-foreground">
           Existing screens keep their look; brand applies to the next Generate.
         </p>

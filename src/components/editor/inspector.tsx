@@ -37,6 +37,7 @@ import { uid } from "@/lib/scene";
 import type { AssetDto } from "./types";
 import { FONTS, DEFAULT_FONT } from "@/lib/fonts";
 import { ICON_IDS } from "@/lib/icons";
+import { BackgroundEditor } from "./background-editor";
 
 export type AlignKind =
   "left" | "hcenter" | "right" | "top" | "vcenter" | "bottom";
@@ -119,6 +120,7 @@ export function Inspector({
         fit: "shrink",
         minFontSize: 16,
         textTransform: "none",
+        highlightPill: false,
         w: Math.round(W * 0.8),
         h: Math.round(W * 0.2),
       };
@@ -223,82 +225,11 @@ export function Inspector({
         <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Background
         </span>
-        <div className="grid grid-cols-2 gap-1.5">
-          <Select
-            value={scene.background.type}
-            onValueChange={(t) =>
-              onScene((s) => ({
-                ...s,
-                background:
-                  t === "solid"
-                    ? {
-                        type: "solid",
-                        color:
-                          s.background.type === "solid"
-                            ? s.background.color
-                            : s.background.from,
-                      }
-                    : {
-                        type: "gradient",
-                        from:
-                          s.background.type === "solid"
-                            ? s.background.color
-                            : s.background.from,
-                        to: "#111111",
-                        angle: 180,
-                      },
-              }))
-            }
-          >
-            <SelectTrigger className="col-span-2 h-8 w-full text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="solid">Solid</SelectItem>
-              <SelectItem value="gradient">Gradient</SelectItem>
-            </SelectContent>
-          </Select>
-          {scene.background.type === "solid" ? (
-            <div className="col-span-2">
-              <Color
-                value={scene.background.color}
-                onChange={(color) =>
-                  onScene((s) => ({
-                    ...s,
-                    background: { type: "solid", color },
-                  }))
-                }
-              />
-            </div>
-          ) : (
-            <>
-              <Color
-                value={scene.background.from}
-                onChange={(from) =>
-                  onScene((s) => ({
-                    ...s,
-                    background:
-                      s.background.type === "gradient"
-                        ? { ...s.background, from }
-                        : s.background,
-                  }))
-                }
-              />
-              <Color
-                value={scene.background.to}
-                onChange={(to) =>
-                  onScene((s) => ({
-                    ...s,
-                    background:
-                      s.background.type === "gradient"
-                        ? { ...s.background, to }
-                        : s.background,
-                  }))
-                }
-              />
-            </>
-          )}
-        </div>
+        <BackgroundEditor
+          value={scene.background}
+          imageSrcs={assets.map((a) => a.url)}
+          onChange={(background) => onScene((s) => ({ ...s, background }))}
+        />
       </section>
 
       {layer && (

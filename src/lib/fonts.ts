@@ -22,11 +22,24 @@ export type FontFamily = {
   /** File prefix in public/fonts, e.g. Inter-Bold.ttf. */
   file: string;
   /** Unicode scripts this family covers. Used to pick fallbacks. */
-  scripts: ("latin" | "arabic" | "hebrew")[];
+  scripts: ("latin" | "arabic" | "hebrew" | "cyrillic" | "cjk" | "devanagari" | "bengali")[];
+  /** Shipped weights when not all five; satori falls back to the nearest one. */
+  weights?: FontWeight[];
+  /** Gitignored, downloaded by scripts/fetch-fonts.sh; skipped when missing. */
+  fetched?: true;
 };
 
+const SCRIPT_FONT = (id: string, name: string, file: string, script: FontFamily["scripts"][number]): FontFamily => ({
+  id,
+  name,
+  file,
+  scripts: [script],
+  weights: [500, 700],
+  fetched: true,
+});
+
 export const FONTS: FontFamily[] = [
-  { id: "inter", name: "Inter", file: "Inter", scripts: ["latin"] },
+  { id: "inter", name: "Inter", file: "Inter", scripts: ["latin", "cyrillic"] },
   // Display/business families. Static instances cut from the Google Fonts
   // variable TTFs with fontTools (satori cannot read variable fonts).
   { id: "archivo", name: "Archivo", file: "Archivo", scripts: ["latin"] },
@@ -61,7 +74,17 @@ export const FONTS: FontFamily[] = [
     file: "NotoSansHebrew",
     scripts: ["hebrew"],
   },
+  SCRIPT_FONT("noto-sans-sc", "Noto Sans SC", "NotoSansSC", "cjk"),
+  SCRIPT_FONT("noto-sans-tc", "Noto Sans TC", "NotoSansTC", "cjk"),
+  SCRIPT_FONT("noto-sans-jp", "Noto Sans JP", "NotoSansJP", "cjk"),
+  SCRIPT_FONT("noto-sans-kr", "Noto Sans KR", "NotoSansKR", "cjk"),
+  SCRIPT_FONT("noto-sans-devanagari", "Noto Sans Devanagari", "NotoSansDevanagari", "devanagari"),
+  SCRIPT_FONT("noto-sans-bengali", "Noto Sans Bengali", "NotoSansBengali", "bengali"),
 ];
+
+export function fontWeights(family: FontFamily): FontWeight[] {
+  return family.weights ?? FONT_WEIGHTS;
+}
 
 export const DEFAULT_FONT = "Inter";
 

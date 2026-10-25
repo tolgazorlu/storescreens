@@ -23,6 +23,13 @@ export const LAYOUT_KEYS = [
   "panorama",
   "panorama-duo",
   "minimal",
+  "bold-type",
+  "card",
+  "badge",
+  "diagonal",
+  "callout",
+  "stat",
+  "bottom-copy",
 ] as const;
 export type LayoutKey = (typeof LAYOUT_KEYS)[number];
 
@@ -51,21 +58,31 @@ export type LayoutSpec = {
     heightRatio?: number;
     x?: number;
     widthRatio?: number;
+    /** Small pill label drawn above the title, from `LayoutParams.eyebrow`. */
+    eyebrow?: boolean;
   };
   devices: DevicePlacement[];
+  /** Rounded colour card drawn behind the device(s), goldie-template-pack style. */
+  card?: { paddingRatio: number; radiusRatio: number };
+  /** Zoomed crop of `screenshot2` in a rounded bubble, overlapping the main device. */
+  callout?: { widthRatio: number; x: number; y: number };
+  /** Overrides TYPE.headlineSize for this layout (e.g. a big stat number). */
+  titleSizeRatio?: number;
 };
 
-/** Type and spacing as fractions of the tile width (sizes, padX) or tile height (padTop, padBottom). */
+/** Type and spacing as fractions of the tile width (sizes, padX) or tile height (padTop, padBottom).
+ * headlineSize is tuned so a 2-line headline occupies roughly 9-12% of a 6.9" canvas's height. */
 const TYPE = {
-  headlineSize: 0.082,
-  headlineLineHeight: 1.08,
+  headlineSize: 0.105,
+  headlineLineHeight: 1.0,
   headlineTracking: -0.0016,
-  subheadSize: 0.038,
+  subheadSize: 0.048,
   subheadLineHeight: 1.3,
   padX: 0.09,
   padTop: 0.055,
   padBottom: 0.05,
-  gap: 0.014,
+  /** title -> subtitle gap, as a fraction of the title's own font size (spec: 0.35-0.5x). */
+  gapOfTitle: 0.28,
 } as const;
 
 const CLASSIC = {
@@ -193,6 +210,66 @@ export const LAYOUTS: Record<LayoutKey, LayoutSpec> = {
     copy: { position: "none", align: "center" },
     devices: single({ widthRatio: 0.92, x: 0.5, y: 0.5 }),
   },
+  "bold-type": {
+    key: "bold-type",
+    label: "Bold type",
+    description: "Huge headline fills the top, device cropped at the bottom edge.",
+    span: 1,
+    copy: { position: "top", align: "center", heightRatio: 0.32 },
+    titleSizeRatio: 0.135,
+    devices: single({ widthRatio: 1.02, x: 0.5, y: 0.92 }),
+  },
+  card: {
+    key: "card",
+    label: "Card",
+    description: "Device sitting on a rounded colour card.",
+    span: 1,
+    copy: { position: "top", align: "center", heightRatio: 0.24 },
+    card: { paddingRatio: 0.09, radiusRatio: 0.11 },
+    devices: single({ widthRatio: 0.78, x: 0.5, y: 0.72 }),
+  },
+  badge: {
+    key: "badge",
+    label: "Badge",
+    description: "An eyebrow pill above the headline, device below.",
+    span: 1,
+    copy: { position: "top", align: "center", heightRatio: 0.28, eyebrow: true },
+    devices: single({ widthRatio: 0.88, x: 0.5, y: 0.76 }),
+  },
+  diagonal: {
+    key: "diagonal",
+    label: "Diagonal",
+    description: "Left-aligned copy, device tilted hard into the opposite corner.",
+    span: 1,
+    copy: { position: "top", align: "left", heightRatio: 0.26 },
+    devices: single({ widthRatio: 0.92, x: 0.68, y: 0.8, rotate: 14 }),
+  },
+  callout: {
+    key: "callout",
+    label: "Callout",
+    description: "A zoomed crop of the app in a bubble overlapping the main device.",
+    span: 1,
+    copy: { position: "top", align: "center", heightRatio: 0.24 },
+    callout: { widthRatio: 0.42, x: 0.82, y: 0.58 },
+    devices: single({ widthRatio: 0.82, x: 0.42, y: 0.72 }),
+  },
+  stat: {
+    key: "stat",
+    label: "Stat",
+    description: "A giant number/stat headline, short caption, small device.",
+    span: 1,
+    copy: { position: "top", align: "center", heightRatio: 0.3 },
+    titleSizeRatio: 0.17,
+    devices: single({ widthRatio: 0.62, x: 0.5, y: 0.82 }),
+  },
+  "bottom-copy": {
+    key: "bottom-copy",
+    label: "Bottom copy",
+    description: "Device bleeding off the top edge, copy anchored at the bottom.",
+    span: 1,
+    copy: { position: "bottom", align: "center", heightRatio: 0.26 },
+    devices: single({ widthRatio: 0.95, x: 0.5, y: 0.26 }),
+  },
 };
 
 /** A style is the rhythm of a whole set: the layout each screen takes, in store order, repeating. */
@@ -202,6 +279,10 @@ export const STYLE_KEYS = [
   "magazine",
   "storyboard",
   "dynamic",
+  "bold",
+  "social",
+  "minimalist",
+  "launch",
 ] as const;
 export type StyleKey = (typeof STYLE_KEYS)[number];
 
@@ -238,6 +319,29 @@ export const STYLES: Record<
     description:
       "Everything tilted: a tilt, a tilted pair, a panorama, a breather.",
     sequence: ["tilt", "duo-tilt", "panorama", "minimal", "tilt-right"],
+  },
+  bold: {
+    label: "Bold",
+    description:
+      "Huge type and a stat screen, badge and diagonal screens, a breather.",
+    sequence: ["bold-type", "stat", "badge", "diagonal", "minimal"],
+  },
+  social: {
+    label: "Social",
+    description:
+      "Card and callout screens showing the app itself, with a hero opener.",
+    sequence: ["hero", "card", "callout", "card", "minimal"],
+  },
+  minimalist: {
+    label: "Minimalist",
+    description: "Mostly breathers, a badge and a card screen between them.",
+    sequence: ["minimal", "badge", "minimal", "card", "classic"],
+  },
+  launch: {
+    label: "Launch",
+    description:
+      "Bold-type opener, a panorama, a stat, bottom-copy and a callout close.",
+    sequence: ["bold-type", "panorama", "stat", "bottom-copy", "callout"],
   },
 };
 
@@ -370,6 +474,10 @@ export function compose(
 export type LayoutParams = {
   title?: string;
   subtitle?: string;
+  /** Small label above the title, on any layout with copy at the top. */
+  eyebrow?: string;
+  /** Call-to-action pill drawn under the subtitle. */
+  cta?: string;
   screenshot?: string | null;
   /** Second capture for the two-device layouts; falls back to the first. */
   screenshot2?: string | null;
@@ -377,19 +485,62 @@ export type LayoutParams = {
   frame?: IphoneFrame;
 };
 
-/** A CSS linear-gradient(angle, from, to) as an SVG data URL of the given size. */
-function gradientSvg(w: number, h: number, from: string, to: string, angle: number): string {
-  const a = (angle * Math.PI) / 180;
-  const dx = Math.sin(a);
-  const dy = -Math.cos(a);
-  const half = (Math.abs(w * dx) + Math.abs(h * dy)) / 2;
-  const [x1, y1, x2, y2] = [w / 2 - dx * half, h / 2 - dy * half, w / 2 + dx * half, h / 2 + dy * half].map(Math.round);
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">` +
-    `<defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">` +
-    `<stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient></defs>` +
-    `<rect width="${w}" height="${h}" fill="url(#g)"/></svg>`;
-  return `data:image/svg+xml;base64,${btoa(svg)}`;
+/** Average glyph width as a fraction of font size, for a bold sans headline. */
+// 0.56 over-counted lines, leaving a gap under titles; an underestimate is safe since titles shrink to fit.
+const GLYPH_WIDTH = 0.52;
+
+/** Greedy word-wrap simulation: how many lines `text` takes at `fontSize` in a box of `width`.
+ * More accurate than a flat char-count estimate, so the title's box height (and the gap below
+ * it) matches what `fit:"shrink"` actually draws instead of leaving a leftover gap. */
+export function estimateLines(text: string | undefined, fontSize: number, width: number): number {
+  if (!text?.trim()) return 0;
+  const charW = fontSize * GLYPH_WIDTH;
+  let lines = 1;
+  let lineW = 0;
+  // `*` highlight markers are not drawn.
+  for (const word of text.replace(/\*/g, "").split(/\s+/)) {
+    const wordW = word.length * charW;
+    const withSpace = lineW === 0 ? wordW : lineW + charW * 0.3 + wordW;
+    if (withSpace > width && lineW > 0) {
+      lines++;
+      lineW = wordW;
+    } else {
+      lineW = withSpace;
+    }
+  }
+  return Math.min(4, lines);
+}
+
+/** Accent-filled rounded label: the eyebrow above a title or a CTA button under it. */
+function pill(label: string, x: number, y: number, w: number, h: number, size: number, brand: Brand, upper = true): Layer[] {
+  const box = { x: Math.round(x), y, w, h, rotation: 0, opacity: 1, locked: false };
+  const lineH = Math.round(size * 1.2);
+  // Dark label on light accents, light on dark ones (relative luminance of a #rrggbb accent).
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(brand.accent.slice(i, i + 2), 16) / 255 || 0);
+  const light = 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.45;
+  return [
+    { id: uid("r"), type: "rect", color: brand.accent, radius: Math.round(h / 2), ...box },
+    {
+      id: uid("t"),
+      type: "text",
+      text: label,
+      ...box,
+      y: y + Math.round((h - lineH) / 2),
+      h: lineH,
+      fontSize: size,
+      fontWeight: 700,
+      color: light ? "#111111" : "#FFFFFF",
+      align: "center",
+      lineHeight: 1.2,
+      letterSpacing: upper ? Math.round(size * 0.02) : 0,
+      dir: "auto",
+      fontFamily: brand.fontFamily ?? DEFAULT_FONT,
+      fit: "shrink",
+      minFontSize: Math.round(size * 0.7),
+      textTransform: upper ? "uppercase" : "none",
+      highlightPill: false,
+    },
+  ];
 }
 
 /** One scene per store tile: two for a panorama, one otherwise. */
@@ -409,46 +560,41 @@ export function buildLayoutScenes(
   const c = compose(spec, { width: W, height: H }, art);
 
   const layers: Layer[] = [];
-  const bg = brand.background;
-  if (spec.span === 2 && bg.type === "gradient") {
-    // One gradient across both tiles, so the seam does not show.
-    layers.push({
-      id: uid("i"),
-      type: "image",
-      src: gradientSvg(c.width, H, bg.from, bg.to, bg.angle),
-      fit: "cover",
-      radius: 0,
-      x: 0,
-      y: 0,
-      w: c.width,
-      h: H,
-      rotation: 0,
-      opacity: 1,
-      locked: false,
-    });
+  let eyebrowH = 0;
+  let copyBottom = 0;
+  if (c.copy && (spec.copy.eyebrow || c.copy.position === "top") && p.eyebrow) {
+    const { box, typeWidth } = c.copy;
+    const size = Math.round(typeWidth * 0.04);
+    const padX = Math.round(size * 1.1);
+    eyebrowH = Math.round(size * 2.1);
+    // Uppercase glyphs run wider than the mixed-case average.
+    const textW = Math.round(p.eyebrow.length * size * 0.68) + padX * 2;
+    const top = Math.round(H * TYPE.padTop);
+    const left = spec.copy.align === "left" ? box.left : box.left + box.width / 2 - textW / 2;
+    layers.push(...pill(p.eyebrow, left, top, textW, eyebrowH, size, brand));
+    eyebrowH += Math.round(H * 0.018);
   }
   if (c.copy && (p.title || p.subtitle)) {
     const { box, typeWidth } = c.copy;
     const titleSize = Math.round(
-      typeWidth * TYPE.headlineSize * brand.titleScale,
+      typeWidth * (spec.titleSizeRatio ?? TYPE.headlineSize) * brand.titleScale,
     );
-    const subSize = Math.round(typeWidth * TYPE.subheadSize);
-    // The block hugs the top edge (top copy) or the bottom edge (copy below) of its band.
-    // shortcut: line count estimated from an average glyph width of 0.55em (shrink-to-fit catches
-    // overruns); measure with the real font if titles start leaving gaps.
-    const lines = (t: string | undefined, size: number) =>
-      Math.min(3, Math.max(1, Math.ceil((t ?? "").length * size * 0.55 / box.width)));
-    const titleH = Math.round(titleSize * TYPE.headlineLineHeight * (lines(p.title, titleSize) + 0.2));
-    const subH = p.subtitle
-      ? Math.round(subSize * TYPE.subheadLineHeight * (lines(p.subtitle, subSize) + 0.2))
-      : 0;
-    const gap = p.subtitle ? Math.round(H * TYPE.gap) : 0;
-    const blockH = titleH + gap + subH;
+    const subSize = Math.round(typeWidth * TYPE.subheadSize * brand.subtitleScale);
+    const titleLines = estimateLines(p.title, titleSize, box.width);
+    const subLines = estimateLines(p.subtitle, subSize, box.width);
+    const titleH = Math.round(titleSize * TYPE.headlineLineHeight * titleLines) + eyebrowH;
+    const subH = Math.round(subSize * TYPE.subheadLineHeight * subLines);
+    const gap = p.subtitle ? Math.round(titleSize * TYPE.gapOfTitle * brand.titleGap) : 0;
+    const ctaSize = Math.round(subSize * 0.95);
+    const ctaGap = p.cta ? Math.round(subSize * 1.2) : 0;
+    const ctaH = p.cta ? Math.round(ctaSize * 2.4) : 0;
+    const blockH = titleH + gap + subH + ctaGap + ctaH;
+    copyBottom = (c.copy.position === "top" ? Math.round(H * TYPE.padTop) : 0) + blockH;
     const top =
       c.copy.position === "top"
         ? Math.round(H * TYPE.padTop)
         : Math.round(
-            Math.max(box.top + H * TYPE.gap, H - H * TYPE.padBottom - blockH),
+            Math.max(box.top + H * 0.014, H - H * TYPE.padBottom - blockH),
           );
     const text = (
       t: string,
@@ -475,13 +621,54 @@ export function buildLayoutScenes(
       fit: "shrink",
       minFontSize: Math.round(W * 0.03),
       textTransform: sub ? "none" : brand.titleCase,
+      highlightColor: sub ? undefined : brand.accent,
+      highlightPill: sub ? false : brand.highlightPill,
       rotation: 0,
       opacity: 1,
       locked: false,
     });
-    if (p.title) layers.push(text(p.title, top, titleH, titleSize, false));
+    if (p.title) layers.push(text(p.title, top + eyebrowH, titleH - eyebrowH, titleSize, false));
     if (p.subtitle)
       layers.push(text(p.subtitle, top + titleH + gap, subH, subSize, true));
+    if (p.cta) {
+      const w = Math.round(p.cta.length * ctaSize * GLYPH_WIDTH + ctaSize * 2.6);
+      const left = c.copy.align === "left" ? box.left : box.left + box.width / 2 - w / 2;
+      layers.push(...pill(p.cta, left, top + titleH + gap + subH + ctaGap, w, ctaH, ctaSize, brand, false));
+    }
+  }
+  // Pull devices up under short top copy so no empty band is left between them (keeping a
+  // bleeding device on the bottom edge), and push them down when long copy would run into them.
+  let lift = 0;
+  if (c.copy?.position === "top" && copyBottom > 0 && spec.span === 1 && c.devices.length) {
+    const top = Math.min(...c.devices.map((d) => d.frame.top));
+    const bottom = Math.max(...c.devices.map((d) => d.frame.top + d.frame.height));
+    lift = Math.min(top - (copyBottom + H * 0.035), Math.max(0, bottom - H * 0.96));
+    for (const d of c.devices) d.frame = { ...d.frame, top: d.frame.top - lift };
+  }
+  if (spec.card) {
+    // One rounded card behind every device, sized to their combined bounding box.
+    const xs = c.devices.map((d) => d.frame.left);
+    const ys = c.devices.map((d) => d.frame.top);
+    const x2 = c.devices.map((d) => d.frame.left + d.frame.width);
+    const y2 = c.devices.map((d) => d.frame.top + d.frame.height);
+    const pad = W * spec.card.paddingRatio;
+    const left = Math.min(...xs) - pad;
+    const top = Math.min(...ys) - pad;
+    const right = Math.max(...x2) + pad;
+    const bottom = Math.max(...y2) + pad * 1.6;
+    layers.push({
+      id: uid("r"),
+      type: "rect",
+      color: brand.accent,
+      radius: Math.round(W * spec.card.radiusRatio),
+      x: Math.round(left),
+      y: Math.round(top),
+      w: Math.round(right - left),
+      h: Math.round(bottom - top),
+      rotation: 0,
+      opacity: 1,
+      locked: false,
+    });
   }
   for (const d of c.devices) {
     const src =
@@ -506,11 +693,31 @@ export function buildLayoutScenes(
     };
     layers.push(m);
   }
+  if (spec.callout && p.screenshot2) {
+    const w = Math.round(W * spec.callout.widthRatio);
+    const h = Math.round(w * 2.0);
+    layers.push({
+      id: uid("i"),
+      type: "image",
+      src: p.screenshot2,
+      fit: "cover",
+      radius: Math.round(w * 0.12),
+      x: Math.round(W * spec.callout.x - w / 2),
+      y: Math.round(H * spec.callout.y - h / 2 - lift),
+      w,
+      h,
+      rotation: 0,
+      opacity: 1,
+      locked: false,
+    });
+  }
 
   return Array.from({ length: spec.span }, (_, i) => ({
     width: W,
     height: H,
     background: brand.background,
+    // One background drawn across the whole composition, so a panorama shows no seam.
+    bg: { offsetX: -i * W, width: c.width },
     // Each tile is a window onto the wide composition; ids stay unique per scene.
     layers: layers
       .map((l) => ({

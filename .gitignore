@@ -43,3 +43,14 @@ next-env.d.ts
 public/uploads
 data/
 public/bezels/*.png
+
+# large script fonts, fetched by scripts/fetch-fonts.sh
+/public/fonts/NotoSansSC-*.ttf
+/public/fonts/NotoSansTC-*.ttf
+/public/fonts/NotoSansJP-*.ttf
+/public/fonts/NotoSansKR-*.ttf
+/public/fonts/NotoSansDevanagari-*.ttf
+/public/fonts/NotoSansBengali-*.ttf
+
+# Pattern Craft background images, fetched by scripts/fetch-patterns.sh (manifest.json is kept)
+public/patterns/*.png

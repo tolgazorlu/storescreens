@@ -8,9 +8,8 @@ import {
   type CSSProperties,
 } from "react";
 import type { Scene, Layer } from "@/lib/scene";
-import { backgroundCss } from "@/lib/scene";
 import { safeAreaForSize } from "@/lib/devices";
-import { LayerView } from "@/components/scene/scene-view";
+import { LayerView, BackgroundLayer } from "@/components/scene/scene-view";
 
 export type CanvasOverlays = {
   grid: boolean;
@@ -219,10 +218,10 @@ export function Canvas({
               transformOrigin: "top left",
               position: "relative",
               overflow: "hidden",
-              background: backgroundCss(scene.background),
               fontFamily: "Inter",
             }}
           >
+            <BackgroundLayer scene={scene} />
             {scene.layers.map((layer) => (
               <LayerBox
                 key={layer.id}

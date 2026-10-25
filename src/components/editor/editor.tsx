@@ -868,7 +868,7 @@ export function Editor({
               setScreens((p) => [
                 ...p.filter(
                   (s) =>
-                    !(replaced && s.locale === l && s.device === d) &&
+                    !(replaced && s.locale === l && rows.some((r) => r.device === s.device)) &&
                     !rows.some((r) => r.id === s.id),
                 ),
                 ...rows,

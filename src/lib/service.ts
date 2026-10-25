@@ -12,7 +12,7 @@ import {
   type Asset,
 } from "@/lib/db";
 import { randomUUID } from "node:crypto";
-import { DEVICES, getDevice, type DeviceId } from "@/lib/devices";
+import { DEVICES, DEVICE_IDS, getDevice, type DeviceId } from "@/lib/devices";
 import {
   buildScene,
   type TemplateId,
@@ -32,7 +32,7 @@ import {
   type TextLayer,
   type MockupLayer,
 } from "@/lib/scene";
-import { brandSchema, DEFAULT_BRAND, type Brand } from "@/lib/brand";
+import { brandSchema, DEFAULT_BRAND, BRAND_PRESETS, type Brand } from "@/lib/brand";
 import { renderSceneToPng } from "@/lib/render";
 import { storeFile, deleteFile } from "@/lib/storage";
 import { imageSize } from "@/lib/image-size";
@@ -251,6 +251,8 @@ export type ScreenSpec = {
   titleScale?: number;
   phoneScale?: number;
   phoneOffsetY?: number;
+  eyebrow?: Localized;
+  cta?: Localized;
 };
 
 export type GenerateInput = {
@@ -259,12 +261,16 @@ export type GenerateInput = {
   locales?: string[];
   device: DeviceId;
   logo?: string | null;
+  /** Named theme preset id: its colours and background, applied before `brand`. */
+  theme?: string;
   brand?: Partial<Brand>;
   background?: Scene["background"];
   textColor?: string;
   fontFamily?: string;
   /** Replace existing screens for this locale+device. */
   replace?: boolean;
+  /** Also build the same design on every other device mockup (iPhone 6.5, iPad, Android...). */
+  allDevices?: boolean;
   /** goldie style: a layout per screen position for screens without template/layout. */
   style?: StyleKey;
   frame?: IphoneFrame;
@@ -340,17 +346,34 @@ async function assetAspect(
 export async function generateScreens(
   projectId: string,
   input: GenerateInput,
+  // A panorama's second tile is its own screen, linked across locales by its own group.
+  groups = { ids: input.screens.map(() => randomUUID()), ids2: input.screens.map(() => randomUUID()) },
 ): Promise<Screen[]> {
+  if (input.allDevices) {
+    // Only the mockup changes between devices, so build them all now instead of on every switch.
+    const ids = [input.device, ...DEVICE_IDS.filter((id) => id !== input.device && layoutFrameFor(getDevice(id)))];
+    const out: Screen[] = [];
+    for (const id of ids) out.push(...(await generateScreens(projectId, { ...input, device: id, allDevices: false }, groups)));
+    return out;
+  }
   const p = await getProject(projectId);
   const device = getDevice(input.device);
   const logo = await resolveAssetRef(p.id, input.logo);
   const locales = input.locales?.length
     ? input.locales
     : [input.locale ?? "en"];
-  const brand: Partial<Brand> = { ...projectBrand(p), ...(input.brand ?? {}) };
-  const groupIds = input.screens.map(() => randomUUID());
-  // A panorama's second tile is its own screen, linked across locales by its own group.
-  const groupIds2 = input.screens.map(() => randomUUID());
+  const theme = input.theme ? BRAND_PRESETS[input.theme].brand : {};
+  const themeColors = Object.fromEntries(
+    (["background", "textColor", "accent", "frameColor"] as const)
+      .filter((k) => theme[k] !== undefined)
+      .map((k) => [k, theme[k]]),
+  );
+  const brand: Partial<Brand> = {
+    ...projectBrand(p),
+    ...themeColors,
+    ...(input.brand ?? {}),
+  };
+  const { ids: groupIds, ids2: groupIds2 } = groups;
   const layoutOf = (spec: ScreenSpec, i: number): LayoutKey | undefined =>
     spec.layout ??
     (input.style && !spec.template ? styleLayout(input.style, i) : undefined);
@@ -431,6 +454,8 @@ export async function generateScreens(
         scenes = buildLayoutScenes(device, layout, {
           title,
           subtitle,
+          eyebrow: pick(spec.eyebrow, locale) ?? undefined,
+          cta: pick(spec.cta, locale) ?? undefined,
           screenshot: params.screenshot,
           screenshot2: params.screenshot2,
           brand: {
