@@ -636,13 +636,13 @@ export function buildLayoutScenes(
       layers.push(...pill(p.cta, left, top + titleH + gap + subH + ctaGap, w, ctaH, ctaSize, brand, false));
     }
   }
-  // Pull devices up under short top copy so no empty band is left between them,
-  // but keep a bleeding device reaching the bottom edge.
+  // Pull devices up under short top copy so no empty band is left between them (keeping a
+  // bleeding device on the bottom edge), and push them down when long copy would run into them.
   let lift = 0;
   if (c.copy?.position === "top" && copyBottom > 0 && spec.span === 1 && c.devices.length) {
     const top = Math.min(...c.devices.map((d) => d.frame.top));
     const bottom = Math.max(...c.devices.map((d) => d.frame.top + d.frame.height));
-    lift = Math.max(0, Math.min(top - (copyBottom + H * 0.035), bottom - H * 0.96));
+    lift = Math.min(top - (copyBottom + H * 0.035), Math.max(0, bottom - H * 0.96));
     for (const d of c.devices) d.frame = { ...d.frame, top: d.frame.top - lift };
   }
   if (spec.card) {
