@@ -48,18 +48,28 @@ Devices: `iphone-6.9` 1320x2868, `iphone-6.5` 1242x2688, `ipad-13`
 The layouts, template styles and device frames of
 [goldie](https://github.com/software-mansion-labs/goldie) (MIT) are built in.
 `generate_screens` takes `style` (`editorial`, `showcase`, `magazine`,
-`storyboard`, `dynamic`) or a per-screen `layout` (`classic`, `copy-below`,
-`hero`, `offset`, `tilt`, `tilt-right`, `duo`, `duo-tilt`, `panorama`,
-`panorama-duo`, `minimal`) and `frame` (`iphone-17-pro-blue|silver|orange`;
-Android uses the Pixel 10 Pro frame). Panorama layouts span two store tiles
-and become two screens. Frame credits: `public/frames/ATTRIBUTION.md`.
+`storyboard`, `dynamic`, `bold`, `social`, `minimalist`, `launch`) or a
+per-screen `layout` (`classic`, `copy-below`, `hero`, `offset`, `tilt`,
+`tilt-right`, `duo`, `duo-tilt`, `panorama`, `panorama-duo`, `minimal`,
+`bold-type`, `card`, `badge`, `diagonal`, `callout`, `stat`, `bottom-copy`)
+and `frame` (`iphone-17-pro-blue|silver|orange`; Android uses the Pixel 10
+Pro frame). Panorama layouts span two store tiles and become two screens.
+Frame credits: `public/frames/ATTRIBUTION.md`.
+
+`theme` picks a named colour/background preset (`GET /api/meta` -> `themes`,
+grouped `light|dark|vibrant|pastel|retro|mono|mesh`, 38 presets); `brand`
+overrides individual fields on top of it. A title's `*word*` renders in the
+theme's accent colour (or a pill, with `highlightPill`). `background` also
+takes `radial`, `split`, `mesh` (seeded, 2-5 colours) and `image`, plus an
+optional `texture` overlay (`grain|dots|grid|stripes|waves|halftone|concentric`).
 
 `capture_screens` launches an app on a booted iOS simulator in a given
 locale, pins the status bar to 9:41, optionally replays an
 [argent](https://github.com/software-mansion/argent) e2e flow per shot, and
 uploads the screenshots as assets. Call it once per locale, then pass the
 asset ids to `generate_screens` with `locales`. `pnpm smoke:layouts` renders
-every layout to `/tmp/storescreens-layouts`.
+every layout to `/tmp/storescreens-layouts`; `pnpm exec tsx
+scripts/smoke-themes.ts` additionally renders a sample of themes and RTL text.
 
 ## Editor
 
