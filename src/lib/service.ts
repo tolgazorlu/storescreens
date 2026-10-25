@@ -12,7 +12,7 @@ import {
   type Asset,
 } from "@/lib/db";
 import { randomUUID } from "node:crypto";
-import { DEVICES, getDevice, type DeviceId } from "@/lib/devices";
+import { DEVICES, DEVICE_IDS, getDevice, type DeviceId } from "@/lib/devices";
 import {
   buildScene,
   type TemplateId,
@@ -269,6 +269,8 @@ export type GenerateInput = {
   fontFamily?: string;
   /** Replace existing screens for this locale+device. */
   replace?: boolean;
+  /** Also build the same design on every other device mockup (iPhone 6.5, iPad, Android...). */
+  allDevices?: boolean;
   /** goldie style: a layout per screen position for screens without template/layout. */
   style?: StyleKey;
   frame?: IphoneFrame;
@@ -345,6 +347,13 @@ export async function generateScreens(
   projectId: string,
   input: GenerateInput,
 ): Promise<Screen[]> {
+  if (input.allDevices) {
+    // Only the mockup changes between devices, so build them all now instead of on every switch.
+    const ids = [input.device, ...DEVICE_IDS.filter((id) => id !== input.device && layoutFrameFor(getDevice(id)))];
+    const out: Screen[] = [];
+    for (const id of ids) out.push(...(await generateScreens(projectId, { ...input, device: id, allDevices: false })));
+    return out;
+  }
   const p = await getProject(projectId);
   const device = getDevice(input.device);
   const logo = await resolveAssetRef(p.id, input.logo);

@@ -95,6 +95,7 @@ export function GeneratePanel({
   const logos = assets.filter((a) => a.kind !== "screenshot");
   const [locale, setLocale] = useState(initialLocale);
   const [device, setDevice] = useState<DeviceId>(initialDevice);
+  const [allDevices, setAllDevices] = useState(true);
   const [logo, setLogo] = useState<string>(() => logos[0]?.id ?? "__none");
   const [replace, setReplace] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -178,6 +179,7 @@ export function GeneratePanel({
             device,
             logo: logo === "__none" ? null : logo,
             replace,
+            allDevices,
             frame,
             screens: rows.map((r) => ({
               ...(layoutKeyOf(r.template)
@@ -505,6 +507,15 @@ export function GeneratePanel({
             onChange={(e) => setReplace(e.target.checked)}
           />
           Replace existing {locale} · {DEVICES[device].label}
+        </label>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={allDevices}
+            className="size-3.5 accent-foreground"
+            onChange={(e) => setAllDevices(e.target.checked)}
+          />
+          All device mockups
         </label>
         <Button onClick={run} disabled={busy || !rows.length}>
           {busy ? "Generating" : `Generate ${rows.length}`}

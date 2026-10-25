@@ -51,6 +51,8 @@ export const generateSchema = z
     textColor: z.string().optional(),
     fontFamily: z.string().optional(),
     replace: z.boolean().optional(),
+    /** Also build the same design on every other device mockup. */
+    allDevices: z.boolean().optional(),
     /** goldie template style: picks a layout per screen position for screens without template/layout. */
     style: z.enum(STYLE_KEYS).optional(),
     /** iPhone bezel colour for goldie layouts (Android uses the Pixel 10 Pro art). */
