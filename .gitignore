@@ -53,4 +53,4 @@ public/bezels/*.png
 /public/fonts/NotoSansBengali-*.ttf
 
 # Pattern Craft background images, fetched by scripts/fetch-patterns.sh (manifest.json is kept)
-public/patterns/*.webp
+public/patterns/*.png

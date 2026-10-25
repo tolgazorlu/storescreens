@@ -1,5 +1,6 @@
 // Renders every Pattern Craft background through real headless Chrome so CSS features
 // satori can't handle (radial gradients with %, mask-image, fine grid lines) look right.
+// PNG, not WebP: @resvg/resvg-js can't decode WebP data URIs (the <image> renders blank).
 // Usage: node scripts/render-patterns.mjs <pattern-craft-repo-dir> <outDir>
 import { createRequire } from "node:module";
 import { execFileSync } from "node:child_process";
@@ -86,14 +87,14 @@ async function main() {
   const manifest = [];
   let failed = 0;
   for (const p of patterns) {
-    const dest = path.join(outDir, `${slugify(p.id)}.webp`);
+    const dest = path.join(outDir, `${slugify(p.id)}.png`);
     if (existsSync(dest)) {
       manifest.push({ id: slugify(p.id), name: p.name, category: p.category });
       continue;
     }
     try {
       const png = renderOne(p, tmpDir);
-      await sharp(png).webp({ quality: 82 }).toFile(dest);
+      await sharp(png).png({ compressionLevel: 9 }).toFile(dest);
       manifest.push({ id: slugify(p.id), name: p.name, category: p.category });
     } catch (e) {
       failed++;

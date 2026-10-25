@@ -13,5 +13,5 @@ export const PATTERN_IDS = PATTERNS.map((p) => p.id);
 export const PATTERN_CATEGORIES: PatternCategory[] = ["gradients", "geometric", "decorative", "effects"];
 
 export function patternSrc(id: string) {
-  return `/patterns/${id}.webp`;
+  return `/patterns/${id}.png`;
 }
