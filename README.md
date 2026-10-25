@@ -72,10 +72,10 @@ optional `texture` overlay (`grain|dots|grid|stripes|waves|halftone|concentric`)
 [Pattern Craft](https://patterncraft.fun) ([megh-bari/pattern-craft](https://github.com/megh-bari/pattern-craft),
 MIT, see `docs/vendor/pattern-craft/LICENSE`) are available as
 `background: {type: "pattern", id}`, picked from a thumbnail grid in the
-editor's background panel. They're pre-rendered to WebP by real headless
+editor's background panel. They're pre-rendered to PNG by real headless
 Chrome (`scripts/fetch-patterns.sh`) instead of satori, since several of
 them use CSS (radial gradients with `%` sizes, `mask-image`, hairline
-grids) satori can't reproduce; run the script once after `pnpm install`
+grids) satori can't reproduce, and `@resvg/resvg-js` can't decode WebP; run the script once after `pnpm install`
 to fetch the images (gitignored; `public/patterns/manifest.json` is
 committed). Patterns are flat images, so they don't recolour to match a
 brand palette.
