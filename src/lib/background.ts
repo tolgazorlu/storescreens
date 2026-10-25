@@ -127,10 +127,11 @@ function wrapSvg(w: number, h: number, defs: string, body: string): string {
   return `data:image/svg+xml;base64,${btoa(svg)}`;
 }
 
-/** Glow blobs and texture alone (no base fill), for compositing on top of a raster background. */
+/** Image dim, glow blobs and texture alone (no base fill), for compositing on top of a raster background. */
 export function backgroundOverlaySvgDataUrl(bg: Background, w: number, h: number): string {
   const { defs, body } = overlays(bg, w, h);
-  return wrapSvg(w, h, defs, body);
+  const dim = bg.type === "image" && bg.dim > 0 ? `<rect width="${w}" height="${h}" fill="#000000" opacity="${bg.dim}"/>` : "";
+  return wrapSvg(w, h, defs, dim + body);
 }
 
 /** Build the full background (base fill + glow blobs + texture) as one flat SVG data URL. */

@@ -59,7 +59,8 @@ Pro frame). Panorama layouts span two store tiles and become two screens.
 Frame credits: `public/frames/ATTRIBUTION.md`.
 
 `theme` picks a named colour/background preset (`GET /api/meta` -> `themes`,
-grouped `light|dark|vibrant|pastel|retro|mono|mesh`, 38 presets); `brand`
+grouped `light|dark|vibrant|pastel|retro|mono|mesh`, 38 presets; it sets
+colours and background only, keeping the project's type and layout); `brand`
 overrides individual fields on top of it. A title's `*word*` renders in the
 theme's accent colour (or a pill, with `highlightPill`). `background` also
 takes `radial`, `split`, `mesh` (seeded, 2-5 colours), `image` and `pattern`

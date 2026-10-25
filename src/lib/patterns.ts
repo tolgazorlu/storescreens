@@ -2,7 +2,7 @@ import manifest from "../../public/patterns/manifest.json";
 
 /**
  * Pattern Craft (github.com/megh-bari/pattern-craft, MIT, see docs/vendor/pattern-craft/LICENSE)
- * backgrounds, pre-rendered to public/patterns/<id>.webp by scripts/fetch-patterns.sh since their
+ * backgrounds, pre-rendered to public/patterns/<id>.png by scripts/fetch-patterns.sh since their
  * CSS (radial gradients with %, mask-image, fine grids) renders wrong through satori.
  */
 export type PatternCategory = "gradients" | "geometric" | "decorative" | "effects";

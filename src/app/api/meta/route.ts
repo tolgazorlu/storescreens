@@ -23,12 +23,6 @@ export function GET() {
     textureTypes: TEXTURE_TYPES,
     patterns: PATTERNS,
     patternCategories: PATTERN_CATEGORIES,
-    // kept for older clients
-    brandPresets: Object.entries(BRAND_PRESETS).map(([id, p]) => ({
-      id,
-      label: p.label,
-      brand: p.brand,
-    })),
     icons: ICON_IDS,
     layouts: Object.values(LAYOUTS).map(({ key, label, description, span }) => ({ id: key, label, description, span })),
     styles: Object.entries(STYLES).map(([id, s]) => ({ id, ...s })),

@@ -68,17 +68,21 @@ export function BackgroundLayer({
   if (raster) {
     // resvg can't decode an <image> whose href is itself an SVG containing a raster image, so
     // this bypasses backgroundSvgDataUrl's flattened-SVG approach and draws the raster directly.
-    const hasOverlay = (scene.background.glow?.length ?? 0) > 0 || !!scene.background.texture;
+    const bg = scene.background;
+    const hasOverlay = (bg.glow?.length ?? 0) > 0 || !!bg.texture || (bg.type === "image" && bg.dim > 0);
+    const src = resolveSrc(raster);
     return (
-      <div style={{ ...box, display: "flex" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={resolveSrc(raster)}
-          alt=""
-          width={rect.width}
-          height={rect.height}
-          style={{ position: "absolute", left: 0, top: 0, width: rect.width, height: rect.height, objectFit: "cover" }}
-        />
+      <div style={{ ...box, display: "flex", backgroundColor: "#FFFFFF" }}>
+        {src && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt=""
+            width={rect.width}
+            height={rect.height}
+            style={{ position: "absolute", left: 0, top: 0, width: rect.width, height: rect.height, objectFit: "cover" }}
+          />
+        )}
         {hasOverlay && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -286,8 +290,7 @@ function contrastColor(hex: string): string {
 
 /**
  * `*word*` in a title renders that word (or phrase) in an accent color, optionally on a
- * highlighter pill. Scoped to the simple (non-RTL) text path; word matching is by text, not
- * position, so a repeated word highlights every instance (acceptable for short headlines).
+ * highlighter pill. Scoped to the simple (non-RTL) text path.
  */
 function HighlightText({
   text,
@@ -304,11 +307,9 @@ function HighlightText({
   color: string;
   pill: boolean;
 }) {
-  const highlighted = new Set<string>();
-  const clean = text.replace(/\*([^*]+)\*/g, (_, inner: string) => {
-    for (const w of inner.split(/\s+/)) if (w) highlighted.add(w);
-    return inner;
-  });
+  const pieces = text
+    .split(/\*([^*]+)\*/)
+    .flatMap((seg, si) => seg.split(/(\s+)/).map((piece) => ({ piece, hl: si % 2 === 1 })));
   const pad = typeof font.fontSize === "number" ? Math.round(font.fontSize * 0.08) : 0;
   return (
     <div
@@ -323,10 +324,9 @@ function HighlightText({
         rowGap: pad,
       }}
     >
-      {clean.split(/(\s+)/).map((piece, i) => {
+      {pieces.map(({ piece, hl }, i) => {
         if (!piece) return null;
         if (/^\s+$/.test(piece)) return <span key={i} style={{ whiteSpace: "pre" }}>{piece}</span>;
-        const hl = highlighted.has(piece);
         if (!hl) return <span key={i} style={{ whiteSpace: "pre" }}>{piece}</span>;
         return (
           <span

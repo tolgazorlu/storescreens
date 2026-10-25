@@ -108,3 +108,13 @@ describe("eyebrow and cta", () => {
     expect(sceneSchema.safeParse(scene).success).toBe(true);
   });
 });
+
+describe("generate theme", () => {
+  const body = (theme: string) => ({ locale: "en", device: "iphone-6.9", theme, style: "editorial", screens: [{ title: "Hi" }] });
+
+  it("accepts a known theme id and rejects an unknown one", async () => {
+    const { generateSchema } = await import("@/lib/validation");
+    expect(generateSchema.safeParse(body("retro-sunset-70s")).success).toBe(true);
+    expect(generateSchema.safeParse(body("retro-sunset")).success).toBe(false);
+  });
+});
