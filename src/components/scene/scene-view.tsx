@@ -302,9 +302,9 @@ function HighlightText({
     >
       {clean.split(/(\s+)/).map((piece, i) => {
         if (!piece) return null;
-        if (/^\s+$/.test(piece)) return <span key={i}>{piece}</span>;
+        if (/^\s+$/.test(piece)) return <span key={i} style={{ whiteSpace: "pre" }}>{piece}</span>;
         const hl = highlighted.has(piece);
-        if (!hl) return <span key={i}>{piece}</span>;
+        if (!hl) return <span key={i} style={{ whiteSpace: "pre" }}>{piece}</span>;
         return (
           <span
             key={i}
@@ -312,12 +312,13 @@ function HighlightText({
               pill
                 ? {
                     display: "flex",
+                    whiteSpace: "pre",
                     color: contrastColor(color),
                     background: color,
                     borderRadius: pad * 2,
                     padding: `0 ${pad}px`,
                   }
-                : { color }
+                : { color, whiteSpace: "pre" }
             }
           >
             {piece}
