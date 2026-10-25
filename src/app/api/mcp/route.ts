@@ -73,9 +73,10 @@ const handler = createMcpHandler(
       },
       async () =>
         text({
-          brandPresets: Object.entries(BRAND_PRESETS).map(([id, p]) => ({
+          themes: Object.entries(BRAND_PRESETS).map(([id, p]) => ({
             id,
             label: p.label,
+            group: p.group,
           })),
           icons: ICON_IDS,
           devices: Object.values(DEVICES),
