@@ -74,7 +74,7 @@ export type LayoutSpec = {
  * headlineSize is tuned so a 2-line headline occupies roughly 9-12% of a 6.9" canvas's height. */
 const TYPE = {
   headlineSize: 0.105,
-  headlineLineHeight: 1.08,
+  headlineLineHeight: 1.0,
   headlineTracking: -0.0016,
   subheadSize: 0.048,
   subheadLineHeight: 1.3,
@@ -82,7 +82,7 @@ const TYPE = {
   padTop: 0.055,
   padBottom: 0.05,
   /** title -> subtitle gap, as a fraction of the title's own font size (spec: 0.35-0.5x). */
-  gapOfTitle: 0.4,
+  gapOfTitle: 0.28,
 } as const;
 
 const CLASSIC = {
@@ -561,6 +561,7 @@ export function buildLayoutScenes(
 
   const layers: Layer[] = [];
   let eyebrowH = 0;
+  let copyBottom = 0;
   if (c.copy && (spec.copy.eyebrow || c.copy.position === "top") && p.eyebrow) {
     const { box, typeWidth } = c.copy;
     const size = Math.round(typeWidth * 0.04);
@@ -588,6 +589,7 @@ export function buildLayoutScenes(
     const ctaGap = p.cta ? Math.round(subSize * 1.2) : 0;
     const ctaH = p.cta ? Math.round(ctaSize * 2.4) : 0;
     const blockH = titleH + gap + subH + ctaGap + ctaH;
+    copyBottom = (c.copy.position === "top" ? Math.round(H * TYPE.padTop) : 0) + blockH;
     const top =
       c.copy.position === "top"
         ? Math.round(H * TYPE.padTop)
@@ -633,6 +635,15 @@ export function buildLayoutScenes(
       const left = c.copy.align === "left" ? box.left : box.left + box.width / 2 - w / 2;
       layers.push(...pill(p.cta, left, top + titleH + gap + subH + ctaGap, w, ctaH, ctaSize, brand, false));
     }
+  }
+  // Pull devices up under short top copy so no empty band is left between them,
+  // but keep a bleeding device reaching the bottom edge.
+  let lift = 0;
+  if (c.copy?.position === "top" && copyBottom > 0 && spec.span === 1 && c.devices.length) {
+    const top = Math.min(...c.devices.map((d) => d.frame.top));
+    const bottom = Math.max(...c.devices.map((d) => d.frame.top + d.frame.height));
+    lift = Math.max(0, Math.min(top - (copyBottom + H * 0.035), bottom - H * 0.96));
+    for (const d of c.devices) d.frame = { ...d.frame, top: d.frame.top - lift };
   }
   if (spec.card) {
     // One rounded card behind every device, sized to their combined bounding box.
@@ -692,7 +703,7 @@ export function buildLayoutScenes(
       fit: "cover",
       radius: Math.round(w * 0.12),
       x: Math.round(W * spec.callout.x - w / 2),
-      y: Math.round(H * spec.callout.y - h / 2),
+      y: Math.round(H * spec.callout.y - h / 2 - lift),
       w,
       h,
       rotation: 0,
