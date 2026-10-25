@@ -1,0 +1,1292 @@
+[
+  {
+    "id": "azure-depths",
+    "name": "Azure Depths",
+    "category": "decorative"
+  },
+  {
+    "id": "azure-depths-top",
+    "name": "Azure Depths Top",
+    "category": "decorative"
+  },
+  {
+    "id": "blue-corner-glow",
+    "name": "Blue Corner Glow",
+    "category": "decorative"
+  },
+  {
+    "id": "bottom-amber-glow",
+    "name": "Bottom Amber Glow",
+    "category": "decorative"
+  },
+  {
+    "id": "bottom-emerald-glow",
+    "name": "Bottom Emerald Glow",
+    "category": "decorative"
+  },
+  {
+    "id": "bottom-gradient-radial",
+    "name": "Bottom Gradient Radial",
+    "category": "decorative"
+  },
+  {
+    "id": "bottom-pink-glow",
+    "name": "Bottom Pink Glow",
+    "category": "decorative"
+  },
+  {
+    "id": "bottom-slate-radial",
+    "name": "Bottom Slate Radial",
+    "category": "decorative"
+  },
+  {
+    "id": "bottom-teal-glow",
+    "name": "Bottom Teal Glow",
+    "category": "decorative"
+  },
+  {
+    "id": "bottom-violet-radial",
+    "name": "Bottom Violet Radial",
+    "category": "decorative"
+  },
+  {
+    "id": "crimson-depth",
+    "name": "Crimson Depth",
+    "category": "decorative"
+  },
+  {
+    "id": "crimson-depth-top",
+    "name": "Crimson Depth Top",
+    "category": "decorative"
+  },
+  {
+    "id": "dark-horizon-glow",
+    "name": "Dark Horizon Glow",
+    "category": "decorative"
+  },
+  {
+    "id": "dark-horizon-glow-top",
+    "name": "Dark Horizon Glow Top",
+    "category": "decorative"
+  },
+  {
+    "id": "emerald-void",
+    "name": "Emerald Void",
+    "category": "decorative"
+  },
+  {
+    "id": "emerald-void-top",
+    "name": "Emerald Void Top",
+    "category": "decorative"
+  },
+  {
+    "id": "green-corner-soft",
+    "name": "Green Corner Soft",
+    "category": "decorative"
+  },
+  {
+    "id": "indigo-corner-deep",
+    "name": "Indigo Corner Deep",
+    "category": "decorative"
+  },
+  {
+    "id": "lavender-cosmic-glow",
+    "name": "Lavender Cosmic Glow",
+    "category": "decorative"
+  },
+  {
+    "id": "mystic-purple-orb",
+    "name": "Mystic Purple Orb",
+    "category": "decorative"
+  },
+  {
+    "id": "orange-corner-warm",
+    "name": "Orange Corner Warm",
+    "category": "decorative"
+  },
+  {
+    "id": "orchid--depths",
+    "name": "Orchid  Depths",
+    "category": "decorative"
+  },
+  {
+    "id": "orchid-depths-top",
+    "name": "Orchid Depths Top",
+    "category": "decorative"
+  },
+  {
+    "id": "pink-corner-dream",
+    "name": "Pink Corner Dream",
+    "category": "decorative"
+  },
+  {
+    "id": "purple-corner-high",
+    "name": "Purple Corner High",
+    "category": "decorative"
+  },
+  {
+    "id": "purple-corner-less",
+    "name": "Purple Corner Less",
+    "category": "decorative"
+  },
+  {
+    "id": "purple-haze-burst",
+    "name": "Purple Haze Burst",
+    "category": "decorative"
+  },
+  {
+    "id": "purple-radial-bloom-light",
+    "name": "Purple Radial Bloom Light",
+    "category": "decorative"
+  },
+  {
+    "id": "rose-corner-elegant",
+    "name": "Rose Corner Elegant",
+    "category": "decorative"
+  },
+  {
+    "id": "soft-rose-glow-corners",
+    "name": "Soft Rose Glow Dual Corners",
+    "category": "decorative"
+  },
+  {
+    "id": "soft-rose-glow-left-corner",
+    "name": "Soft Rose Glow Left Corner",
+    "category": "decorative"
+  },
+  {
+    "id": "soft-rose-glow-right-corner",
+    "name": "Soft Rose Glow Right Corner",
+    "category": "decorative"
+  },
+  {
+    "id": "teal-corner-cool",
+    "name": "Teal Corner Cool",
+    "category": "decorative"
+  },
+  {
+    "id": "top-amber-glow",
+    "name": "Top Amber Glow",
+    "category": "decorative"
+  },
+  {
+    "id": "top-emerald-glow",
+    "name": "Top Emerald Glow",
+    "category": "decorative"
+  },
+  {
+    "id": "top-gradient-radial",
+    "name": "Top Gradient Radial",
+    "category": "decorative"
+  },
+  {
+    "id": "top-pink-glow",
+    "name": "Top Pink Glow",
+    "category": "decorative"
+  },
+  {
+    "id": "top-slate-radial",
+    "name": "Top Slate Radial",
+    "category": "decorative"
+  },
+  {
+    "id": "top-teal-glow",
+    "name": "Top Teal Glow",
+    "category": "decorative"
+  },
+  {
+    "id": "top-violet-radial",
+    "name": "Top Violet Radial",
+    "category": "decorative"
+  },
+  {
+    "id": "violet-abyss",
+    "name": "Violet Abyss",
+    "category": "decorative"
+  },
+  {
+    "id": "violet-abyss-top",
+    "name": "Violet Abyss Top",
+    "category": "decorative"
+  },
+  {
+    "id": "violet-dream-sphere",
+    "name": "Violet Dream Sphere",
+    "category": "decorative"
+  },
+  {
+    "id": "yellow-corner-bright",
+    "name": "Yellow Corner Bright",
+    "category": "decorative"
+  },
+  {
+    "id": "aurora-dream-corner-whispers",
+    "name": "Aurora Dream Corner Whispers",
+    "category": "effects"
+  },
+  {
+    "id": "aurora-dream-diagonal-flow",
+    "name": "Aurora Dream Diagonal Flow",
+    "category": "effects"
+  },
+  {
+    "id": "aurora-dream-soft-harmony",
+    "name": "Aurora Dream Soft Harmony",
+    "category": "effects"
+  },
+  {
+    "id": "aurora-dream-vivid-bloom",
+    "name": "Aurora Dream Vivid Bloom",
+    "category": "effects"
+  },
+  {
+    "id": "aurora-mystic-mist",
+    "name": "Aurora Mystic Mist",
+    "category": "effects"
+  },
+  {
+    "id": "aurora-silk-fade",
+    "name": "Aurora Silk Fade",
+    "category": "effects"
+  },
+  {
+    "id": "beach",
+    "name": "Beach",
+    "category": "effects"
+  },
+  {
+    "id": "beige-texture",
+    "name": "Warm Beige",
+    "category": "effects"
+  },
+  {
+    "id": "cool-blue-glow-bg",
+    "name": "Cool Blue Glow Right",
+    "category": "effects"
+  },
+  {
+    "id": "cool-blue-glow-bg-left",
+    "name": "Cool Blue Glow Left",
+    "category": "effects"
+  },
+  {
+    "id": "cool-blue-glow-bg-top",
+    "name": "Cool Blue Glow Top",
+    "category": "effects"
+  },
+  {
+    "id": "cosmic-aurora",
+    "name": "Cosmic Aurora",
+    "category": "effects"
+  },
+  {
+    "id": "cosmic-noise",
+    "name": "Cosmic Noise",
+    "category": "effects"
+  },
+  {
+    "id": "cosmic-sparkle",
+    "name": "Cosmic Sparkle",
+    "category": "effects"
+  },
+  {
+    "id": "cotton-candy-sky",
+    "name": "Cotton Candy Sky",
+    "category": "effects"
+  },
+  {
+    "id": "cotton-candy-sky-reverse",
+    "name": "Cotton Candy Sky Reverse",
+    "category": "effects"
+  },
+  {
+    "id": "crimson-core-glow",
+    "name": "Crimson Core Glow",
+    "category": "effects"
+  },
+  {
+    "id": "crystal-maze",
+    "name": "Crystal Maze",
+    "category": "effects"
+  },
+  {
+    "id": "deep-ocean-glow",
+    "name": "Deep Ocean Glow",
+    "category": "effects"
+  },
+  {
+    "id": "dreamy-sky-pink-glow",
+    "name": "Dreamy Sky Pink Glow",
+    "category": "effects"
+  },
+  {
+    "id": "dreamy-sunset-gradient",
+    "name": "Dreamy Sunset Gradient",
+    "category": "effects"
+  },
+  {
+    "id": "ember-glow",
+    "name": "Ember Glow",
+    "category": "effects"
+  },
+  {
+    "id": "green-center-glow",
+    "name": "Green Center Glow",
+    "category": "effects"
+  },
+  {
+    "id": "indigo-center-glow",
+    "name": "Indigo Center Glow",
+    "category": "effects"
+  },
+  {
+    "id": "lavender-blush-left-flow",
+    "name": "Lavender Blush Left Flow",
+    "category": "effects"
+  },
+  {
+    "id": "lavender-blush-right-flow",
+    "name": "Lavender Blush Right Flow",
+    "category": "effects"
+  },
+  {
+    "id": "light-sky-blue-glow",
+    "name": "Light Sky Blue Glow",
+    "category": "effects"
+  },
+  {
+    "id": "lime-center-glow",
+    "name": "Lime Center  Glow",
+    "category": "effects"
+  },
+  {
+    "id": "midnight-ember",
+    "name": "Midnight Ember",
+    "category": "effects"
+  },
+  {
+    "id": "midnight-mist",
+    "name": "Midnight Mist",
+    "category": "effects"
+  },
+  {
+    "id": "mint-fresh-breeze",
+    "name": "Mint Fresh Breeze",
+    "category": "effects"
+  },
+  {
+    "id": "minty-cloud-drift",
+    "name": "Minty Cloud Drift",
+    "category": "effects"
+  },
+  {
+    "id": "moonlit-fog",
+    "name": "Moonlit Fog",
+    "category": "effects"
+  },
+  {
+    "id": "morning-haze",
+    "name": "Morning Haze",
+    "category": "effects"
+  },
+  {
+    "id": "northern-aurora",
+    "name": "Northern Aurora",
+    "category": "effects"
+  },
+  {
+    "id": "ocean-breeze-fade",
+    "name": "Ocean Breeze Fade",
+    "category": "effects"
+  },
+  {
+    "id": "orange-soft-glow",
+    "name": "Orange Soft Glow",
+    "category": "effects"
+  },
+  {
+    "id": "pastel-wave",
+    "name": "Pastel Wave",
+    "category": "effects"
+  },
+  {
+    "id": "peachy-mint-dream",
+    "name": "Peachy Mint Dream",
+    "category": "effects"
+  },
+  {
+    "id": "peachy-sunrise-glow",
+    "name": "Peachy Sunrise Glow",
+    "category": "effects"
+  },
+  {
+    "id": "purple-center-glow",
+    "name": "Purple Center Glow",
+    "category": "effects"
+  },
+  {
+    "id": "purple-glow-bg",
+    "name": "Purple Glow Right",
+    "category": "effects"
+  },
+  {
+    "id": "purple-glow-bg-left",
+    "name": "Purple Glow Left",
+    "category": "effects"
+  },
+  {
+    "id": "purple-glow-bg-top",
+    "name": "Purple Glow Top",
+    "category": "effects"
+  },
+  {
+    "id": "rose-gold-whisper",
+    "name": "Rose Gold Whisper",
+    "category": "effects"
+  },
+  {
+    "id": "soft-blue-radial",
+    "name": "Soft Blue Radial",
+    "category": "effects"
+  },
+  {
+    "id": "soft-dark-yellow-glow",
+    "name": "Soft Dark Yellow Glow",
+    "category": "effects"
+  },
+  {
+    "id": "soft-green-glow",
+    "name": "Soft Green Glow",
+    "category": "effects"
+  },
+  {
+    "id": "soft-lavender-center-glow",
+    "name": "Soft Lavender Center Glow",
+    "category": "effects"
+  },
+  {
+    "id": "soft-morning-mist",
+    "name": "Soft Morning Mist",
+    "category": "effects"
+  },
+  {
+    "id": "soft-pastel-dream",
+    "name": "Soft Pastel Dream",
+    "category": "effects"
+  },
+  {
+    "id": "soft-pink-glow",
+    "name": "Soft Pink Glow",
+    "category": "effects"
+  },
+  {
+    "id": "soft-warm-pastel-texture",
+    "name": "Soft Warm Pastel",
+    "category": "effects"
+  },
+  {
+    "id": "soft-yellow-glow",
+    "name": "Soft Yellow Glow",
+    "category": "effects"
+  },
+  {
+    "id": "spring-meadow-mist",
+    "name": "Spring Meadow Mist",
+    "category": "effects"
+  },
+  {
+    "id": "sunny-glow",
+    "name": "Sunny Glow",
+    "category": "effects"
+  },
+  {
+    "id": "sunrise-glow",
+    "name": "Sunrise Glow",
+    "category": "effects"
+  },
+  {
+    "id": "teal-glow-bg",
+    "name": "Teal Glow Right",
+    "category": "effects"
+  },
+  {
+    "id": "teal-glow-bg-left",
+    "name": "Teal Glow Left",
+    "category": "effects"
+  },
+  {
+    "id": "teal-glow-bg-top",
+    "name": "Teal Glow Top",
+    "category": "effects"
+  },
+  {
+    "id": "tropical-dusk-glow",
+    "name": "Tropical Dusk Glow",
+    "category": "effects"
+  },
+  {
+    "id": "volcanic-ember",
+    "name": "Volcanic Ember",
+    "category": "effects"
+  },
+  {
+    "id": "warm-light-apricot-coral",
+    "name": "Warm Light Apricot & Coral",
+    "category": "effects"
+  },
+  {
+    "id": "warm-orange-glow-bg",
+    "name": "Warm Orange Glow Right",
+    "category": "effects"
+  },
+  {
+    "id": "warm-orange-glow-bg-left",
+    "name": "Warm Orange Glow Left",
+    "category": "effects"
+  },
+  {
+    "id": "warm-orange-glow-bg-top",
+    "name": "Warm Orange Glow Top",
+    "category": "effects"
+  },
+  {
+    "id": "warm-pastel-coral-cream",
+    "name": "Warm Soft Coral & Cream",
+    "category": "effects"
+  },
+  {
+    "id": "basic-grid",
+    "name": "Basic Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "black-basic-grid",
+    "name": "Black Basic Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "black-grid-white-dots",
+    "name": "Black Grid with White Dots",
+    "category": "geometric"
+  },
+  {
+    "id": "bottom-fade-grid",
+    "name": "Bottom Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "circuit-board",
+    "name": "Circuit Board",
+    "category": "geometric"
+  },
+  {
+    "id": "circuit-board-dark",
+    "name": "Circuit Board - Dark",
+    "category": "geometric"
+  },
+  {
+    "id": "circuit-board-light",
+    "name": "Circuit Board - Light",
+    "category": "geometric"
+  },
+  {
+    "id": "circuit-board-vibes",
+    "name": "Circuit Board Vibes",
+    "category": "geometric"
+  },
+  {
+    "id": "complex-multiplier",
+    "name": "Complex Multiplier",
+    "category": "geometric"
+  },
+  {
+    "id": "concentric-squares-dark",
+    "name": "Concentric Squares - Dark",
+    "category": "geometric"
+  },
+  {
+    "id": "concentric-squares-light",
+    "name": "Concentric Squares - Light",
+    "category": "geometric"
+  },
+  {
+    "id": "cross-diagonal-lines",
+    "name": "Cross Diagonal Lines",
+    "category": "geometric"
+  },
+  {
+    "id": "crosshatch-art-dark",
+    "name": "Crosshatch Art - Dark",
+    "category": "geometric"
+  },
+  {
+    "id": "crosshatch-art-light",
+    "name": "Crosshatch Art - Light",
+    "category": "geometric"
+  },
+  {
+    "id": "dark-basic-grid-faded",
+    "name": "Dark Basic Grid (Faded)",
+    "category": "geometric"
+  },
+  {
+    "id": "dark-basic-grid-slate",
+    "name": "Dark Basic Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "dark-circuit-board",
+    "name": "Dark Circuit Board",
+    "category": "geometric"
+  },
+  {
+    "id": "dark-dot-matrix",
+    "name": "Dark Dot Matrix",
+    "category": "geometric"
+  },
+  {
+    "id": "dark-dotted-grid",
+    "name": "Dark Dotted Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "dark-grid-lines",
+    "name": "Dark Grid Lines",
+    "category": "geometric"
+  },
+  {
+    "id": "dark-grid-white-dots",
+    "name": "Dark Grid with White Dots",
+    "category": "geometric"
+  },
+  {
+    "id": "dark-noise-colored-high",
+    "name": "Dark Noise Colored",
+    "category": "geometric"
+  },
+  {
+    "id": "dark-sphere-grid",
+    "name": "Dark Sphere Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "dark-white-dotted-grid",
+    "name": "Dark White Dotted Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "dashed-bottom-fade-grid",
+    "name": "Dashed Bottom Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "dashed-bottom-left-fade-grid",
+    "name": "Dashed Bottom Left Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "dashed-bottom-right-fade-grid",
+    "name": "Dashed Bottom Right Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "dashed-center-fade-grid",
+    "name": "Dashed Center Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "dashed-grid-light",
+    "name": "Dashed Grid Light",
+    "category": "geometric"
+  },
+  {
+    "id": "dashed-top-fade-grid",
+    "name": "Dashed Top Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "dashed-top-left-fade-grid",
+    "name": "Dashed Top Left Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "dashed-top-right-fade-grid",
+    "name": "Dashed Top Right Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-cross-Bottom-left-fade-grid",
+    "name": "Diagonal Cross Bottom Left Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-cross-Bottom-right-fade-grid",
+    "name": "Diagonal Cross Bottom Right Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-cross-center-fade-grid",
+    "name": "Diagonal Cross Center Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-cross-grid",
+    "name": "Diagonal Cross Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-cross-grid-bottom",
+    "name": "Diagonal Cross Grid Bottom",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-cross-grid-top",
+    "name": "Diagonal Cross Grid Top",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-cross-top-left-fade-grid",
+    "name": "Diagonal Cross Top Left Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-cross-top-right-fade-grid",
+    "name": "Diagonal Cross Top Right Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-electric-erange",
+    "name": "Diagonal Grid - Electric Orange",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-fade-bottom-grid-Left",
+    "name": "Diagonal Fade Bottom Grid Left",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-fade-bottom-grid-right",
+    "name": "Diagonal Fade Bottom Grid Right",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-fade-center-grid",
+    "name": "Diagonal Fade Center Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-fade-grid-left",
+    "name": "Diagonal Fade Grid Left",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-fade-grid-right",
+    "name": "Diagonal Fade Grid Right",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-green-glow",
+    "name": "Diagonal Grid - Green Glow",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-light",
+    "name": "Diagonal Grid - Light",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-light-green",
+    "name": "Diagonal Grid - Electric",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-lines",
+    "name": "Diagonal Stripes",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-red-blue-glow",
+    "name": "Diagonal Grid - Red/Blue Glow",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-striped-grid",
+    "name": "Diagonal Striped Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "diagonal-synthwave",
+    "name": "Diagonal Grid - Synthwave",
+    "category": "geometric"
+  },
+  {
+    "id": "dual-gradient-overlay-bottom",
+    "name": "Dual Gradient Overlay (Bottom)",
+    "category": "geometric"
+  },
+  {
+    "id": "dual-gradient-overlay-strong",
+    "name": "Dual Gradient Overlay",
+    "category": "geometric"
+  },
+  {
+    "id": "dual-gradient-overlay-strong-swapped",
+    "name": "Dual Gradient Overlay Swapped",
+    "category": "geometric"
+  },
+  {
+    "id": "dual-gradient-overlay-top",
+    "name": "Dual Gradient Overlay (Top)",
+    "category": "geometric"
+  },
+  {
+    "id": "gradient-left-diagonal-lines",
+    "name": "Gradient Left Diagonal Lines",
+    "category": "geometric"
+  },
+  {
+    "id": "gradient-right-diagonal-lines",
+    "name": "Gradient Right Diagonal Lines",
+    "category": "geometric"
+  },
+  {
+    "id": "grid-dual-purple-glow",
+    "name": "Grid Dual Purple Glow",
+    "category": "geometric"
+  },
+  {
+    "id": "grid-quad-purple-glow",
+    "name": "Grid Quad Purple Glow",
+    "category": "geometric"
+  },
+  {
+    "id": "hexagonal-lines",
+    "name": "Hexagonal Lines",
+    "category": "geometric"
+  },
+  {
+    "id": "left-masked-basic-grid",
+    "name": "Left Masked Basic Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "left-masked-circuit-board",
+    "name": "Left Masked Circuit Board",
+    "category": "geometric"
+  },
+  {
+    "id": "left-masked-circuit-board-light",
+    "name": "Left Masked Circuit Board - Light",
+    "category": "geometric"
+  },
+  {
+    "id": "left-masked-concentric-squares-light",
+    "name": "Left Masked Concentric Squares - Light",
+    "category": "geometric"
+  },
+  {
+    "id": "left-masked-dashed-grid-light",
+    "name": "Left Masked Dashed Grid Light",
+    "category": "geometric"
+  },
+  {
+    "id": "left-masked-diagonal-cross-grid",
+    "name": "Left Masked Diagonal Cross Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "left-masked-noise-texture-darker-dots",
+    "name": "Left Masked Noise Texture (Darker Dots)",
+    "category": "geometric"
+  },
+  {
+    "id": "left-masked-white-grid-with-dots",
+    "name": "Left Masked White Grid with Dots",
+    "category": "geometric"
+  },
+  {
+    "id": "magenta-orb-grid",
+    "name": "Magenta Orb Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "magenta-orb-grid-light",
+    "name": "Magenta Orb Grid Light",
+    "category": "geometric"
+  },
+  {
+    "id": "matrix-green",
+    "name": "Matrix Green",
+    "category": "geometric"
+  },
+  {
+    "id": "multi-cross-diagonal-lines",
+    "name": "Multi Cross Diagonal Lines",
+    "category": "geometric"
+  },
+  {
+    "id": "neon-vertical-lines",
+    "name": "Neon Vertical Lines",
+    "category": "geometric"
+  },
+  {
+    "id": "noise-texture-darker-dots",
+    "name": "Noise Texture (Darker Dots)",
+    "category": "geometric"
+  },
+  {
+    "id": "paper-texture",
+    "name": "Paper Texture",
+    "category": "geometric"
+  },
+  {
+    "id": "pixel-grid-pattern",
+    "name": "Pixel Grid Pattern",
+    "category": "geometric"
+  },
+  {
+    "id": "purple-corner-grid",
+    "name": "Purple Corner Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "purple-gradient-grid-left",
+    "name": "Purple Gradient Grid Left",
+    "category": "geometric"
+  },
+  {
+    "id": "purple-gradient-grid-right",
+    "name": "Purple Gradient Grid Right",
+    "category": "geometric"
+  },
+  {
+    "id": "right-masked-basic-grid",
+    "name": "Right Masked Basic Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "right-masked-circuit-board",
+    "name": "Right Masked Circuit Board",
+    "category": "geometric"
+  },
+  {
+    "id": "right-masked-circuit-board-light",
+    "name": "Right Masked Circuit Board - Light",
+    "category": "geometric"
+  },
+  {
+    "id": "right-masked-concentric-squares-light",
+    "name": "Right Masked Concentric Squares - Light",
+    "category": "geometric"
+  },
+  {
+    "id": "right-masked-dashed-grid-light",
+    "name": "Right Masked Dashed Grid Light",
+    "category": "geometric"
+  },
+  {
+    "id": "right-masked-diagonal-cross-grid",
+    "name": "Right Masked Diagonal Cross Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "right-masked-noise-texture-darker-dots",
+    "name": "Right Masked Noise Texture (Darker Dots)",
+    "category": "geometric"
+  },
+  {
+    "id": "right-masked-white-grid-with-dots",
+    "name": "Right Masked White Grid with Dots",
+    "category": "geometric"
+  },
+  {
+    "id": "small-grid",
+    "name": "Small Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "striped-dark",
+    "name": "Striped Dark",
+    "category": "geometric"
+  },
+  {
+    "id": "top-fade-grid",
+    "name": "Top Fade Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "variable-spacing",
+    "name": "Variable Spacing",
+    "category": "geometric"
+  },
+  {
+    "id": "vercel-grid-subtle",
+    "name": "Vercel Grid Subtle",
+    "category": "geometric"
+  },
+  {
+    "id": "white-grid-with-dots",
+    "name": "White Grid with Dots",
+    "category": "geometric"
+  },
+  {
+    "id": "white-sphere-grid",
+    "name": "White Sphere Grid",
+    "category": "geometric"
+  },
+  {
+    "id": "woven-fabric-light",
+    "name": "Woven Fabric - Light",
+    "category": "geometric"
+  },
+  {
+    "id": "zigzag-lightning-dark",
+    "name": "Zigzag Lightning - Dark",
+    "category": "geometric"
+  },
+  {
+    "id": "zigzag-lightning-light",
+    "name": "Zigzag Lightning - Light",
+    "category": "geometric"
+  },
+  {
+    "id": "arctic-lights-glow",
+    "name": "Arctic Lights Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "aurora-edge-glow",
+    "name": "Aurora Edge Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "aurora-midnight-glow",
+    "name": "Aurora Midnight Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "aurora-waves",
+    "name": "Aurora Waves",
+    "category": "gradients"
+  },
+  {
+    "id": "blue-radial-glow",
+    "name": "Blue Radial Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "center-spotlight",
+    "name": "Center Spotlight",
+    "category": "gradients"
+  },
+  {
+    "id": "center-spotlight-amber",
+    "name": "Amber Spotlight",
+    "category": "gradients"
+  },
+  {
+    "id": "center-spotlight-blue",
+    "name": "Blue Spotlight",
+    "category": "gradients"
+  },
+  {
+    "id": "center-spotlight-crimson",
+    "name": "Crimson Spotlight",
+    "category": "gradients"
+  },
+  {
+    "id": "center-spotlight-cyan",
+    "name": "Cyan Spotlight",
+    "category": "gradients"
+  },
+  {
+    "id": "center-spotlight-emerald",
+    "name": "Emerald Spotlight",
+    "category": "gradients"
+  },
+  {
+    "id": "center-spotlight-rose",
+    "name": "Rose Spotlight",
+    "category": "gradients"
+  },
+  {
+    "id": "center-spotlight-violet",
+    "name": "Violet Spotlight",
+    "category": "gradients"
+  },
+  {
+    "id": "center-spotlight-white",
+    "name": "White Spotlight",
+    "category": "gradients"
+  },
+  {
+    "id": "copper-bronze",
+    "name": "Copper & Bronze",
+    "category": "gradients"
+  },
+  {
+    "id": "copper-forge-glow",
+    "name": "Copper Forge Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "cosmic-nebula",
+    "name": "Cosmic Nebula",
+    "category": "gradients"
+  },
+  {
+    "id": "crimson-shadow-glow",
+    "name": "Crimson Shadow Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "cyan-radial-glow",
+    "name": "Cyan Radial Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "dark-radial-glow",
+    "name": "Dark Radial Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "deep-navy-gold",
+    "name": "Deep Navy & Gold",
+    "category": "gradients"
+  },
+  {
+    "id": "emerald-depths-glow",
+    "name": "Emerald Depths Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "emerald-radial-glow",
+    "name": "Emerald Radial Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "forest-emerald",
+    "name": "Forest Emerald",
+    "category": "gradients"
+  },
+  {
+    "id": "gold-radial-glow",
+    "name": "Gold Radial Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "golden-horizon-glow",
+    "name": "Golden Horizon Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "indigo-cosmos-glow",
+    "name": "Indigo Cosmos Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "lime-radial-glow",
+    "name": "Lime Radial Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "magenta-nebula-glow",
+    "name": "Magenta Nebula Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "midnight-aurora-glow",
+    "name": "Midnight Aurora Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "midnight-radial-glow",
+    "name": "Midnight Radial Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "moonlight-silver",
+    "name": "Moonlight Silver",
+    "category": "gradients"
+  },
+  {
+    "id": "ocean-abyss-glow",
+    "name": "Ocean Abyss Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "orange-radial-glow",
+    "name": "Orange Radial Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "pearl-mist-glow",
+    "name": "Pearl Mist Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "pink-aurora-top",
+    "name": "Pink Aurora Top",
+    "category": "gradients"
+  },
+  {
+    "id": "pink-radial-glow",
+    "name": "Pink Radial Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "prismatic-aurora-burst",
+    "name": "Prismatic Aurora Burst",
+    "category": "gradients"
+  },
+  {
+    "id": "purple-radial-glow",
+    "name": "Purple Radial Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "red-radial-glow",
+    "name": "Red Radial Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "rich-burgundy",
+    "name": "Rich Burgundy",
+    "category": "gradients"
+  },
+  {
+    "id": "rose-twilight-glow",
+    "name": "Rose Twilight Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "royal-purple",
+    "name": "Royal Purple",
+    "category": "gradients"
+  },
+  {
+    "id": "steel-blue",
+    "name": "Steel Blue",
+    "category": "gradients"
+  },
+  {
+    "id": "stellar-mist",
+    "name": "Stellar Mist",
+    "category": "gradients"
+  },
+  {
+    "id": "top-spotlight",
+    "name": "Top Spotlight",
+    "category": "gradients"
+  },
+  {
+    "id": "violet-storm-glow",
+    "name": "Violet Storm Glow",
+    "category": "gradients"
+  },
+  {
+    "id": "warm-amber",
+    "name": "Warm Amber",
+    "category": "gradients"
+  }
+]
