@@ -6,6 +6,7 @@ import { BRAND_PRESETS, PRESET_GROUPS } from "@/lib/brand";
 import { ICON_IDS } from "@/lib/icons";
 import { IPHONE_FRAMES, LAYOUTS, STYLES } from "@/lib/layouts";
 import { BACKGROUND_TYPES, TEXTURE_TYPES } from "@/lib/scene";
+import { PATTERNS, PATTERN_CATEGORIES } from "@/lib/patterns";
 
 export function GET() {
   return json({
@@ -20,6 +21,8 @@ export function GET() {
     themeGroups: PRESET_GROUPS,
     backgroundTypes: BACKGROUND_TYPES,
     textureTypes: TEXTURE_TYPES,
+    patterns: PATTERNS,
+    patternCategories: PATTERN_CATEGORIES,
     // kept for older clients
     brandPresets: Object.entries(BRAND_PRESETS).map(([id, p]) => ({
       id,
