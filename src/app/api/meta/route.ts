@@ -1,7 +1,7 @@
 import { json } from "@/lib/api";
 import { DEVICES } from "@/lib/devices";
 import { TEMPLATE_IDS, TEMPLATE_LABELS } from "@/lib/templates";
-import { FONTS, FONT_WEIGHTS } from "@/lib/fonts";
+import { FONTS, fontWeights } from "@/lib/fonts";
 import { BRAND_PRESETS } from "@/lib/brand";
 import { ICON_IDS } from "@/lib/icons";
 import { IPHONE_FRAMES, LAYOUTS, STYLES } from "@/lib/layouts";
@@ -23,7 +23,7 @@ export function GET() {
       id: f.id,
       name: f.name,
       scripts: f.scripts,
-      weights: FONT_WEIGHTS,
+      weights: fontWeights(f),
     })),
   });
 }
