@@ -140,6 +140,7 @@ export function buildScene(
     fit: "shrink",
     minFontSize: Math.round(W * 0.03),
     textTransform: brand.titleCase,
+    highlightPill: false,
     rotation: 0,
     opacity: 1,
     locked: false,

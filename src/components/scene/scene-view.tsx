@@ -1,7 +1,8 @@
 import { bezelFor, type Bezel } from "@/lib/bezels";
 import type { CSSProperties } from "react";
 import type { Scene, Layer, MockupLayer, TextLayer } from "@/lib/scene";
-import { backgroundCss } from "@/lib/scene";
+import { bgRect } from "@/lib/scene";
+import { backgroundSvgDataUrl } from "@/lib/background";
 import { layoutParagraph, detectDir, hasRtl, type Word } from "@/lib/bidi";
 import { fontStack } from "@/lib/fonts";
 import { iconDataUri } from "@/lib/icons";
@@ -33,10 +34,10 @@ export function SceneView({
         display: "flex",
         position: "relative",
         overflow: "hidden",
-        background: backgroundCss(scene.background),
         fontFamily: FONT_FAMILY,
       }}
     >
+      <BackgroundLayer scene={scene} resolveSrc={resolveSrc} />
       {scene.layers.map((layer) => (
         <LayerView
           key={layer.id}
@@ -46,6 +47,32 @@ export function SceneView({
         />
       ))}
     </div>
+  );
+}
+
+/**
+ * Background for one tile, shared by the exporter (satori) and the editor canvas (DOM): both
+ * just load the same baked SVG image. A panorama's `bg` rect is wider than the tile and offset,
+ * so the pattern lines up across the seam instead of each tile drawing its own copy.
+ */
+export function BackgroundLayer({
+  scene,
+  resolveSrc = (s) => s,
+}: {
+  scene: Scene;
+  resolveSrc?: (src: string) => string;
+}) {
+  const rect = bgRect(scene);
+  const url = backgroundSvgDataUrl(scene.background, rect.width, rect.height, resolveSrc);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt=""
+      width={rect.width}
+      height={rect.height}
+      style={{ position: "absolute", left: rect.offsetX, top: 0, width: rect.width, height: rect.height }}
+    />
   );
 }
 
@@ -182,6 +209,18 @@ export function TextContent({
     letterSpacing: Math.round(layer.letterSpacing * k),
   };
   if (simple) {
+    if (layer.highlightColor && /\*[^*]+\*/.test(text)) {
+      return (
+        <HighlightText
+          text={text}
+          font={font}
+          justify={justify}
+          block={block}
+          color={layer.highlightColor}
+          pill={layer.highlightPill}
+        />
+      );
+    }
     return (
       <div
         style={{
@@ -200,12 +239,92 @@ export function TextContent({
   }
   return (
     <BidiText
-      text={text}
+      // `*word*` highlight markers are only supported on the simple (non-RTL) path.
+      text={text.replace(/\*([^*]+)\*/g, "$1")}
       base={base}
       justify={justify}
       font={font}
       block={block}
     />
+  );
+}
+
+/** Black or white, whichever reads better on `hex`. */
+function contrastColor(hex: string): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return "#111111";
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 0xff;
+  const g = (n >> 8) & 0xff;
+  const b = n & 0xff;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "#111111" : "#ffffff";
+}
+
+/**
+ * `*word*` in a title renders that word (or phrase) in an accent color, optionally on a
+ * highlighter pill. Scoped to the simple (non-RTL) text path; word matching is by text, not
+ * position, so a repeated word highlights every instance (acceptable for short headlines).
+ */
+function HighlightText({
+  text,
+  font,
+  justify,
+  block,
+  color,
+  pill,
+}: {
+  text: string;
+  font: CSSProperties;
+  justify: string;
+  block: boolean;
+  color: string;
+  pill: boolean;
+}) {
+  const highlighted = new Set<string>();
+  const clean = text.replace(/\*([^*]+)\*/g, (_, inner: string) => {
+    for (const w of inner.split(/\s+/)) if (w) highlighted.add(w);
+    return inner;
+  });
+  const pad = typeof font.fontSize === "number" ? Math.round(font.fontSize * 0.08) : 0;
+  return (
+    <div
+      style={{
+        ...font,
+        display: "flex",
+        flexWrap: block ? "wrap" : "nowrap",
+        alignItems: "center",
+        textAlign: "left",
+        width: block ? "100%" : "auto",
+        justifyContent: justify,
+        rowGap: pad,
+      }}
+    >
+      {clean.split(/(\s+)/).map((piece, i) => {
+        if (!piece) return null;
+        if (/^\s+$/.test(piece)) return <span key={i}>{piece}</span>;
+        const hl = highlighted.has(piece);
+        if (!hl) return <span key={i}>{piece}</span>;
+        return (
+          <span
+            key={i}
+            style={
+              pill
+                ? {
+                    display: "flex",
+                    color: contrastColor(color),
+                    background: color,
+                    borderRadius: pad * 2,
+                    padding: `0 ${pad}px`,
+                  }
+                : { color }
+            }
+          >
+            {piece}
+          </span>
+        );
+      })}
+    </div>
   );
 }
 

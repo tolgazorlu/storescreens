@@ -33,6 +33,7 @@ import {
   type StyleKey,
 } from "@/lib/layouts";
 import type { Scene } from "@/lib/scene";
+import { backgroundSvgDataUrl } from "@/lib/background";
 import { SceneView } from "@/components/scene/scene-view";
 import type { AssetDto, ProjectDto, ScreenDto } from "./types";
 import type { Brand } from "@/lib/brand";
@@ -47,6 +48,7 @@ type Row = {
   template: RowTemplate;
   title: string;
   subtitle: string;
+  eyebrow: string;
   screenshot: string | null;
   screenshot2: string | null;
   bullets: string;
@@ -107,6 +109,7 @@ export function GeneratePanel({
       template: rowTemplate(style, i),
       title: "",
       subtitle: "",
+      eyebrow: "",
       screenshot: a?.id ?? null,
       screenshot2: null,
       bullets: "",
@@ -130,6 +133,7 @@ export function GeneratePanel({
         const p = {
           title: r.title || "Headline",
           subtitle: r.subtitle || undefined,
+          eyebrow: r.eyebrow || undefined,
           screenshot: assetUrl(r.screenshot),
           screenshot2: assetUrl(r.screenshot2),
         };
@@ -187,6 +191,7 @@ export function GeneratePanel({
                   : undefined,
               title: r.title || "Headline",
               subtitle: r.subtitle || undefined,
+              eyebrow: r.eyebrow || undefined,
             })),
           },
         },
@@ -299,10 +304,8 @@ export function GeneratePanel({
             <span
               className="size-3 rounded-sm"
               style={{
-                background:
-                  brand.background.type === "solid"
-                    ? brand.background.color
-                    : brand.background.from,
+                backgroundImage: `url(${backgroundSvgDataUrl(brand.background, 24, 24)})`,
+                backgroundSize: "cover",
               }}
             />
             <span
@@ -409,6 +412,14 @@ export function GeneratePanel({
                   className="h-7 text-xs"
                   onChange={(e) => set(i, { subtitle: e.target.value })}
                 />
+                {layoutKeyOf(r.template) && LAYOUTS[layoutKeyOf(r.template)!].copy.eyebrow && (
+                  <Input
+                    placeholder="Eyebrow label (optional)"
+                    value={r.eyebrow}
+                    className="h-7 text-xs"
+                    onChange={(e) => set(i, { eyebrow: e.target.value })}
+                  />
+                )}
                 {r.template === "feature-list" && (
                   <textarea
                     placeholder={"One bullet per line (max 4)"}
@@ -473,6 +484,7 @@ export function GeneratePanel({
                 template: rowTemplate(style, rows.length),
                 title: "",
                 subtitle: "",
+                eyebrow: "",
                 screenshot: null,
                 screenshot2: null,
                 bullets: "",
