@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,6 +11,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Shuffle, Plus, X } from "lucide-react";
 import { BACKGROUND_TYPES, TEXTURE_TYPES, type Background } from "@/lib/scene";
+import { PATTERNS, PATTERN_CATEGORIES, patternSrc, type PatternCategory } from "@/lib/patterns";
 
 /**
  * One background editor used by both the project Brand panel and the per-screen Inspector
@@ -26,6 +28,7 @@ export function BackgroundEditor({
   imageSrcs?: string[];
 }) {
   const types = imageSrcs?.length ? BACKGROUND_TYPES : BACKGROUND_TYPES.filter((t) => t !== "image");
+  const [patternCategory, setPatternCategory] = useState<PatternCategory | "all">("all");
   const firstColor = (bg: Background): string =>
     bg.type === "solid"
       ? bg.color
@@ -51,7 +54,9 @@ export function BackgroundEditor({
               ? { type: "split", colorA: c, colorB: "#111111", angle: 135, split: 0.5, ...base }
               : t === "mesh"
                 ? { type: "mesh", seed: 1, base: "#101016", colors: [c, "#7A1FA2", "#F76707"], ...base }
-                : { type: "image", src: imageSrcs?.[0] ?? "", dim: 0, ...base };
+                : t === "pattern"
+                  ? { type: "pattern", id: PATTERNS[0].id, ...base }
+                  : { type: "image", src: imageSrcs?.[0] ?? "", dim: 0, ...base };
     onChange(next);
   }
 
@@ -169,6 +174,41 @@ export function BackgroundEditor({
             ))}
           </SelectContent>
         </Select>
+      )}
+
+      {value.type === "pattern" && (
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap gap-1">
+            {(["all", ...PATTERN_CATEGORIES] as const).map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setPatternCategory(c)}
+                className={`rounded-full border px-2 py-0.5 text-[10px] capitalize transition ${
+                  patternCategory === c
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-input text-muted-foreground hover:border-foreground/40"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+          <div className="grid max-h-56 grid-cols-5 gap-1.5 overflow-y-auto">
+            {PATTERNS.filter((p) => patternCategory === "all" || p.category === patternCategory).map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                title={p.name}
+                onClick={() => onChange({ ...value, id: p.id })}
+                className={`aspect-square rounded-md ring-1 transition hover:ring-2 hover:ring-foreground ${
+                  value.id === p.id ? "ring-2 ring-foreground" : "ring-border"
+                }`}
+                style={{ backgroundImage: `url(${patternSrc(p.id)})`, backgroundSize: "cover", backgroundPosition: "center" }}
+              />
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="space-y-1 border-t border-border pt-2">
